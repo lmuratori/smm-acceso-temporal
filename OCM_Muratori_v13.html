@@ -1185,7 +1185,7 @@ body{font-family:'Inter',system-ui,sans-serif;font-size:13px;background:var(--bg
   <button class="acc-btn" title="Imprimir (Ctrl+P)" onclick="imprimirReceta()">🖨 Imprimir</button>
   <div class="acc-sep"></div>
   <!-- GRUPO 4: ENVÍO -->
-  <button class="acc-btn acc-wa" title="Enviar por WhatsApp" onclick="whatsappReceta()">📲 WhatsApp</button>
+  <button class="acc-btn acc-wa" title="Enviar por WhatsApp" onclick="enviarWhatsApp()">📲 WhatsApp</button>
   <button class="acc-btn acc-mail" title="Enviar por Mail" onclick="mailReceta()">✉ Mail</button>
   <div class="acc-sep"></div>
   <!-- GRUPO 5: DATOS -->
@@ -3882,6 +3882,71 @@ function enviarWhatsApp(){
   const tel=document.getElementById('rf-tel').textContent.trim().replace(/\D/g,'');
   if(tel)window.open(`https://wa.me/549${tel}?text=Estimado/a, adjunto su receta médica. Dr. Muratori.`,'_blank');
   else toast('El paciente no tiene teléfono registrado','err');
+}
+
+// ── Envía la receta actual (la que está visible en pantalla) por mail,
+//    generando el PDF automáticamente y usando el backend ya existente
+//    enviarRecetaPorMail. Antes este botón llamaba a una función que no
+//    existía (mailReceta) — corregido agosto 2026. ──
+async function mailReceta(){
+  if(!pacienteActivo){ toast('⚠️ No hay paciente seleccionado','err'); return; }
+  if(!pacienteActivo.mail){ toast('⚠️ Este paciente no tiene mail cargado — cargalo en RIMP o en la ficha del paciente','err'); return; }
+  if(!itemsReceta.length){ toast('⚠️ No hay nada cargado en la receta para enviar','err'); return; }
+  if(typeof html2pdf === 'undefined'){ toast('⚠️ La librería de PDF todavía no cargó (conexión lenta) — esperá unos segundos y probá de nuevo','err'); return; }
+
+  toast('⏳ Generando PDF...','ok');
+  const recetaEl = document.getElementById('receta');
+  if(!recetaEl){ toast('⚠️ No se encontró la receta en pantalla','err'); return; }
+  const holder = document.createElement('div');
+  holder.style.cssText = 'position:fixed;left:-9999px;top:0;width:400px;background:#fff;z-index:-1';
+  holder.innerHTML = recetaEl.outerHTML;
+  holder.querySelectorAll('.btn-card-turno,.turno-link,.turno-wa,.turno-mail,.turno-geo,.print-btn,.nombre-archivo')
+    .forEach(el=>el.remove());
+  document.body.appendChild(holder);
+
+  try{
+    const blob = await html2pdf().set({
+      margin:4,
+      image:{type:'jpeg', quality:0.95},
+      html2canvas:{scale:2, useCORS:true, backgroundColor:'#ffffff'},
+      jsPDF:{unit:'mm', format:'a4', orientation:'portrait'}
+    }).from(holder).outputPdf('blob');
+
+    const base64 = await new Promise((resolve,reject)=>{
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(String(reader.result).split(',')[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+
+    const apellido = pacienteActivo.apellido || '';
+    const nombre   = pacienteActivo.nombre   || '';
+    const fecha    = new Date().toLocaleDateString('es-AR').replace(/\//g,'-');
+    const nombreArchivo = `Receta_${apellido}${nombre?'_'+nombre:''}_${pacienteActivo.dni||''}_${fecha}.pdf`.replace(/\s+/g,'');
+    const listaItems = itemsReceta.map((it,i)=>`${i+1}. ${it.prefix?it.prefix+' - ':''}${it.text}`).join('\n');
+    const resumen = `Adjunto encontrará su receta / indicación médica:\n\n${listaItems}`;
+
+    toast('📤 Enviando por mail...','ok');
+    const resp = await fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({
+        action:'enviarRecetaPorMail',
+        Email: pacienteActivo.mail,
+        Nombre_Paciente: `${apellido}, ${nombre}`,
+        Asunto: 'Tu receta médica — Dr. Muratori',
+        Mini_Resumen: resumen,
+        Pdf_Base64: base64,
+        Pdf_Nombre: nombreArchivo
+      }),
+      signal: AbortSignal.timeout(30000)
+    });
+    const data = await resp.json();
+    if(!data.success) throw new Error(data.error || 'Error del servidor');
+    toast(`✅ Receta enviada por mail a ${pacienteActivo.mail}`,'ok');
+  }catch(err){
+    toast('❌ No se pudo enviar: '+(err && err.message ? err.message : err),'err');
+  } finally {
+    document.body.removeChild(holder);
+  }
 }
 
 // ══════════════════════════════════════════════════════════════════
