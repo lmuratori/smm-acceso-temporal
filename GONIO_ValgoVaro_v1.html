@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>GONIO — Valgo/Varo de Retropié · SMM</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--navy:#0b1f3a;--green:#22c55e;--blue:#2563eb;--red:#dc2626;--border:#e2e8f0}
+body{font-family:'Inter',Arial,sans-serif;background:#f0f4f8;min-height:100vh;color:#1e293b}
+.header{background:var(--navy);color:#fff;padding:16px 20px;display:flex;align-items:center;justify-content:space-between}
+.header h1{font-size:15px;font-weight:700}
+.header a{color:#93c5fd;font-size:12px;text-decoration:none}
+.main{max-width:720px;margin:0 auto;padding:16px}
+.card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px}
+.card h2{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:10px;text-transform:uppercase;letter-spacing:.04em}
+label{display:block;font-size:12px;font-weight:600;color:#475569;margin-bottom:4px;margin-top:10px}
+input[type=text],select,textarea{width:100%;padding:9px 10px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;font-family:inherit}
+textarea{resize:vertical;min-height:60px}
+.btn{display:inline-block;background:var(--blue);color:#fff;border:none;padding:11px 18px;border-radius:8px;
+font-size:14px;font-weight:600;cursor:pointer;margin-top:12px;margin-right:8px}
+.btn:hover{background:#1d4ed8}
+.btn.gris{background:#64748b}
+.btn.gris:hover{background:#475569}
+.btn.verde{background:var(--green)}
+.btn.verde:hover{background:#16a34a}
+.btn:disabled{background:#cbd5e1;cursor:not-allowed}
+#file-input{display:none}
+.zona-foto{border:2px dashed #cbd5e1;border-radius:10px;padding:30px 16px;text-align:center;cursor:pointer;color:#64748b;font-size:13px}
+.zona-foto:hover{border-color:var(--blue);color:var(--blue)}
+#canvas-wrap{position:relative;width:100%;max-width:100%;touch-action:none}
+canvas{width:100%;border-radius:8px;display:block;background:#000;touch-action:none}
+.instructivo{background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px 12px;font-size:12.5px;color:#1e3a5f;margin-bottom:10px}
+.instructivo b{color:#1d4ed8}
+.resultado{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:16px;text-align:center;margin-top:12px}
+.resultado .num{font-size:34px;font-weight:800;color:#166534}
+.resultado .clasif{font-size:15px;font-weight:700;margin-top:2px}
+.resultado .aviso{font-size:11px;color:#78716c;margin-top:8px;line-height:1.4}
+.badge-paso{display:inline-block;background:var(--blue);color:#fff;font-size:11px;font-weight:700;
+padding:2px 9px;border-radius:20px;margin-bottom:6px}
+.msg-ok{color:#166534;font-size:13px;font-weight:600;margin-top:8px}
+.msg-error{color:var(--red);font-size:13px;font-weight:600;margin-top:8px}
+.leyenda{display:flex;gap:14px;font-size:11px;color:#64748b;margin-top:8px;flex-wrap:wrap}
+.leyenda span{display:flex;align-items:center;gap:5px}
+.punto-ico{width:10px;height:10px;border-radius:50%;display:inline-block}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>📐 GONIO — Valgo/Varo de Retropié</h1>
+  <a href="INDEX_SIM.html">← Menú principal</a>
+</div>
+
+<div class="main">
+
+  <!-- DATOS DEL PACIENTE -->
+  <div class="card">
+    <h2>1 · Paciente</h2>
+    <label>DNI</label>
+    <input type="text" id="dni" placeholder="Ej: 12345678" inputmode="numeric">
+    <label>Pie evaluado</label>
+    <select id="pie">
+      <option value="Derecho">Derecho</option>
+      <option value="Izquierdo">Izquierdo</option>
+    </select>
+  </div>
+
+  <!-- CARGA DE FOTO -->
+  <div class="card" id="card-foto">
+    <h2>2 · Foto del talón (vista posterior)</h2>
+    <div class="instructivo">
+      Sacá la foto con el paciente parado, apoyando ambos pies, cámara a la altura del talón,
+      de frente al eje posterior de la pierna (vista de espaldas).
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <div class="zona-foto" id="zona-foto" style="flex:1;min-width:150px">📱 Foto con el celular</div>
+      <div class="zona-foto" id="zona-foto-webcam" style="flex:1;min-width:150px">🎥 Cámara Web HD</div>
+    </div>
+    <input type="file" id="file-input" accept="image/*" capture="environment" style="display:none">
+  </div>
+
+  <!-- MODAL DE CAPTURA POR CÁMARA WEB -->
+  <div id="modal-webcam" style="display:none;position:fixed;inset:0;background:rgba(11,31,58,.85);z-index:9999;align-items:center;justify-content:center;padding:16px">
+    <div style="background:#fff;border-radius:12px;padding:16px;max-width:640px;width:100%">
+      <div style="font-size:13px;font-weight:700;color:#0b1f3a;margin-bottom:8px">🎥 Cámara Web HD</div>
+      <video id="webcam-video" autoplay playsinline style="width:100%;border-radius:8px;background:#000"></video>
+      <div id="webcam-error" style="color:#dc2626;font-size:12px;margin-top:6px"></div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="btn verde" id="btn-capturar-webcam" style="flex:1">📸 Capturar foto</button>
+        <button class="btn gris" id="btn-cancelar-webcam">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CANVAS DE MEDICIÓN -->
+  <div class="card" id="card-canvas" style="display:none">
+    <h2>3 · Marcar el ángulo (3 puntos)</h2>
+    <div class="instructivo" id="txt-paso">
+      <span class="badge-paso" id="badge-paso">Punto 1 de 3</span><br>
+      Marcá el <b>punto superior</b>, sobre el eje de la pierna (pantorrilla / tendón de Aquiles, bien arriba).
+    </div>
+    <div id="canvas-wrap">
+      <canvas id="canvas"></canvas>
+    </div>
+    <div class="leyenda">
+      <span><i class="punto-ico" style="background:#0ea5e9"></i> Punto 1 (superior)</span>
+      <span><i class="punto-ico" style="background:#f97316"></i> Punto 2 (vértice — tobillo/talón)</span>
+      <span><i class="punto-ico" style="background:#eab308"></i> Punto 3 (inferior — calcáneo)</span>
+    </div>
+    <button class="btn gris" id="btn-reiniciar">↺ Reiniciar puntos</button>
+    <button class="btn gris" id="btn-otra-foto">🔄 Cambiar foto</button>
+  </div>
+
+  <!-- RESULTADO -->
+  <div class="card" id="card-resultado" style="display:none">
+    <h2>4 · Resultado</h2>
+    <div class="resultado">
+      <div class="num" id="num-angulo">--°</div>
+      <div class="clasif" id="txt-clasif">—</div>
+      <div class="aviso">⚠️ Clasificación orientativa calculada según el lado del pie seleccionado.
+      Verificar siempre con el criterio clínico del profesional antes de usar en el diagnóstico.</div>
+    </div>
+
+    <h3 style="font-size:12.5px;font-weight:700;color:#334155;margin:16px 0 6px">Seguimiento quirúrgico (para investigación / dashboard)</h3>
+    <label>Estado del paciente</label>
+    <select id="estado-quirurgico">
+      <option value="Seguimiento">Seguimiento (sin indicación quirúrgica)</option>
+      <option value="Candidato">Candidato a cirugía</option>
+      <option value="Pre-operatorio">Pre-operatorio</option>
+      <option value="Post-operatorio">Post-operatorio</option>
+    </select>
+    <div id="campos-cirugia" style="display:none">
+      <label>Técnica quirúrgica</label>
+      <select id="tecnica-quirurgica">
+        <option value="Osteosíntesis de Seno del Tarso">Osteosíntesis de Seno del Tarso</option>
+        <option value="Otra">Otra</option>
+      </select>
+      <label>Implante (tipo / talla)</label>
+      <input type="text" id="implante-detalle" placeholder="Ej: HyProCure talla 8">
+      <label>Fecha de cirugía</label>
+      <input type="text" id="fecha-cirugia" placeholder="DD/MM/AAAA">
+    </div>
+
+    <label>Comentario / observación (opcional)</label>
+    <textarea id="comentario" placeholder="Ej: paciente en apoyo bipodal, buena colaboración..."></textarea>
+    <button class="btn verde" id="btn-guardar">💾 Guardar en la carpeta del paciente</button>
+    <div id="msg-guardado"></div>
+  </div>
+
+</div>
+
+<script>
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbwYdoFuU8mQL4YKqufSBQ9AD_yqWEEesLtGzYQjNw2JG1BZIQF7ug80mHB5sLMXhaUpvQ/exec';
+
+const zonaFoto   = document.getElementById('zona-foto');
+const fileInput  = document.getElementById('file-input');
+const cardCanvas = document.getElementById('card-canvas');
+const cardResult = document.getElementById('card-resultado');
+const canvas     = document.getElementById('canvas');
+const ctx        = canvas.getContext('2d');
+const txtPaso    = document.getElementById('txt-paso');
+
+let img = new Image();
+let puntos = []; // 3 puntos: [0]=superior (pierna), [1]=vértice (tobillo/talón), [2]=inferior (calcáneo)
+
+const COLORES = ['#0ea5e9', '#f97316', '#eab308'];
+const TEXTOS_PASO = [
+  {badge:'Punto 1 de 3', texto:'Marcá el <b>punto superior</b>, sobre el eje de la pierna (pantorrilla / tendón de Aquiles, bien arriba).'},
+  {badge:'Punto 2 de 3', texto:'Marcá el <b>vértice</b>: el punto donde se cruzan el eje de la pierna y el eje del talón (a la altura del tobillo).'},
+  {badge:'Punto 3 de 3', texto:'Marcá el <b>punto inferior</b>, sobre el eje del calcáneo (línea media del talón, hacia abajo).'}
+];
+
+zonaFoto.addEventListener('click', () => fileInput.click());
+
+// ── Cámara Web HD (USB, Bluetooth o inalámbrica — todas via getUserMedia) ──
+const modalWebcam = document.getElementById('modal-webcam');
+const videoWebcam = document.getElementById('webcam-video');
+const errorWebcam = document.getElementById('webcam-error');
+let streamWebcamActivo = null;
+document.getElementById('zona-foto-webcam').addEventListener('click', async () => {
+  errorWebcam.textContent = '';
+  modalWebcam.style.display = 'flex';
+  try {
+    streamWebcamActivo = await navigator.mediaDevices.getUserMedia({video:{width:{ideal:1920},height:{ideal:1080}}});
+    videoWebcam.srcObject = streamWebcamActivo;
+  } catch (err) {
+    errorWebcam.textContent = '⚠️ No se pudo acceder a ninguna cámara conectada (' + err.message + ').';
+  }
+});
+function cerrarModalWebcam(){
+  if (streamWebcamActivo){ streamWebcamActivo.getTracks().forEach(t=>t.stop()); streamWebcamActivo=null; }
+  modalWebcam.style.display = 'none';
+}
+document.getElementById('btn-cancelar-webcam').addEventListener('click', cerrarModalWebcam);
+document.getElementById('btn-capturar-webcam').addEventListener('click', () => {
+  if (!streamWebcamActivo) return;
+  const cnv = document.createElement('canvas');
+  cnv.width = videoWebcam.videoWidth; cnv.height = videoWebcam.videoHeight;
+  cnv.getContext('2d').drawImage(videoWebcam, 0, 0, cnv.width, cnv.height);
+  const dataURL = cnv.toDataURL('image/jpeg', 0.92);
+  cerrarModalWebcam();
+  img = new Image();
+  img.onload = function () {
+    dibujarImagenBase();
+    cardCanvas.style.display = 'block';
+    cardResult.style.display = 'none';
+    puntos = [];
+    actualizarInstructivo();
+    cardCanvas.scrollIntoView({behavior:'smooth', block:'start'});
+  };
+  img.src = dataURL;
+});
+
+fileInput.addEventListener('change', function () {
+  const file = this.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    img = new Image();
+    img.onload = function () {
+      dibujarImagenBase();
+      cardCanvas.style.display = 'block';
+      cardResult.style.display = 'none';
+      puntos = [];
+      actualizarInstructivo();
+      cardCanvas.scrollIntoView({behavior:'smooth', block:'start'});
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+});
+
+function dibujarImagenBase(){
+  const anchoMax = Math.min(window.innerWidth - 40, 680);
+  window.__escala = anchoMax / img.width;
+  canvas.width = anchoMax;
+  canvas.height = img.height * window.__escala;
+  redibujar();
+}
+
+function redibujar(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  // Línea del punto 1 al vértice (punto 2)
+  if (puntos.length >= 2) dibujarLinea(puntos[0], puntos[1], '#38bdf8');
+  // Línea del vértice (punto 2) al punto 3
+  if (puntos.length >= 3) dibujarLinea(puntos[1], puntos[2], '#facc15');
+  puntos.forEach((p,i)=>{
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 7, 0, Math.PI*2);
+    ctx.fillStyle = COLORES[i];
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  });
+}
+
+function dibujarLinea(a, b, color){
+  ctx.beginPath();
+  ctx.moveTo(a.x, a.y);
+  ctx.lineTo(b.x, b.y);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 3;
+  ctx.stroke();
+}
+
+function coordsDesdeEvento(ev){
+  const rect = canvas.getBoundingClientRect();
+  const clientX = ev.touches ? ev.touches[0].clientX : ev.clientX;
+  const clientY = ev.touches ? ev.touches[0].clientY : ev.clientY;
+  return {
+    x: (clientX - rect.left) * (canvas.width / rect.width),
+    y: (clientY - rect.top) * (canvas.height / rect.height)
+  };
+}
+
+function manejarClick(ev){
+  ev.preventDefault();
+  if (puntos.length >= 3) return;
+  puntos.push(coordsDesdeEvento(ev));
+  redibujar();
+  actualizarInstructivo();
+  if (puntos.length === 3) calcularAngulo();
+}
+canvas.addEventListener('mousedown', manejarClick);
+canvas.addEventListener('touchstart', manejarClick, {passive:false});
+
+function actualizarInstructivo(){
+  if (puntos.length < 3){
+    const paso = TEXTOS_PASO[puntos.length];
+    txtPaso.innerHTML = '<span class="badge-paso">' + paso.badge + '</span><br>' + paso.texto;
+  } else {
+    txtPaso.innerHTML = '<span class="badge-paso" style="background:#16a34a">Listo ✓</span><br>Ángulo calculado abajo. Si no quedó bien, tocá "Reiniciar puntos".';
+  }
+}
+
+document.getElementById('btn-reiniciar').addEventListener('click', ()=>{
+  puntos = [];
+  redibujar();
+  actualizarInstructivo();
+  cardResult.style.display = 'none';
+});
+document.getElementById('btn-otra-foto').addEventListener('click', ()=>{
+  fileInput.value = '';
+  fileInput.click();
+});
+
+function calcularAngulo(){
+  // Ángulo formado EN el vértice (punto 2) entre los rayos hacia punto 1 y punto 3
+  const vertice = puntos[1];
+  const v1 = {x: puntos[0].x - vertice.x, y: puntos[0].y - vertice.y};
+  const v2 = {x: puntos[2].x - vertice.x, y: puntos[2].y - vertice.y};
+  const dot = v1.x*v2.x + v1.y*v2.y;
+  const mag1 = Math.hypot(v1.x, v1.y);
+  const mag2 = Math.hypot(v2.x, v2.y);
+  const anguloVertice = Math.acos(Math.max(-1, Math.min(1, dot/(mag1*mag2)))) * 180 / Math.PI;
+
+  // Si la pierna y el talón estuvieran en línea recta, el ángulo en el vértice sería 180°.
+  // La desviación (el "valgo/varo" en grados) es lo que le falta a ese ángulo para llegar a 180°.
+  const desviacion = 180 - anguloVertice;
+
+  // Signo de la desviación (cruz z) para estimar hacia qué lado se inclina el calcáneo
+  const cruz = v1.x*v2.y - v1.y*v2.x;
+  const pie = document.getElementById('pie').value;
+  let clasificacion;
+  if (pie === 'Derecho'){
+    clasificacion = cruz > 0 ? 'Valgo' : 'Varo';
+  } else {
+    clasificacion = cruz > 0 ? 'Varo' : 'Valgo';
+  }
+  if (desviacion < 2) clasificacion = 'Neutro (sin desviación significativa)';
+
+  document.getElementById('num-angulo').textContent = desviacion.toFixed(1) + '°';
+  document.getElementById('txt-clasif').textContent = clasificacion;
+  document.getElementById('card-resultado').style.display = 'block';
+  document.getElementById('card-resultado').scrollIntoView({behavior:'smooth', block:'start'});
+
+  window.__gonioResultado = {angulo: desviacion.toFixed(1), clasificacion: clasificacion};
+}
+
+document.getElementById('estado-quirurgico').addEventListener('change', function(){
+  document.getElementById('campos-cirugia').style.display =
+    (this.value === 'Pre-operatorio' || this.value === 'Post-operatorio') ? 'block' : 'none';
+});
+
+document.getElementById('btn-guardar').addEventListener('click', async function(){
+  const dni = document.getElementById('dni').value.trim();
+  const msg = document.getElementById('msg-guardado');
+  if (!dni){
+    msg.className = 'msg-error';
+    msg.textContent = '⚠️ Ingresá el DNI del paciente antes de guardar.';
+    return;
+  }
+  if (!window.__gonioResultado){
+    msg.className = 'msg-error';
+    msg.textContent = '⚠️ Primero completá la medición (3 puntos).';
+    return;
+  }
+  this.disabled = true;
+  this.textContent = 'Guardando...';
+  msg.className = '';
+  msg.textContent = '';
+
+  const fotoBase64 = canvas.toDataURL('image/jpeg', 0.85);
+
+  const payload = {
+    action: 'guardar_gonio_medicion',
+    dni: dni,
+    tipo_medicion: 'ValgoVaro_Retropie',
+    pie: document.getElementById('pie').value,
+    angulo: window.__gonioResultado.angulo,
+    clasificacion: window.__gonioResultado.clasificacion,
+    comentario: document.getElementById('comentario').value.trim(),
+    foto_base64: fotoBase64,
+    puntos: puntos,
+    datos_extra: {
+      estado_quirurgico: document.getElementById('estado-quirurgico').value,
+      tecnica_quirurgica: document.getElementById('tecnica-quirurgica').value,
+      implante_detalle: document.getElementById('implante-detalle').value.trim(),
+      fecha_cirugia: document.getElementById('fecha-cirugia').value.trim()
+    }
+  };
+
+  try {
+    const resp = await fetch(GAS_URL, {
+      method: 'POST',
+      headers: {'Content-Type': 'text/plain;charset=utf-8'},
+      body: JSON.stringify(payload)
+    });
+    const data = await resp.json();
+    if (data.success){
+      msg.className = 'msg-ok';
+      msg.textContent = '✅ Medición guardada en la carpeta del paciente (DNI ' + dni + ').';
+    } else {
+      msg.className = 'msg-error';
+      msg.textContent = '❌ Error al guardar: ' + (data.error || data.message || 'desconocido');
+    }
+  } catch (err) {
+    msg.className = 'msg-error';
+    msg.textContent = '❌ No se pudo conectar con el backend. Revisar conexión a internet.';
+  }
+  this.disabled = false;
+  this.textContent = '💾 Guardar en la carpeta del paciente';
+});
+
+window.addEventListener('resize', ()=>{ if (img.src) dibujarImagenBase(); });
+</script>
+
+</body>
+</html>

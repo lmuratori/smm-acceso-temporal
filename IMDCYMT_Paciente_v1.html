@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Indicación Médica — Dr. Muratori</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" defer></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#0b1f3a;--blue:#2563eb;--green:#16a34a;--amber:#d97706;
+  --red:#dc2626;--purple:#7c3aed;--teal:#0891b2;
+  --border:#e2e8f0;--muted:#64748b;--bg:#f0f4f8;--surface:#fff;
+  --radius:10px;--shadow:0 2px 8px rgba(0,0,0,.08);
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:#111;font-size:13px}
+.header{background:var(--navy);color:#fff;padding:14px 20px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:100}
+.hdr-logo{width:46px;height:46px;border-radius:50%;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;overflow:hidden}
+.hdr-logo img{width:100%;height:100%;object-fit:cover}
+.hdr-info{flex:1}
+.hdr-dr{font-family:'Playfair Display',serif;font-size:16px;font-style:italic}
+.hdr-sub{font-size:9px;opacity:.65;letter-spacing:.04em;text-transform:uppercase;margin-top:2px}
+.hdr-actions{display:flex;gap:8px}
+.hbtn{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:6px;padding:6px 12px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;text-decoration:none;display:inline-flex;align-items:center;gap:5px}
+.pac-banner{background:var(--navy);border-bottom:3px solid var(--blue);padding:10px 20px 14px;color:#fff}
+.pac-nombre{font-family:'Playfair Display',serif;font-size:18px;font-weight:700}
+.pac-meta{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:4px;font-size:11px;opacity:.8}
+.page{max-width:760px;margin:0 auto;padding:16px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;margin-bottom:14px;box-shadow:var(--shadow)}
+.sec-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px}
+.sec-title span{font-size:15px}
+.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:12px;font-size:10px;font-weight:700}
+.badge-blue{background:#dbeafe;color:#1e40af}
+.badge-green{background:#dcfce7;color:#166534}
+.badge-amber{background:#fef3c7;color:#92400e}
+.badge-red{background:#fee2e2;color:#b91c1c}
+.field-row{display:flex;gap:10px;margin-bottom:8px;font-size:12px}
+.field-lbl{font-weight:600;color:var(--muted);min-width:110px;flex-shrink:0}
+.field-val{color:#1e293b;flex:1}
+/* Farmacia selector */
+.farm-selector{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.farm-card{flex:1;min-width:200px;border:2px solid var(--border);border-radius:var(--radius);padding:12px;cursor:pointer;transition:all .2s}
+.farm-card.active{border-color:var(--blue);background:#eff6ff}
+.farm-card h4{font-size:12px;font-weight:700;margin-bottom:4px;color:var(--navy)}
+.farm-card p{font-size:11px;color:var(--muted);margin:2px 0;line-height:1.4}
+.farm-detail{background:#f8fafc;border-radius:8px;padding:12px;margin-top:8px;display:none}
+.farm-detail.show{display:block}
+/* Btn genérico */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:none;font-family:inherit;text-decoration:none;transition:all .15s}
+.btn-wa{background:#25D366;color:#fff}
+.btn-wa:hover{background:#128C7E}
+.btn-mail{background:#2563eb;color:#fff}
+.btn-mail:hover{background:#1d4ed8}
+.btn-turno{background:var(--navy);color:#fff}
+.btn-turno:hover{background:#1e3a5f}
+.btn-consulta{background:var(--purple);color:#fff;width:100%}
+.btn-outline{background:#fff;color:var(--navy);border:1.5px solid var(--navy)}
+/* Ejercicios */
+.ej-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:8px;display:grid;grid-template-columns:1fr auto;gap:10px;align-items:start}
+.ej-n{font-size:13px;font-weight:600;color:#1e293b;margin-bottom:4px}
+.ej-d{font-size:12px;color:#475569;line-height:1.5;margin-bottom:6px}
+.ej-series{font-size:11px;background:#f1f5f9;border-radius:6px;padding:3px 8px;display:inline-block;margin-right:4px;color:#334155}
+.ej-resumen{font-size:11px;color:#64748b;background:#f8fafc;border-left:3px solid var(--blue);padding:6px 10px;border-radius:0 6px 6px 0;margin-top:6px}
+.ej-video-btn{background:#fee2e2;color:#b91c1c;border:none;border-radius:6px;padding:6px 10px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;text-decoration:none;display:inline-flex;align-items:center;gap:4px;flex-shrink:0}
+/* Evaluación */
+.eval-entry{border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px}
+.eval-entry.friday{border-color:var(--amber);background:#fffbeb}
+.pain-scale{display:flex;gap:4px;margin:6px 0;flex-wrap:wrap}
+.pain-btn{width:32px;height:32px;border-radius:6px;border:1px solid var(--border);background:#f8fafc;cursor:pointer;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.pain-btn.sel{background:var(--navy);color:#fff;border-color:var(--navy)}
+.chk-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:6px;margin:6px 0}
+.chk-item{display:flex;align-items:center;gap:6px;font-size:12px;padding:4px 8px;border-radius:6px;border:1px solid var(--border);cursor:pointer;user-select:none;background:#f8fafc;transition:all .15s}
+.chk-item.sel{background:#fee2e2;border-color:#fca5a5;color:#b91c1c;font-weight:600}
+.resumen-semanal{background:#fffbeb;border:2px solid var(--amber);border-radius:10px;padding:14px;text-align:center}
+/* Directorio */
+.dir-card{border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:8px;display:flex;gap:12px;align-items:flex-start}
+.dir-ico{width:38px;height:38px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;background:#f1f5f9}
+.dir-info{flex:1;min-width:0}
+.dir-name{font-size:13px;font-weight:600;color:#1e293b;margin-bottom:2px}
+.dir-det{font-size:11px;color:var(--muted);line-height:1.6}
+.dir-btns{display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap}
+/* Calistenia */
+.fase-line{display:flex;align-items:center;gap:10px;margin:8px 0}
+.fase-ico{width:32px;height:32px;border-radius:50%;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
+.fase-info{flex:1;font-size:12px;line-height:1.5}
+/* Consultas online */
+.consulta-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.consulta-card{border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center}
+.consulta-precio{font-size:20px;font-weight:700;color:var(--navy);margin:6px 0}
+.consulta-tipo{font-size:12px;font-weight:600;color:#334155;margin-bottom:4px}
+.consulta-det{font-size:11px;color:var(--muted);margin-bottom:10px}
+/* Tags centro */
+.centro-tag{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:12px;font-size:10px;font-weight:700;background:rgba(30,79,163,.12);color:var(--navy);margin-left:8px}
+/* Print */
+@media print{
+  .header{position:relative;background:#0b1f3a!important;print-color-adjust:exact;-webkit-print-color-adjust:exact}
+  .hdr-actions,.btn,.eval-entry{display:none}
+  .eval-entry.show-print{display:block}
+  .farm-detail{display:block!important}
+  body{background:#fff}
+  .card{box-shadow:none;break-inside:avoid}
+}
+.loading{text-align:center;color:var(--muted);padding:40px;font-size:13px}
+.viernes-banner{background:#fef3c7;border:2px solid var(--amber);border-radius:10px;padding:14px;margin-bottom:14px;text-align:center}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="hdr-logo" id="hdr-logo">🏥</div>
+  <div class="hdr-info">
+    <div class="hdr-dr">Dr. Luis Alberto Muratori</div>
+    <div class="hdr-sub" id="hdr-sub">M.N. 100.540 · M.P. 9943 · Ortopedia y Traumatología</div>
+  </div>
+  <div class="hdr-actions">
+    <a class="hbtn" href="#" id="btn-enviar-mail" onclick="enviarPDFAlPaciente();return false">📧 Enviar por mail</a>
+    <a class="hbtn" href="#" onclick="window.print();return false">🖨 Imprimir</a>
+    <a class="hbtn" href="tel:+5492616586234">📞 Urgencias</a>
+  </div>
+</div>
+
+<div class="pac-banner">
+  <div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px">
+    <span class="pac-nombre" id="pac-nombre">Cargando...</span>
+    <span class="centro-tag" id="centro-tag">Centro médico</span>
+  </div>
+  <div class="pac-meta" id="pac-meta"></div>
+</div>
+
+<div class="page" id="page-content">
+  <div class="loading">⏳ Cargando su indicación médica...</div>
+</div>
+
+<script defer>
+const SHEETS_URL='https://script.google.com/macros/s/AKfycbwYdoFuU8mQL4YKqufSBQ9AD_yqWEEesLtGzYQjNw2JG1BZIQF7ug80mHB5sLMXhaUpvQ/exec';
+const FIRMA_B64="data:image/png;base64,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";
+const DOCTOR_WA='5492616586234';
+
+const CENTROS = {
+  sicoli:   {label:'H. Sicoli', nombreHTML:'HOSPITAL DR. DOMINGO SICOLI<br>LAVALLE MENDOZA — CONSULTORIO EXTERNO',
+             tit:'Especialista Certificado en Ortopedia y Traumatología · Miembro Titular A.A.O.T. · Cirugía de Columna · Médico Laboral · Médico Forense',
+             lugar:'Lavalle, Mendoza', dir:'Ruta 142, Lavalle, Mendoza', tel:'0261 497-3000',
+             wsp:'5492614973000', mail:'turnos@sicoli.gov.ar', lat:-32.717, lng:-68.460, color:'#1e4fa3'},
+  espanol:  {label:'H. Español', nombreHTML:'HOSPITAL ESPAÑOL DE MENDOZA<br>CONSULTORIO EXTERNO',
+             tit:'Especialista Certificado en Ortopedia y Traumatología · Miembro Titular A.A.O.T. · Cirugía de Columna · Médico Laboral',
+             lugar:'Mendoza', dir:'Av. Godoy Cruz 447, Mendoza', tel:'0261 428-0000',
+             wsp:'5492614280000', mail:'turnos@hospitalespanol.org.ar', lat:-32.890, lng:-68.844, color:'#8b0000'},
+  palmares: {label:'Palmares', nombreHTML:'CENTRO MÉDICO PALMARES<br>MENDOZA — CONSULTORIO EXTERNO',
+             tit:'Especialista Certificado en Ortopedia y Traumatología · Miembro Titular A.A.O.T.',
+             lugar:'Palmares, Mendoza', dir:'Acceso Sur Km 7.5, Guaymallén', tel:'0261 441-5500',
+             wsp:'5492614415500', mail:'', lat:-32.940, lng:-68.800, color:'#0f766e'},
+  sandona:  {label:'San Donà', nombreHTML:'CLÍNICA SAN DONÀ<br>MENDOZA — CONSULTORIO DE ORTOPEDIA',
+             tit:'Especialista Certificado en Ortopedia y Traumatología · Cirugía de Columna',
+             lugar:'San Donà, Mendoza', dir:'San Donà, Mendoza', tel:'—',
+             wsp:'', mail:'', lat:-32.900, lng:-68.820, color:'#6b3fa0'},
+  altomaipu:{label:'Alto Maipú', nombreHTML:'CENTRO MÉDICO ALTO MAIPÚ<br>MENDOZA — CONSULTORIO EXTERNO',
+             tit:'Especialista Certificado en Ortopedia y Traumatología · Miembro Titular A.A.O.T.',
+             lugar:'Maipú, Mendoza', dir:'Ruta 60, Maipú, Mendoza', tel:'—',
+             wsp:'', mail:'', lat:-32.980, lng:-68.780, color:'#d97706'},
+  rehab:    {label:'Rehabilitarte', nombreHTML:'REHABILITARTE INSTITUTO MÉDICO<br>MENDOZA — CONSULTORIO EXTERNO',
+             tit:'Especialista Certificado en Ortopedia y Traumatología · Rehabilitación Motora · Médico Laboral',
+             lugar:'Mendoza', dir:'Mendoza Capital', tel:'—',
+             wsp:'', mail:'', lat:-32.890, lng:-68.844, color:'#b45309'},
+  norte:    {label:'Cons. Norte', nombreHTML:'CONSULTORIOS MÉDICOS PRIVADOS DEL NORTE<br>MENDOZA',
+             tit:'Especialista Certificado en Ortopedia y Traumatología · Miembro Titular A.A.O.T. · Médico Laboral · Médico Forense',
+             lugar:'Mendoza Norte', dir:'Zona Norte, Mendoza', tel:'—',
+             wsp:'', mail:'', lat:-32.850, lng:-68.850, color:'#1e4fa3'},
+};
+
+const MEDICOS_DB = [
+  {id:1, nombre:"Dr. Luis Alberto Muratori", nombreFirma:"Muratori", nombreCorto:"Luis A. Muratori",
+   especialidad:"MEDICO CIRUJANO", mn:"M.N. 100.540", mp:"M.P. 9943",
+   titulos:"Especialista Certificado en Ortopedia y Traumatología · Miembro Titular A.A.O.T. · Cirugía de Columna · Médico Laboral · Médico Forense"},
+];
+
+// ── DATOS DE FARMACIAS ────────────────────────────────────────────
+const FARMACIAS = {
+  san_jorge:{
+    id:'san_jorge',
+    nombre:'Farmacia San Jorge',
+    dir:'Pedro Molina 96, San Martín, Mendoza',
+    tel:'0263 447-9960', wa:'5492634479960',
+    mail:'fsanjorge10@gmail.com',
+    tipo:'Cápsulas y comprimidos',
+    badge:'Cápsulas + Comprimidos',
+    capsulas:{
+      cant:60, frec:'1 cápsula con el desayuno',
+      items:['Omeprazol 30 mg','Paracetamol 1800 mg','Ibuprofeno 1000 mg','Tramadol 30 mg']
+    },
+    comprimidos:{
+      cant:60, frec:'½ comprimido cada 6 hs, siempre después de un alimento',
+      items:['Carisoprodol 30 mg','Gabapentina 300 mg','Amitriptilina 15 mg']
+    },
+    nota:'A medida que el dolor disminuye, espaciá la dosis: cada 8 hs, luego 12 hs, hasta llegar a solo ½ comprimido nocturno. Suspendé cuando podás realizar la rutina diaria de ejercicios sin dolor.'
+  },
+  sevilla:{
+    id:'sevilla',
+    nombre:'Farmacia Sevilla',
+    dir:'San Martín 1450 casi Av. Las Heras, Mendoza Capital',
+    tel:'0261 361-2450', wa:'5492613612450',
+    mail:'farmacia@farmaciasevilla.com.ar',
+    tipo:'Solo cápsulas (todo en una)',
+    badge:'Cápsulas Todo-en-Uno',
+    capsulas:{
+      cant:90, frec:'1 cápsula cada 8 hs, siempre después de un alimento',
+      items:['Omeprazol 30 mg','Paracetamol 1800 mg','Ibuprofeno 1000 mg','Tramadol 30 mg','Carisoprodol 30 mg','Gabapentina 300 mg','Amitriptilina 15 mg']
+    },
+    nota:'A medida que el dolor disminuye, espaciá la dosis: cada 12 hs, hasta llegar a 1 cápsula nocturna. Suspendé cuando podás realizar la rutina diaria sin dolor.'
+  }
+};
+
+const GIMNASIOS = [
+  {nombre:'Primal',dir:'Pueyrredón 210, Capital',tel:'0261 7232468',wa:'5492617232468',icon:'🏋'},
+  {nombre:'Primal Godoy Cruz',dir:'Granadero 80, Godoy Cruz',tel:'',wa:'',icon:'🏋'},
+  {nombre:'Focus',dir:'Evans 1198, Luján de Cuyo',tel:'0261 6418717',wa:'5492616418717',icon:'💪'},
+  {nombre:'Vitamina',dir:'Roca 1450, Las Heras',tel:'',wa:'',icon:'🌟'},
+  {nombre:'Gravity Gym',dir:'Saavedra 560, San Martín',tel:'263 4362018',wa:'5492634362018',icon:'⚡'}
+];
+
+// ── ESTADO EVALUACIÓN ─────────────────────────────────────────────
+const _params = new URLSearchParams(window.location.search);
+const DNI = _params.get('dni') || '';
+let DATOS = {};
+let evalSelDolor = -1;
+let evalSelEfecto = -1;
+let evalSelAdversos = [];
+
+// ── INICIO ────────────────────────────────────────────────────────
+async function init(){
+  // 1) Cargar datos del localStorage (escritos por OCM al generar)
+  try{
+    const raw = localStorage.getItem('imdcymt_datos_' + DNI);
+    if(raw) DATOS = JSON.parse(raw);
+  }catch(_){}
+
+  // 2) Si no hay datos locales, intentar la nube
+  if(!DATOS.paciente && DNI){
+    try{
+      const r = await fetch(SHEETS_URL+'?action=getIMDCYMT&dni='+encodeURIComponent(DNI),{signal:AbortSignal.timeout(8000)});
+      const d = await r.json();
+      if(d.success && d.datos) DATOS = d.datos;
+    }catch(_){}
+  }
+
+  renderPacBanner();
+  renderPage();
+  verificarViernes();
+}
+
+function renderPacBanner(){
+  const p = DATOS.paciente || {};
+  const c = DATOS.consulta || {};
+  const centroKey = c.centro || 'sicoli';
+  const centro = CENTROS[centroKey] || CENTROS.sicoli;
+
+  document.getElementById('pac-nombre').textContent =
+    p.apellido ? p.apellido + ', ' + (p.nombre||'') : 'Paciente';
+  document.getElementById('centro-tag').textContent = centro.label;
+
+  const logo = LOGOS_B64 && LOGOS_B64[centroKey];
+  if(logo){
+    document.getElementById('hdr-logo').innerHTML = '<img src="'+logo+'" alt="Logo">';
+  }
+  document.getElementById('hdr-sub').textContent =
+    (centro.nombreHTML||'').replace(/<br>/gi,' · ') + ' · M.N. 100.540 · M.P. 9943';
+
+  const meta = [];
+  if(p.dni) meta.push('DNI '+p.dni);
+  if(p.os) meta.push(p.os + (p.plan?' – Plan '+p.plan:''));
+  if(p.tel) meta.push('📞 '+p.tel);
+  if(c.fecha) meta.push('📅 Consulta: '+c.fecha);
+  document.getElementById('pac-meta').innerHTML = meta.map(m=>'<span>'+m+'</span>').join('');
+}
+
+function renderPage(){
+  const page = document.getElementById('page-content');
+  page.innerHTML = [
+    renderDiagnosis(),
+    renderMedicacion(),
+    renderKinesio(),
+    renderEjercicios(),
+    renderEvaluacion(),
+    renderDirectorio(),
+    renderCalistenia(),
+    renderConsultaOnline()
+  ].join('');
+}
+
+// ── SECCIÓN 2: DIAGNÓSTICO ────────────────────────────────────────
+function renderDiagnosis(){
+  const c = DATOS.consulta || {};
+  return '<div class="card">'+
+    '<div class="sec-title"><span>🩺</span> Diagnóstico y consulta</div>'+
+    (c.dx ? '<div class="field-row"><span class="field-lbl">Diagnóstico:</span><span class="field-val"><strong>'+c.dx+'</strong>'+(c.cie10?' <span class="badge badge-blue">CIE-10: '+c.cie10+'</span>':'')+'</span></div>' : '')+
+    (c.resumen ? '<div class="field-row"><span class="field-lbl">Resumen:</span><span class="field-val">'+c.resumen+'</span></div>' : '')+
+    (c.estudios ? '<div class="field-row"><span class="field-lbl">Estudios:</span><span class="field-val">'+c.estudios+'</span></div>' : '')+
+    '<div class="field-row"><span class="field-lbl">Paso 1:</span><span class="field-val" style="color:#b91c1c;font-weight:600">Reducir el dolor al menos un 60 % antes de iniciar los ejercicios.</span></div>'+
+  '</div>';
+}
+
+// ── SECCIÓN 3: MEDICACIÓN + FARMACIAS ────────────────────────────
+function renderMedicacion(){
+  const m = DATOS.medicacion || {};
+  const farmKeys = m.farmacias || ['san_jorge'];
+  const farmActiva = m.farmacia_activa || farmKeys[0];
+
+  let html = '<div class="card">'+
+    '<div class="sec-title"><span>💊</span> Medicación</div>';
+
+  if(m.items && m.items.length){
+    html += m.items.map(it=>'<div class="field-row"><span class="field-lbl">'+it.nombre+':</span><span class="field-val">'+it.dosis+'</span></div>').join('');
+  } else {
+    html += '<div style="font-size:12px;color:var(--muted);margin-bottom:10px">Según prescripción médica indicada en consulta.</div>';
+  }
+
+  html += '<div style="margin-top:12px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:8px">Dónde retirar la medicación magistral</div>';
+  html += '<div class="farm-selector">';
+
+  for(const key of farmKeys){
+    const f = FARMACIAS[key];
+    if(!f) continue;
+    html += '<div class="farm-card '+(key===farmActiva?'active':'')+'" onclick="selFarmacia(\\\''+key+'\\\')" id="fc-'+key+'">'+
+      '<h4>'+f.nombre+' <span class="badge badge-blue">'+f.badge+'</span></h4>'+
+      '<p>📍 '+f.dir+'</p>'+
+      '<p>📞 '+f.tel+'</p>'+
+    '</div>';
+  }
+  html += '</div>';
+
+  for(const key of farmKeys){
+    const f = FARMACIAS[key];
+    if(!f) continue;
+    html += '<div class="farm-detail '+(key===farmActiva?'show':'')+'" id="fd-'+key+'">'+
+      '<div style="font-size:12px;margin-bottom:8px;color:#1e293b">';
+
+    if(f.capsulas){
+      html += '<strong>Cápsulas ('+f.capsulas.cant+'):</strong><br>';
+      html += f.capsulas.items.map(i=>'&nbsp;&nbsp;· '+i).join('<br>')+'<br>';
+      html += '<em>Cómo tomarlas: '+f.capsulas.frec+'</em><br><br>';
+    }
+    if(f.comprimidos){
+      html += '<strong>Comprimidos ('+f.comprimidos.cant+'):</strong><br>';
+      html += f.comprimidos.items.map(i=>'&nbsp;&nbsp;· '+i).join('<br>')+'<br>';
+      html += '<em>Cómo tomarlos: '+f.comprimidos.frec+'</em><br><br>';
+    }
+    if(f.nota){
+      html += '<div style="background:#fef3c7;border-left:3px solid #d97706;padding:8px;border-radius:0 6px 6px 0;font-size:11px;color:#92400e;margin-top:4px">⚠️ '+f.nota+'</div>';
+    }
+    html += '</div>'+
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">'+
+        '<a class="btn btn-wa" href="https://wa.me/'+f.wa+'?text='+encodeURIComponent('Hola, le envío receta magistral del Dr. Luis Muratori para preparación. DNI paciente: '+(DATOS.paciente&&DATOS.paciente.dni||''))+'" target="_blank">📲 WhatsApp farmacia</a>'+
+        '<a class="btn btn-mail" href="mailto:'+f.mail+'?subject=Receta Magistral — Dr. Muratori&body='+encodeURIComponent('Estimados, adjunto receta magistral del Dr. Luis Alberto Muratori. DNI del paciente: '+(DATOS.paciente&&DATOS.paciente.dni||''))+'" target="_blank">📧 Email farmacia</a>'+
+      '</div>'+
+    '</div>';
+  }
+  html += '</div>';
+  return html;
+}
+
+function selFarmacia(key){
+  document.querySelectorAll('.farm-card').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.farm-detail').forEach(el=>el.classList.remove('show'));
+  const card = document.getElementById('fc-'+key);
+  const detail = document.getElementById('fd-'+key);
+  if(card) card.classList.add('active');
+  if(detail) detail.classList.add('show');
+}
+
+// ── SECCIÓN 4: KINESIOTERAPIA ────────────────────────────────────
+function renderKinesio(){
+  const k = DATOS.kinesio || {};
+  return '<div class="card">'+
+    '<div class="sec-title"><span>🏃</span> Fisio/kinesioterapia</div>'+
+    (k.prescripcion ? '<div class="field-row"><span class="field-lbl">Indicación:</span><span class="field-val">'+k.prescripcion+'</span></div>' : '')+
+    (k.sesiones ? '<div class="field-row"><span class="field-lbl">Sesiones:</span><span class="field-val">'+k.sesiones+' sesiones × '+k.frecuencia+'</span></div>' : '')+
+    (k.kinesiologo && k.kinesiologo.nombre ?
+      '<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:10px;margin-top:8px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">'+
+        '<div>'+
+          '<div style="font-size:13px;font-weight:600;color:#166534">'+k.kinesiologo.nombre+'</div>'+
+          '<div style="font-size:11px;color:#4ade80">Kinesiólogo/a asignado/a</div>'+
+        '</div>'+
+        (k.kinesiologo.tel ? '<a class="btn btn-wa" href="https://wa.me/549'+k.kinesiologo.tel.replace(/\D/g,'')+'" target="_blank">📲 Contactar</a>' : '')+
+      '</div>' : '<div style="font-size:12px;color:var(--muted);margin-top:8px">Ver directorio de kinesiólogos recomendados al final de este documento.</div>')+
+    '<div style="font-size:11px;color:var(--muted);margin-top:10px;padding:8px;background:#f8fafc;border-radius:6px">ℹ️ Su kinesiólogo registrará la evolución de cada sesión. Esos datos llegarán al panel de seguimiento del Dr. Muratori automáticamente.</div>'+
+  '</div>';
+}
+
+// ── SECCIÓN 5: EJERCICIOS ─────────────────────────────────────────
+function renderEjercicios(){
+  const ej = DATOS.ejercicios || {};
+  const lista = ej.lista || [];
+
+  let html = '<div class="card">'+
+    '<div class="sec-title"><span>💪</span> Ejercicios en casa '+(ej.titulo?'<span class="badge badge-blue">'+ej.titulo+'</span>':'')+'</div>';
+
+  if(ej.progresion){
+    html += '<div style="background:#eff6ff;border-left:3px solid var(--blue);padding:8px 12px;border-radius:0 8px 8px 0;font-size:12px;margin-bottom:12px;color:#1e40af"><strong>Progresión:</strong> '+ej.progresion+'</div>';
+  }
+
+  html += '<div style="font-size:12px;color:var(--muted);margin-bottom:10px">Realizá los ejercicios en el orden indicado. <strong>3 series × 10 repeticiones.</strong> Presión máxima 3 segundos (contá: uno… dos… tres… soltá). Descanso 5 seg entre reps y 30 seg entre series.</div>';
+
+  if(lista.length){
+    lista.forEach((e,i)=>{
+      html += '<div class="ej-card">'+
+        '<div>'+
+          '<div class="ej-n">'+(i+1)+'. '+(e.ico||'')+'  '+e.n+'</div>'+
+          '<div class="ej-d">'+e.d+'</div>'+
+          '<div><span class="ej-series">'+e.s+'</span><span class="ej-series">⏱ '+e.t+'</span></div>'+
+          (e.resumen?'<div class="ej-resumen">'+e.resumen+'</div>':'')+
+          (e.yt?'<a class="ej-video-btn" href="'+e.yt+'" target="_blank">▶ Ver video</a>':'')+
+        '</div>'+
+      '</div>';
+    });
+  } else {
+    html += '<div style="text-align:center;color:var(--muted);padding:20px;border:1.5px dashed var(--border);border-radius:8px">'+
+      'Los ejercicios específicos son indicados según la región tratada.<br>Consultá el video de referencia:<br><br>'+
+      '<a class="btn btn-wa" href="https://www.youtube.com/@patriJordanGymVirtual" target="_blank" style="margin:4px">▶ Patri Jordán — Core y glúteo</a>'+
+    '</div>';
+  }
+  html += '</div>';
+  return html;
+}
+
+// ── SECCIÓN 6: EVALUACIÓN SEMANAL ────────────────────────────────
+function renderEvaluacion(){
+  return '<div class="card" id="eval-card">'+
+    '<div class="sec-title"><span>📊</span> Evaluación semanal</div>'+
+    '<div style="font-size:12px;color:var(--muted);margin-bottom:12px">Completá estos datos cada día. El viernes se genera un resumen automático para el Dr. Muratori.</div>'+
+    renderFormEval()+
+  '</div>';
+}
+
+function renderFormEval(){
+  const fecha = new Date().toLocaleDateString('es-AR');
+  const hist = getEvalHistory();
+  const hoy = hist.find(e=>e.fecha===fecha);
+
+  let html = '<div class="eval-entry" id="eval-hoy">'+
+    '<div style="font-size:11px;font-weight:700;color:var(--navy);margin-bottom:8px">📅 Hoy — '+fecha+'</div>';
+
+  html += '<div style="font-size:11px;font-weight:600;color:#334155;margin-bottom:4px">Intensidad del dolor (0 = sin dolor · 10 = máximo)</div>'+
+    '<div class="pain-scale" id="ps-dolor">';
+  for(let i=0;i<=10;i++){
+    const sel = (hoy&&hoy.dolor===i)||evalSelDolor===i;
+    html += '<button class="pain-btn'+(sel?' sel':'')+'" onclick="selDolor('+i+')">'+i+'</button>';
+  }
+  html += '</div>';
+
+  html += '<div style="font-size:11px;font-weight:600;color:#334155;margin:8px 0 4px">Efecto del medicamento (0 = sin efecto · 10 = alivio completo)</div>'+
+    '<div class="pain-scale" id="ps-efecto">';
+  for(let i=0;i<=10;i++){
+    const sel = (hoy&&hoy.efecto===i)||evalSelEfecto===i;
+    html += '<button class="pain-btn'+(sel?' sel':'')+'" onclick="selEfecto('+i+')">'+i+'</button>';
+  }
+  html += '</div>';
+
+  const adv = ['Gastritis/acidez','Somnolencia','Embotamiento','Mareo','Letargo','Confusión','Disestesias (hormigueos)'];
+  html += '<div style="font-size:11px;font-weight:600;color:#334155;margin:8px 0 4px">Efectos adversos</div>'+
+    '<div class="chk-grid">';
+  adv.forEach((a,i)=>{
+    const sel = (hoy&&hoy.adversos&&hoy.adversos.includes(a))||evalSelAdversos.includes(a);
+    html += '<div class="chk-item'+(sel?' sel':'')+'" onclick="toggleAdverso(\\\''+a+'\\\')" id="adv-'+i+'">'+a+'</div>';
+  });
+  html += '</div>';
+
+  html += '<div style="margin-top:8px">'+
+    '<label style="font-size:11px;font-weight:600;color:#334155;display:block;margin-bottom:4px">Movilidad y actividades del día</label>'+
+    '<textarea id="eval-movilidad" rows="2" placeholder="Ej: pude caminar 15 minutos, me cuesta agacharme..." style="width:100%;border:1px solid var(--border);border-radius:6px;padding:8px;font-size:12px;font-family:inherit;resize:vertical;">'+(hoy&&hoy.movilidad?hoy.movilidad:'')+'</textarea>'+
+  '</div>';
+
+  html += '<button onclick="guardarEval()" style="margin-top:10px;background:var(--navy);color:#fff;border:none;border-radius:8px;padding:10px 18px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;width:100%">💾 Guardar evaluación de hoy</button>';
+
+  html += '</div>';
+
+  if(hist.length>1){
+    html += '<div style="margin-top:12px">'+
+      '<div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:8px">HISTORIAL RECIENTE</div>';
+    hist.slice(-5).reverse().forEach(e=>{
+      if(e.fecha===fecha) return;
+      html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:11px">'+
+        '<span style="min-width:80px;color:var(--muted)">'+e.fecha+'</span>'+
+        (e.dolor!==undefined?'<span class="badge badge-red">Dolor: '+e.dolor+'/10</span>':'')+
+        (e.efecto!==undefined?'<span class="badge badge-green">Farm.: '+e.efecto+'/10</span>':'')+
+      '</div>';
+    });
+    html += '</div>';
+  }
+
+  return html;
+}
+
+function getEvalHistory(){
+  try{ return JSON.parse(localStorage.getItem('eval_'+DNI)||'[]'); }catch(_){ return []; }
+}
+
+function selDolor(v){ evalSelDolor=v; document.getElementById('eval-card').innerHTML='<div class="sec-title"><span>📊</span> Evaluación semanal</div><div style="font-size:12px;color:var(--muted);margin-bottom:12px">Completá estos datos cada día.</div>'+renderFormEval(); }
+function selEfecto(v){ evalSelEfecto=v; document.getElementById('eval-card').innerHTML='<div class="sec-title"><span>📊</span> Evaluación semanal</div><div style="font-size:12px;color:var(--muted);margin-bottom:12px">Completá estos datos cada día.</div>'+renderFormEval(); }
+function toggleAdverso(a){
+  if(evalSelAdversos.includes(a)) evalSelAdversos=evalSelAdversos.filter(x=>x!==a);
+  else evalSelAdversos.push(a);
+  document.getElementById('eval-card').innerHTML='<div class="sec-title"><span>📊</span> Evaluación semanal</div><div style="font-size:12px;color:var(--muted);margin-bottom:12px">Completá estos datos cada día.</div>'+renderFormEval();
+}
+
+function guardarEval(){
+  const fecha = new Date().toLocaleDateString('es-AR');
+  const movilidad = document.getElementById('eval-movilidad')?.value||'';
+  if(evalSelDolor<0){ alert('Indicá el nivel de dolor de hoy (0-10)'); return; }
+  const entry = { fecha, dolor:evalSelDolor, efecto:evalSelEfecto, adversos:[...evalSelAdversos], movilidad };
+  const hist = getEvalHistory().filter(e=>e.fecha!==fecha);
+  hist.push(entry);
+  localStorage.setItem('eval_'+DNI, JSON.stringify(hist));
+  // Sync nube
+  fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({action:'evaluacion_submit',dni:DNI,paciente:(DATOS.paciente?DATOS.paciente.apellido+', '+DATOS.paciente.nombre:''),region:'seguimiento',vals:entry})}).catch(()=>{});
+  evalSelDolor=-1; evalSelEfecto=-1; evalSelAdversos=[];
+  alert('✅ Evaluación guardada. El resumen del viernes se enviará automáticamente al Dr. Muratori.');
+  document.getElementById('eval-card').innerHTML='<div class="sec-title"><span>📊</span> Evaluación semanal</div><div style="font-size:12px;color:var(--muted);margin-bottom:12px">Completá estos datos cada día.</div>'+renderFormEval();
+}
+
+function verificarViernes(){
+  const hoy = new Date();
+  if(hoy.getDay()!==5) return;
+  const hist = getEvalHistory();
+  const semana = hist.filter(e=>{
+    const d = new Date(e.fecha.split('/').reverse().join('-'));
+    const diff = (hoy-d)/(1000*60*60*24);
+    return diff>=0 && diff<7;
+  });
+  if(semana.length<1) return;
+  const avgDolor = (semana.reduce((a,e)=>a+(e.dolor||0),0)/semana.length).toFixed(1);
+  const avgEfecto = (semana.reduce((a,e)=>a+(e.efecto||0),0)/semana.length).toFixed(1);
+  const adversosList = [...new Set(semana.flatMap(e=>e.adversos||[]))];
+  const nombre = DATOS.paciente?(DATOS.paciente.apellido+', '+DATOS.paciente.nombre):'Paciente';
+  const msg = '📊 *Resumen semanal — '+nombre+'*\n'+
+    '📅 Semana del '+semana[semana.length-1].fecha+' al '+semana[0].fecha+'\n\n'+
+    '🔴 Dolor promedio: '+avgDolor+'/10\n'+
+    '💊 Efecto farmacológico promedio: '+avgEfecto+'/10\n'+
+    (adversosList.length?'⚠️ Efectos adversos: '+adversosList.join(', ')+'\n':'')+
+    '📝 Días registrados: '+semana.length+' de 7\n\n'+
+    'Seguimiento IMDCYMT — Dr. Luis Muratori';
+
+  const banner = document.createElement('div');
+  banner.className='viernes-banner';
+  banner.innerHTML='<div style="font-size:13px;font-weight:600;color:#92400e;margin-bottom:8px">📊 Es viernes — enviá tu resumen semanal al Dr. Muratori</div>'+
+    '<div style="font-size:11px;color:#92400e;margin-bottom:10px">Dolor promedio: <strong>'+avgDolor+'/10</strong> · Efecto farmacológico: <strong>'+avgEfecto+'/10</strong> · Días registrados: <strong>'+semana.length+'</strong></div>'+
+    '<a class="btn btn-wa" href="https://wa.me/'+DOCTOR_WA+'?text='+encodeURIComponent(msg)+'" target="_blank" style="display:inline-flex">📲 Enviar resumen al Dr. Muratori</a>';
+  document.getElementById('page-content').prepend(banner);
+}
+
+// ── SECCIÓN 7: DIRECTORIO ────────────────────────────────────────
+function renderDirectorio(){
+  const nombre = DATOS.paciente?(DATOS.paciente.apellido||''):'';
+  let html = '<div class="card">'+
+    '<div class="sec-title"><span>📋</span> Directorio y turnos</div>'+
+    '<div style="font-size:12px;color:var(--muted);margin-bottom:12px">Centros donde atiende el Dr. Muratori. Al confirmar turno, avisá también al consultorio y al doctor.</div>';
+
+  // Centros donde atiende el médico
+  const centrosVisibles = ['sicoli','espanol','palmares','altomaipu','rehab'];
+  centrosVisibles.forEach(key=>{
+    const c = CENTROS[key];
+    if(!c) return;
+    html += '<div class="dir-card">'+
+      '<div class="dir-ico" style="background:'+c.color+'20;color:'+c.color+'">🏥</div>'+
+      '<div class="dir-info">'+
+        '<div class="dir-name">'+c.label+'</div>'+
+        '<div class="dir-det">'+c.dir+'<br>'+(c.tel&&c.tel!=='—'?'📞 '+c.tel:'')+' '+c.tit+'</div>'+
+      '</div>'+
+      '<div class="dir-btns">'+
+        (c.wsp?'<a class="btn btn-turno" href="https://wa.me/'+c.wsp+'?text='+encodeURIComponent('Hola, quisiera pedir turno con el Dr. Muratori. Soy '+nombre+'.')+'" target="_blank" style="font-size:11px">📅 Turno</a>':'')+
+        (c.wsp?'<a class="btn btn-wa" href="https://wa.me/'+DOCTOR_WA+'?text='+encodeURIComponent('Dr. Muratori, confirmo asistencia al turno en '+c.label+'. Soy '+nombre+'.')+'" target="_blank" style="font-size:11px">✅ Confirmar</a>':'')+
+      '</div>'+
+    '</div>';
+  });
+
+  html += '<div style="margin-top:14px;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Gimnasios recomendados para calistenia</div>';
+  GIMNASIOS.forEach(g=>{
+    html += '<div class="dir-card">'+
+      '<div class="dir-ico">'+g.icon+'</div>'+
+      '<div class="dir-info">'+
+        '<div class="dir-name">'+g.nombre+'</div>'+
+        '<div class="dir-det">📍 '+g.dir+(g.tel?'<br>📞 '+g.tel:'')+'</div>'+
+      '</div>'+
+      (g.wa?'<div class="dir-btns"><a class="btn btn-wa" href="https://wa.me/'+g.wa+'" target="_blank" style="font-size:11px">📲 Contactar</a></div>':'')+
+    '</div>';
+  });
+  html += '</div>';
+  return html;
+}
+
+// ── SECCIÓN 8: CALISTENIA ────────────────────────────────────────
+function renderCalistenia(){
+  return '<div class="card">'+
+    '<div class="sec-title"><span>🏋</span> Progresión hacia la calistenia</div>'+
+    '<div style="font-size:12px;color:var(--muted);margin-bottom:12px">La calistenia es el fortalecimiento muscular usando el propio peso corporal, sin máquinas ni pesas. Es el objetivo final de la rehabilitación.</div>'+
+    '<div class="fase-line">'+
+      '<div class="fase-ico">1</div>'+
+      '<div class="fase-info"><strong>Meses 1–3: Ejercicios isométricos</strong><br>Contracciones musculares sin movimiento. Base de la rehabilitación. Son los que estás haciendo ahora.</div>'+
+    '</div>'+
+    '<div class="fase-line">'+
+      '<div class="fase-ico" style="background:var(--teal)">2</div>'+
+      '<div class="fase-info"><strong>A partir del mes 4: RPG — Reeducación Postural Global</strong><br>Corrección de la postura y cadenas musculares con el kinesiólogo. Se inicia luego de 3 meses de isométrico.</div>'+
+    '</div>'+
+    '<div class="fase-line">'+
+      '<div class="fase-ico" style="background:var(--green)">3</div>'+
+      '<div class="fase-info"><strong>A partir del mes 6: Calistenia</strong><br>Fortalecimiento muscular global con peso corporal (push-ups, sentadillas, planchas, etc.). Mantenimiento de por vida.</div>'+
+    '</div>'+
+    '<div style="margin-top:10px;font-size:12px;color:#475569">Los gimnasios del directorio cuentan con instructores capacitados para guiarte en esta progresión.</div>'+
+  '</div>';
+}
+
+// ── SECCIÓN 9: CONSULTAS ONLINE ──────────────────────────────────
+function renderConsultaOnline(){
+  const pac = DATOS.paciente ? DATOS.paciente.apellido+', '+DATOS.paciente.nombre : '';
+  const dni = DATOS.paciente ? (DATOS.paciente.dni||'') : '';
+  // Tarifas — desde los datos guardados por OCM o defaults
+  const tar = DATOS.tarifas || {
+    texto:   { precio:null, label:'Consulta escrita',  descripcion:'Respuesta escrita por mensaje' },
+    video:   { precio:null, label:'Video breve',        descripcion:'Videollamada breve' },
+    virtual: { precio:null, label:'Consulta virtual',   descripcion:'Videollamada de 15 min' }
+  };
+  const fmtPrecio = p => p ? `$${Number(p).toLocaleString('es-AR')}` : 'Consultar costo';
+
+  return '<div class="card">'+
+    '<div class="sec-title"><span>📱</span> Consultas con el Dr. Muratori</div>'+
+    '<div style="background:#eff6ff;border-left:3px solid var(--blue);padding:10px 14px;border-radius:0 8px 8px 0;font-size:12px;color:#1e40af;margin-bottom:14px;line-height:1.6">'+
+      'Todas las modalidades tienen un <strong>costo mínimo</strong>, en reconocimiento al compromiso de brindar información clara y estar disponible para resolver sus dudas en todo momento.'+
+    '</div>'+
+    '<div class="consulta-grid">'+
+      ['texto','video','virtual'].map(tipo=>{
+        const t = tar[tipo] || {};
+        return `<div class="consulta-card">
+          <div class="consulta-tipo">${t.label||tipo}</div>
+          <div style="font-size:18px;margin:6px 0">${{texto:'✍️',video:'📹',virtual:'🩺'}[tipo]}</div>
+          <div class="consulta-det">${t.descripcion||''}</div>
+          <div style="font-size:15px;font-weight:700;color:var(--navy);margin:6px 0">${fmtPrecio(t.precio)}</div>
+          <button class="btn btn-consulta" onclick="solicitarConsulta('${tipo}')" style="width:100%">Solicitar</button>
+        </div>`;
+      }).join('')+
+    '</div>'+
+    '<div style="margin-top:12px;text-align:center;font-size:11px;color:var(--text-muted)">Urgencias: <a href="https://wa.me/'+DOCTOR_WA+'" style="color:var(--blue);font-weight:600">📞 +54 9 261 658-6234</a></div>'+
+    // Modal de solicitud (oculto)
+    '<div id="modal-solicitar" style="display:none;margin-top:14px;background:#f8fafc;border:1.5px solid var(--blue);border-radius:10px;padding:14px">'+
+      '<div style="font-size:13px;font-weight:600;color:var(--navy);margin-bottom:10px" id="modal-tipo-lbl">Solicitar consulta</div>'+
+      '<label style="font-size:11px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:4px">Describí tu consulta o pregunta:</label>'+
+      '<textarea id="inp-pregunta" rows="4" placeholder="Ej: Tengo dolor en la rodilla derecha al bajar escaleras desde hace una semana..." style="width:100%;border:1.5px solid var(--border);border-radius:8px;padding:10px;font-size:12px;font-family:inherit;resize:vertical;margin-bottom:10px"></textarea>'+
+      '<div style="display:flex;gap:8px">'+
+        '<button onclick="enviarSolicitudConsulta()" style="flex:2;background:var(--navy);color:#fff;border:none;border-radius:8px;padding:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">✅ Enviar solicitud</button>'+
+        '<button onclick="document.getElementById(\'modal-solicitar\').style.display=\'none\'" style="flex:1;background:#f1f5f9;border:1px solid var(--border);border-radius:8px;padding:10px;font-size:12px;cursor:pointer;font-family:inherit">Cancelar</button>'+
+      '</div>'+
+    '</div>'+
+  '</div>';
+}
+
+// ── Solicitud de consulta — formulario en el mismo documento ──────
+let TIPO_CONSULTA_ACTIVO = '';
+function solicitarConsulta(tipo){
+  const tar = DATOS.tarifas || {};
+  const t = tar[tipo] || {label:tipo, precio:null};
+  TIPO_CONSULTA_ACTIVO = tipo;
+  const lbl = document.getElementById('modal-tipo-lbl');
+  if(lbl) lbl.textContent = `${{texto:'✍️',video:'📹',virtual:'🩺'}[tipo]} ${t.label}${t.precio?' — $'+Number(t.precio).toLocaleString('es-AR'):''}`;
+  const m = document.getElementById('modal-solicitar');
+  if(m) m.style.display='block';
+  document.getElementById('inp-pregunta')?.focus();
+  m?.scrollIntoView({behavior:'smooth',block:'center'});
+}
+
+async function enviarSolicitudConsulta(){
+  const pregunta = document.getElementById('inp-pregunta')?.value.trim();
+  if(!pregunta){ alert('Por favor escribí tu consulta antes de enviar.'); return; }
+  const pac = DATOS.paciente || {};
+  const tar = (DATOS.tarifas||{})[TIPO_CONSULTA_ACTIVO] || {};
+  try{
+    await fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({action:'saveConsulta',
+        dni:pac.dni||DNI, paciente:(pac.apellido||'')+', '+(pac.nombre||''),
+        tipo:TIPO_CONSULTA_ACTIVO, precio:tar.precio||0, pregunta})});
+  }catch(_){}
+  const nombre = (pac.apellido||'')+', '+(pac.nombre||'');
+  const precio = tar.precio?`$${Number(tar.precio).toLocaleString('es-AR')}`:'a convenir';
+  const texto = `Hola Dr. Muratori, quiero solicitar una ${tar.label||TIPO_CONSULTA_ACTIVO} (${precio}).\n\nMi consulta:\n"${pregunta}"\n\nSoy ${nombre}. DNI: ${pac.dni||DNI||'—'}.`;
+  window.open(`https://wa.me/${DOCTOR_WA}?text=${encodeURIComponent(texto)}`,'_blank');
+  const m = document.getElementById('modal-solicitar');
+  if(m) m.innerHTML=`<div style="text-align:center;padding:16px"><div style="font-size:24px;margin-bottom:8px">✅</div><div style="font-size:13px;font-weight:600;color:#166534;margin-bottom:6px">¡Solicitud enviada!</div><div style="font-size:12px;color:#475569;line-height:1.6">El Dr. Muratori recibió su consulta por WhatsApp.<br>Le enviará el link de pago a la brevedad.<br>Una vez confirmado el pago, recibirá su respuesta.</div></div>`;
+}
+
+// ── ENVÍO POR MAIL (PDF automático al paciente) ──────────────────
+function blobToBase64(blob){
+  return new Promise((resolve,reject)=>{
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(String(reader.result).split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+async function enviarPDFAlPaciente(){
+  if(typeof html2pdf === 'undefined'){
+    alert('⚠️ La librería para generar PDF todavía no cargó (puede ser por conexión lenta).\n\nEsperá unos segundos y probá de nuevo.');
+    return;
+  }
+  const p = DATOS.paciente || {};
+  if(!p.mail){
+    alert('⚠️ Este paciente no tiene un email cargado en el sistema.\n\nCargalo en RIMP (o en OCM al generar el documento) para poder enviarle el PDF por mail.');
+    return;
+  }
+
+  const btn = document.getElementById('btn-enviar-mail');
+  const textoOriginal = btn ? btn.innerHTML : '';
+  if(btn){ btn.innerHTML='⏳ Generando PDF...'; btn.style.pointerEvents='none'; btn.style.opacity='.7'; }
+
+  try{
+    const contenido = document.getElementById('page-content');
+    const nombreArchivo = 'Indicacion_'+(p.apellido||'paciente').replace(/[^a-zA-Z0-9]/g,'_')+'.pdf';
+
+    const pdfBlob = await html2pdf().set({
+      margin: 6,
+      filename: nombreArchivo,
+      image:{type:'jpeg', quality:0.95},
+      html2canvas:{scale:2, useCORS:true, backgroundColor:'#ffffff'},
+      jsPDF:{unit:'mm', format:'a4', orientation:'portrait'},
+      pagebreak:{mode:['css','avoid-all']}
+    }).from(contenido).outputPdf('blob');
+
+    if(btn) btn.innerHTML='📤 Enviando...';
+
+    const base64 = await blobToBase64(pdfBlob);
+    const nombreCompleto = (p.apellido||'')+(p.nombre?', '+p.nombre:'');
+    const resumen = 'Adjunto encontrarás tu indicación médica completa: diagnóstico, medicación, plan de ejercicios de rehabilitación y turnos con el Dr. Muratori.';
+
+    const r = await fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({
+        action:'enviarRecetaPorMail',
+        Email: p.mail,
+        Nombre_Paciente: nombreCompleto,
+        Asunto: 'Tu indicación médica — Dr. Muratori',
+        Mini_Resumen: resumen,
+        Pdf_Base64: base64,
+        Pdf_Nombre: nombreArchivo
+      }),
+      signal: AbortSignal.timeout(20000)
+    });
+    const data = await r.json();
+
+    if(data.success){
+      if(btn){ btn.innerHTML='✅ Enviado'; setTimeout(()=>{ btn.innerHTML=textoOriginal; btn.style.pointerEvents=''; btn.style.opacity=''; },2500); }
+      alert('✅ El documento fue enviado por mail a '+p.mail);
+    } else {
+      throw new Error(data.error || 'Error desconocido del servidor');
+    }
+  }catch(err){
+    if(btn){ btn.innerHTML=textoOriginal; btn.style.pointerEvents=''; btn.style.opacity=''; }
+    alert('❌ No se pudo enviar el mail.\n\n'+(err && err.message ? err.message : err)+'\n\nRevisá la conexión a internet e intentá de nuevo.');
+  }
+}
+
+// ── LOGOS (referencia a OCM) ──────────────────────────────────────
+const LOGOS_B64 = {};  // Se carga desde localStorage si OCM los guardó
+
+window.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>RIDM — Datos previos para su consulta · Dr. Muratori</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;1,500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--accent:#0b1f3a;--accent2:#2563eb;--green:#16a34a;--amber:#d97706;--border:#e2e8f0;--muted:#64748b;--bg:#f0f4f8;--surface:#fff}
+body{font-family:'Inter',sans-serif;background:var(--bg);min-height:100vh;padding:0 0 40px}
+/* HEADER */
+.header{background:var(--accent);color:#fff;padding:20px 24px;text-align:center;position:relative}
+.header-logo{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;opacity:.75;margin-bottom:6px}
+.header-dr{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;letter-spacing:.02em}
+.header-mat{font-size:10px;opacity:.75;margin-top:3px}
+.header-inst{font-size:10px;opacity:.6;margin-top:2px}
+.header-badge{display:inline-block;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:20px;padding:4px 14px;font-size:10px;font-weight:600;margin-top:8px;letter-spacing:.04em}
+/* PROGRESS */
+.progress-bar{background:var(--accent);padding:0 24px 14px;display:flex;justify-content:center;gap:0}
+.prog-step{display:flex;flex-direction:column;align-items:center;flex:1;max-width:90px;cursor:pointer}
+.prog-dot{width:28px;height:28px;border-radius:50%;border:2px solid rgba(255,255,255,.4);color:rgba(255,255,255,.5);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;transition:all .2s;background:transparent;position:relative;z-index:1}
+.prog-step.done .prog-dot{background:#fff;color:var(--accent);border-color:#fff}
+.prog-step.active .prog-dot{background:var(--accent2);border-color:var(--accent2);color:#fff;box-shadow:0 0 0 4px rgba(37,99,235,.3)}
+.prog-lbl{font-size:8.5px;color:rgba(255,255,255,.55);margin-top:4px;text-align:center;font-weight:500;line-height:1.2}
+.prog-step.done .prog-lbl,.prog-step.active .prog-lbl{color:rgba(255,255,255,.9)}
+.prog-line{height:2px;background:rgba(255,255,255,.2);flex:1;margin-top:13px}
+.prog-line.done{background:#fff}
+/* MAIN */
+.main{max-width:680px;margin:24px auto;padding:0 16px}
+.section-card{background:var(--surface);border-radius:12px;padding:20px 22px;margin-bottom:16px;border:1px solid var(--border);display:none}
+.section-card.active{display:block;animation:fadeIn .25s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.section-header{display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.section-ico{font-size:22px}
+.section-title{font-size:14px;font-weight:700;color:var(--accent)}
+.section-sub{font-size:11px;color:var(--muted);margin-top:1px}
+/* FIELDS */
+.form-grid{display:grid;gap:12px}
+.fg2{grid-template-columns:1fr 1fr}
+.fg3{grid-template-columns:1fr 1fr 1fr}
+.field label{display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:4px}
+.field input,.field select,.field textarea{width:100%;border:1.5px solid var(--border);border-radius:7px;padding:8px 11px;font-size:13px;font-family:inherit;outline:none;transition:border .15s,box-shadow .15s;color:var(--accent)}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent2);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.field textarea{resize:vertical;min-height:72px}
+.req{color:#dc2626}
+/* RADIO / CHECKBOX */
+.radio-group,.check-group{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.radio-opt,.check-opt{display:flex;align-items:center;gap:6px;padding:6px 12px;border:1.5px solid var(--border);border-radius:20px;cursor:pointer;font-size:12px;font-weight:500;transition:all .15s;user-select:none}
+.radio-opt:hover,.check-opt:hover{border-color:var(--accent2);background:#eff6ff}
+.radio-opt.sel,.check-opt.sel{border-color:var(--accent2);background:#dbeafe;color:var(--accent2);font-weight:700}
+/* ESCALA */
+.escala{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}
+.esc-btn{width:40px;height:40px;border:2px solid var(--border);border-radius:8px;background:#fff;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;font-family:inherit;color:var(--accent)}
+.esc-btn:hover{border-color:var(--accent2)}
+.esc-btn.sel0,.esc-btn.sel1,.esc-btn.sel2,.esc-btn.sel3{border-color:#dc2626;background:#fef2f2;color:#dc2626}
+.esc-btn.sel4,.esc-btn.sel5,.esc-btn.sel6{border-color:#eab308;background:#fefce8;color:#a16207}
+.esc-btn.sel7,.esc-btn.sel8,.esc-btn.sel9,.esc-btn.sel10{border-color:#16a34a;background:#f0fdf4;color:#15803d}
+.esc-labels{display:flex;justify-content:space-between;font-size:9px;color:var(--muted);margin-top:3px}
+/* NAVIGATION */
+.nav{display:flex;gap:10px;margin-top:18px;padding-top:14px;border-top:1px solid var(--border)}
+.btn-prev{flex:1;padding:11px;border:2px solid var(--border);border-radius:9px;background:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--muted);transition:all .15s}
+.btn-prev:hover{border-color:var(--accent);color:var(--accent)}
+.btn-next{flex:2;padding:11px;border:none;border-radius:9px;background:var(--accent2);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s}
+.btn-next:hover{background:#1d4ed8}
+.btn-submit{flex:2;padding:11px;border:none;border-radius:9px;background:var(--green);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
+/* CONFIRMATION */
+.confirm-card{background:var(--surface);border-radius:12px;padding:32px 24px;text-align:center;border:1px solid var(--border)}
+.confirm-icon{font-size:56px;margin-bottom:12px}
+.confirm-title{font-family:'Playfair Display',serif;font-size:22px;color:var(--green);margin-bottom:6px}
+.confirm-sub{font-size:13px;color:var(--muted);line-height:1.7}
+.confirm-resumen{background:#f8fafc;border-radius:8px;padding:14px;margin:16px 0;text-align:left;font-size:12px;line-height:1.8}
+/* ALERT */
+.field-error{border-color:#fca5a5!important;background:#fef2f2}
+.err-msg{font-size:10px;color:#dc2626;margin-top:3px}
+/* RESPONSIVE */
+@media(max-width:500px){.fg2,.fg3{grid-template-columns:1fr}.esc-btn{width:34px;height:34px;font-size:12px}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-logo">🏥 Sistema Médico Dr. Muratori</div>
+  <div class="header-dr">RIDM — Registro de Datos Previos</div>
+  <div class="header-mat">M.P. 9943 · M.N. 100.540</div>
+  <div class="header-inst">Hospital Dr. Domingo Sicoli · Lavalle, Mendoza</div>
+  <div class="header-badge" id="header-badge">📋 Complete antes de su consulta</div>
+</div>
+
+<!-- PROGRESS BAR -->
+<div class="progress-bar">
+  <div class="prog-step active" id="ps1" onclick="irASec(0)">
+    <div class="prog-dot">1</div>
+    <div class="prog-lbl">Datos personales</div>
+  </div>
+  <div class="prog-line" id="pl1"></div>
+  <div class="prog-step" id="ps2" onclick="irASec(1)">
+    <div class="prog-dot">2</div>
+    <div class="prog-lbl">Cobertura</div>
+  </div>
+  <div class="prog-line" id="pl2"></div>
+  <div class="prog-step" id="ps3" onclick="irASec(2)">
+    <div class="prog-dot">3</div>
+    <div class="prog-lbl">Antecedentes</div>
+  </div>
+  <div class="prog-line" id="pl3"></div>
+  <div class="prog-step" id="ps4" onclick="irASec(3)">
+    <div class="prog-dot">4</div>
+    <div class="prog-lbl">Motivo consulta</div>
+  </div>
+  <div class="prog-line" id="pl4"></div>
+  <div class="prog-step" id="ps5" onclick="irASec(4)">
+    <div class="prog-dot">5</div>
+    <div class="prog-lbl">Actividad</div>
+  </div>
+</div>
+
+<div id="banner-offline" style="display:none;background:#fef3c7;border-bottom:2px solid #d97706;padding:10px 20px;text-align:center;font-size:12px;font-weight:600;color:#92400e">
+  ⚠️ Sin conexión a internet — sus datos quedarán guardados localmente y el Dr. Muratori los recibirá cuando se restaure la conexión.
+</div>
+<div id="banner-clinico" style="display:none;background:#eff6ff;border-bottom:2px solid #2563eb;padding:10px 20px;text-align:center;font-size:12px;font-weight:600;color:#1e40af">
+  📋 Complete sus antecedentes médicos — el Dr. Muratori ya tiene sus datos de contacto.
+</div>
+<div class="main">
+
+  <!-- SEC 1: DATOS PERSONALES -->
+  <div class="section-card active" id="sec-0">
+    <div class="section-header">
+      <span class="section-ico">👤</span>
+      <div><div class="section-title">Datos personales</div><div class="section-sub">Información básica de identificación</div></div>
+    </div>
+    <div class="form-grid fg2">
+      <div class="field">
+        <label>Apellido/s <span class="req">*</span></label>
+        <input id="f-apellido" placeholder="Apellido completo" required>
+      </div>
+      <div class="field">
+        <label>Nombre/s <span class="req">*</span></label>
+        <input id="f-nombre" placeholder="Nombre completo" required>
+      </div>
+    </div>
+    <div class="form-grid fg3" style="margin-top:10px">
+      <div class="field">
+        <label>DNI <span class="req">*</span></label>
+        <input id="f-dni" placeholder="XX.XXX.XXX" inputmode="numeric" maxlength="10">
+      </div>
+      <div class="field">
+        <label>Fecha de nacimiento</label>
+        <input id="f-fnac" type="date">
+      </div>
+      <div class="field">
+        <label>Sexo</label>
+        <select id="f-sexo">
+          <option value="">—</option>
+          <option>Masculino</option>
+          <option>Femenino</option>
+          <option>Otro</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-grid fg2" style="margin-top:10px">
+      <div class="field">
+        <label>Teléfono / WhatsApp <span class="req">*</span></label>
+        <input id="f-tel" placeholder="+54 9 261 XXX-XXXX" inputmode="tel">
+      </div>
+      <div class="field">
+        <label>Email</label>
+        <input id="f-mail" type="email" placeholder="correo@ejemplo.com">
+      </div>
+    </div>
+    <div class="form-grid fg2" style="margin-top:10px">
+      <div class="field">
+        <label>Domicilio</label>
+        <input id="f-domicilio" placeholder="Calle, número">
+      </div>
+      <div class="field">
+        <label>Localidad / Departamento</label>
+        <select id="f-localidad">
+          <option value="">Seleccionar…</option>
+          <option>Ciudad de Mendoza</option>
+          <option>Godoy Cruz</option>
+          <option>Guaymallén</option>
+          <option>Las Heras</option>
+          <option>Maipú</option>
+          <option>Luján de Cuyo</option>
+          <option>San Martín</option>
+          <option>Rivadavia</option>
+          <option>Junín</option>
+          <option>San Rafael</option>
+          <option>General Alvear</option>
+          <option>Malargüe</option>
+          <option>Tunuyán</option>
+          <option>Tupungato</option>
+          <option>San Carlos</option>
+          <option>La Paz</option>
+          <option>Santa Rosa</option>
+          <option>Lavalle</option>
+          <option>Otra provincia</option>
+        </select>
+      </div>
+    </div>
+    <div class="nav">
+      <button class="btn-next" onclick="irASec(1)">Continuar → Cobertura de salud</button>
+    </div>
+  </div>
+
+  <!-- SEC 2: COBERTURA -->
+  <div class="section-card" id="sec-1">
+    <div class="section-header">
+      <span class="section-ico">🏥</span>
+      <div><div class="section-title">Cobertura de salud</div><div class="section-sub">Obra social y afiliación</div></div>
+    </div>
+    <div class="form-grid fg2">
+      <div class="field">
+        <label>Obra social / prepaga</label>
+        <input id="f-os" placeholder="Ej: PAMI, OSEP, SWISS MEDICAL…">
+      </div>
+      <div class="field">
+        <label>Plan</label>
+        <input id="f-plan" placeholder="Ej: 400, Premium, Básico…">
+      </div>
+    </div>
+    <div class="form-grid fg2" style="margin-top:10px">
+      <div class="field">
+        <label>N° de afiliado</label>
+        <input id="f-afil" placeholder="Número de carnet / afiliación">
+      </div>
+      <div class="field">
+        <label>N° de radiología (si corresponde)</label>
+        <input id="f-radio" placeholder="N° para pedido de imágenes">
+      </div>
+    </div>
+    <div style="margin-top:12px">
+      <label style="display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:6px">¿Tiene autorización de obra social para esta consulta?</label>
+      <div class="radio-group" id="rg-autorizacion">
+        <div class="radio-opt" onclick="selRadio('rg-autorizacion','Sí')">Sí</div>
+        <div class="radio-opt" onclick="selRadio('rg-autorizacion','No')">No</div>
+        <div class="radio-opt" onclick="selRadio('rg-autorizacion','Particular')">Particular</div>
+      </div>
+    </div>
+    <div class="nav">
+      <button class="btn-prev" onclick="irASec(0)">← Anterior</button>
+      <button class="btn-next" onclick="irASec(2)">Continuar → Antecedentes</button>
+    </div>
+  </div>
+
+  <!-- SEC 3: ANTECEDENTES -->
+  <div class="section-card" id="sec-2">
+    <div class="section-header">
+      <span class="section-ico">📋</span>
+      <div><div class="section-title">Antecedentes médicos</div><div class="section-sub">Enfermedades previas, cirugías y medicación habitual</div></div>
+    </div>
+    <!-- Enfermedades crónicas -->
+    <div style="margin-bottom:12px">
+      <label style="display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:6px">Enfermedades crónicas (puede seleccionar varias)</label>
+      <div class="check-group" id="cg-enfermedades">
+        <div class="check-opt" onclick="toggleCheck(this)">Hipertensión arterial</div>
+        <div class="check-opt" onclick="toggleCheck(this)">Diabetes tipo 1</div>
+        <div class="check-opt" onclick="toggleCheck(this)">Diabetes tipo 2</div>
+        <div class="check-opt" onclick="toggleCheck(this)">Hipotiroidismo</div>
+        <div class="check-opt" onclick="toggleCheck(this)">Hipertiroidismo</div>
+        <div class="check-opt" onclick="toggleCheck(this)">Osteoporosis</div>
+        <div class="check-opt" onclick="toggleCheck(this)">Artritis / Artropatía</div>
+        <div class="check-opt" onclick="toggleCheck(this)">Cardiopatía</div>
+        <div class="check-opt" onclick="toggleCheck(this)">Anticoagulación</div>
+        <div class="check-opt" onclick="toggleCheck(this)">EPOC / Asma</div>
+        <div class="check-opt" onclick="toggleCheck(this)">Cáncer</div>
+        <div class="check-opt" onclick="toggleCheck(this)">Insuficiencia renal</div>
+        <div class="check-opt" onclick="toggleCheck(this)">Ansiedad</div>
+        <div class="check-opt" onclick="toggleCheck(this)">Depresión</div>
+        <div class="check-opt" onclick="toggleCheck(this)">TOC</div>
+        <div class="check-opt" onclick="toggleCheck(this)">Psicosis</div>
+        <div class="check-opt" onclick="toggleCheck(this)">Insomnio</div>
+      </div>
+    </div>
+
+    <!-- Enfermedades de la infancia -->
+    <div style="margin-bottom:12px">
+      <label style="display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:6px">Enfermedades de la infancia (puede seleccionar varias)</label>
+      <div class="check-group" id="cg-infancia">
+        <div class="check-opt" onclick="toggleCheck(this)">Varicela</div>
+        <div class="check-opt" onclick="toggleCheck(this)">Sarampión</div>
+        <div class="check-opt" onclick="toggleCheck(this)">Paperas</div>
+        <div class="check-opt" onclick="toggleCheck(this)">Rubéola</div>
+        <div class="check-opt" onclick="toggleCheck(this)">Escarlatina</div>
+        <div class="check-opt" onclick="toggleCheck(this)">Tos convulsa</div>
+        <div class="check-opt" onclick="toggleCheck(this)">Ninguna relevante</div>
+      </div>
+    </div>
+
+    <!-- Vacunas -->
+    <div style="margin-bottom:12px">
+      <label style="display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:6px">Vacunas recibidas (puede seleccionar varias)</label>
+      <div class="check-group" id="cg-vacunas">
+        <div class="check-opt" onclick="toggleCheck(this)">Antitetánica (últimos 10 años)</div>
+        <div class="check-opt" onclick="toggleCheck(this)">Hepatitis B</div>
+        <div class="check-opt" onclick="toggleCheck(this)">Gripe / Influenza (última campaña)</div>
+        <div class="check-opt" onclick="toggleCheck(this)">COVID-19 (esquema completo)</div>
+        <div class="check-opt" onclick="toggleCheck(this)">Neumococo</div>
+        <div class="check-opt" onclick="toggleCheck(this)">Fiebre amarilla</div>
+        <div class="check-opt" onclick="toggleCheck(this)">No sabe / no tiene carnet</div>
+      </div>
+    </div>
+
+    <!-- COVID-19: exposición y secuelas -->
+    <div style="margin-bottom:12px">
+      <label style="display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:6px">¿Tuvo COVID-19?</label>
+      <div class="radio-group" id="rg-covid">
+        <div class="radio-opt" onclick="selRadio('rg-covid','No tuvo')">No tuvo</div>
+        <div class="radio-opt" onclick="selRadio('rg-covid','Sí, una vez')">Sí, una vez</div>
+        <div class="radio-opt" onclick="selRadio('rg-covid','Sí, más de una vez')">Sí, más de una vez</div>
+        <div class="radio-opt" onclick="selRadio('rg-covid','No sabe')">No sabe</div>
+      </div>
+      <label style="display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:10px 0 6px">Secuelas persistentes (Long COVID) — si corresponde</label>
+      <div class="check-group" id="cg-covid-secuelas">
+        <div class="check-opt" onclick="toggleCheck(this)">Fatiga persistente</div>
+        <div class="check-opt" onclick="toggleCheck(this)">Dificultad respiratoria</div>
+        <div class="check-opt" onclick="toggleCheck(this)">Niebla mental / dificultad de concentración</div>
+        <div class="check-opt" onclick="toggleCheck(this)">Pérdida de olfato/gusto persistente</div>
+        <div class="check-opt" onclick="toggleCheck(this)">Palpitaciones</div>
+        <div class="check-opt" onclick="toggleCheck(this)">Ninguna secuela</div>
+      </div>
+    </div>
+    <div class="field">
+      <label>Otras enfermedades o aclaraciones</label>
+      <textarea id="f-otras-enf" placeholder="Detalle otras enfermedades relevantes…"></textarea>
+    </div>
+    <!-- Cirugías -->
+    <div class="field" style="margin-top:10px">
+      <label>Cirugías previas</label>
+      <textarea id="f-cirugias" placeholder="Ej: Artroplastia de cadera derecha (2019) · Meniscectomía rodilla izquierda (2021)…"></textarea>
+    </div>
+    <!-- Medicación -->
+    <div class="field" style="margin-top:10px">
+      <label>Medicación habitual actual</label>
+      <textarea id="f-medicacion" placeholder="Ej: Enalapril 10mg cada 12hs · Levotiroxina 100mcg en ayunas · Metformina 850mg…"></textarea>
+    </div>
+    <!-- Alergias -->
+    <div style="margin-top:12px">
+      <label style="display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:6px">¿Tiene alergias conocidas a medicamentos?</label>
+      <div class="radio-group" id="rg-alergia">
+        <div class="radio-opt" onclick="selRadio('rg-alergia','No')">No</div>
+        <div class="radio-opt" onclick="selRadio('rg-alergia','Sí')">Sí</div>
+      </div>
+      <input id="f-alergia-detalle" placeholder="¿A cuáles? Describa la reacción…" style="margin-top:8px;width:100%;border:1.5px solid #e2e8f0;border-radius:7px;padding:8px 11px;font-size:13px;font-family:inherit;outline:none;display:none" oninput="">
+    </div>
+    <div class="nav">
+      <button class="btn-prev" onclick="irASec(1)">← Anterior</button>
+      <button class="btn-next" onclick="irASec(3)">Continuar → Motivo de consulta</button>
+    </div>
+  </div>
+
+  <!-- SEC 4: MOTIVO DE CONSULTA -->
+  <div class="section-card" id="sec-3">
+    <div class="section-header">
+      <span class="section-ico">🎯</span>
+      <div><div class="section-title">Motivo de consulta</div><div class="section-sub">¿Qué lo trae a la consulta hoy?</div></div>
+    </div>
+    <div class="field">
+      <label>Describe brevemente tu problema principal <span class="req">*</span></label>
+      <textarea id="f-motivo" placeholder="Ej: Tengo dolor en la rodilla derecha desde hace 2 meses, especialmente al bajar escaleras. Empeoró con el fútbol…" rows="4" required></textarea>
+    </div>
+    <!-- Zona afectada -->
+    <div style="margin-top:12px">
+      <label style="display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:6px">Zona afectada (puede seleccionar varias)</label>
+      <div class="check-group" id="cg-zona">
+        <div class="check-opt" onclick="toggleCheck(this)">Columna cervical</div>
+        <div class="check-opt" onclick="toggleCheck(this)">Columna dorsal</div>
+        <div class="check-opt" onclick="toggleCheck(this)">Columna lumbar</div>
+        <div class="check-opt" onclick="toggleCheck(this)">Hombro derecho</div>
+        <div class="check-opt" onclick="toggleCheck(this)">Hombro izquierdo</div>
+        <div class="check-opt" onclick="toggleCheck(this)">Codo derecho</div>
+        <div class="check-opt" onclick="toggleCheck(this)">Codo izquierdo</div>
+        <div class="check-opt" onclick="toggleCheck(this)">Muñeca / Mano D</div>
+        <div class="check-opt" onclick="toggleCheck(this)">Muñeca / Mano I</div>
+        <div class="check-opt" onclick="toggleCheck(this)">Cadera derecha</div>
+        <div class="check-opt" onclick="toggleCheck(this)">Cadera izquierda</div>
+        <div class="check-opt" onclick="toggleCheck(this)">Rodilla derecha</div>
+        <div class="check-opt" onclick="toggleCheck(this)">Rodilla izquierda</div>
+        <div class="check-opt" onclick="toggleCheck(this)">Tobillo / Pie D</div>
+        <div class="check-opt" onclick="toggleCheck(this)">Tobillo / Pie I</div>
+        <div class="check-opt" onclick="toggleCheck(this)">Piso pelviano</div>
+      </div>
+    </div>
+    <!-- Escala de dolor -->
+    <div style="margin-top:14px">
+      <label style="display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:6px">Intensidad del dolor ahora (0 = sin dolor · 10 = máximo)</label>
+      <div class="escala" id="esc-dolor">
+        <button class="esc-btn" onclick="selEscala('esc-dolor',0)">0</button>
+        <button class="esc-btn" onclick="selEscala('esc-dolor',1)">1</button>
+        <button class="esc-btn" onclick="selEscala('esc-dolor',2)">2</button>
+        <button class="esc-btn" onclick="selEscala('esc-dolor',3)">3</button>
+        <button class="esc-btn" onclick="selEscala('esc-dolor',4)">4</button>
+        <button class="esc-btn" onclick="selEscala('esc-dolor',5)">5</button>
+        <button class="esc-btn" onclick="selEscala('esc-dolor',6)">6</button>
+        <button class="esc-btn" onclick="selEscala('esc-dolor',7)">7</button>
+        <button class="esc-btn" onclick="selEscala('esc-dolor',8)">8</button>
+        <button class="esc-btn" onclick="selEscala('esc-dolor',9)">9</button>
+        <button class="esc-btn" onclick="selEscala('esc-dolor',10)">10</button>
+      </div>
+      <div class="esc-labels"><span>Sin dolor</span><span>Dolor moderado</span><span>Dolor máximo</span></div>
+    </div>
+    <!-- Tiempo de evolución -->
+    <div style="margin-top:14px">
+      <label style="display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:6px">¿Hace cuánto tiene este problema?</label>
+      <div class="radio-group" id="rg-evolucion">
+        <div class="radio-opt" onclick="selRadio('rg-evolucion','Menos de 1 semana')">Menos de 1 semana</div>
+        <div class="radio-opt" onclick="selRadio('rg-evolucion','1 a 4 semanas')">1-4 semanas</div>
+        <div class="radio-opt" onclick="selRadio('rg-evolucion','1 a 3 meses')">1-3 meses</div>
+        <div class="radio-opt" onclick="selRadio('rg-evolucion','3 a 12 meses')">3-12 meses</div>
+        <div class="radio-opt" onclick="selRadio('rg-evolucion','Más de 1 año')">Más de 1 año</div>
+        <div class="radio-opt" onclick="selRadio('rg-evolucion','Crónico / años')">Crónico</div>
+      </div>
+    </div>
+    <!-- Tratamientos previos -->
+    <div class="field" style="margin-top:12px">
+      <label>Tratamientos realizados previamente por este problema</label>
+      <textarea id="f-tratamientos" placeholder="Ej: Kinesiología (6 sesiones en 2023) · AINEs sin mejoría · Infiltración con corticoides hace 6 meses…"></textarea>
+    </div>
+    <div class="nav">
+      <button class="btn-prev" onclick="irASec(2)">← Anterior</button>
+      <button class="btn-next" onclick="irASec(4)">Continuar → Actividad y trabajo</button>
+    </div>
+  </div>
+
+  <!-- SEC 5: ACTIVIDAD Y TRABAJO -->
+  <div class="section-card" id="sec-4">
+    <div class="section-header">
+      <span class="section-ico">💼</span>
+      <div><div class="section-title">Actividad y trabajo</div><div class="section-sub">Ocupación, deporte y estilo de vida</div></div>
+    </div>
+    <div id="trabajos-wrap"></div>
+    <div style="margin:6px 0 14px">
+      <button type="button" class="btn-prev" id="btn-add-trabajo" onclick="agregarTrabajo()" style="width:auto;padding:8px 16px;font-size:12px">+ Agregar otro trabajo</button>
+    </div>
+
+    <!-- Vivienda y saneamiento -->
+    <div style="margin-top:6px;padding-top:12px;border-top:1px solid var(--border)">
+      <label style="display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:6px">🏠 Vivienda y saneamiento</label>
+      <div class="form-grid fg2">
+        <div class="field">
+          <label>Agua que consume</label>
+          <select id="f-vivienda-agua">
+            <option value="">Seleccionar…</option>
+            <option>Red pública</option>
+            <option>Pozo propio</option>
+            <option>Cisterna / camión</option>
+            <option>Otra fuente</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Disposición de excretas</label>
+          <select id="f-vivienda-excretas">
+            <option value="">Seleccionar…</option>
+            <option>Red cloacal</option>
+            <option>Pozo ciego / cámara séptica</option>
+            <option>A cielo abierto</option>
+            <option>Otra</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-grid fg2">
+        <div class="field">
+          <label>Calefacción principal</label>
+          <select id="f-vivienda-calefaccion" onchange="onCalefaccionChange()">
+            <option value="">Seleccionar…</option>
+            <option>Leña</option>
+            <option>Gas envasado (garrafa)</option>
+            <option>Gas natural</option>
+            <option>Eléctrica</option>
+            <option>No usa calefacción</option>
+          </select>
+        </div>
+        <div class="field" id="wrap-ventilacion" style="display:none">
+          <label>¿Tiene sistema de ventilación adecuado? (riesgo de monóxido de carbono)</label>
+          <select id="f-vivienda-ventilacion">
+            <option value="">Seleccionar…</option>
+            <option>Sí, ventilación adecuada</option>
+            <option>No / dudosa</option>
+            <option>No sabe</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <!-- Tipo de jornada -->
+    <div style="margin-top:12px">
+      <label style="display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:6px">Tipo de jornada laboral</label>
+      <div class="radio-group" id="rg-jornada">
+        <div class="radio-opt" onclick="selRadio('rg-jornada','Trabajo de escritorio (sentado)')">Escritorio / sentado</div>
+        <div class="radio-opt" onclick="selRadio('rg-jornada','Trabajo de pie')">De pie</div>
+        <div class="radio-opt" onclick="selRadio('rg-jornada','Trabajo mixto')">Mixto</div>
+        <div class="radio-opt" onclick="selRadio('rg-jornada','Esfuerzo físico / carga')">Esfuerzo / carga</div>
+        <div class="radio-opt" onclick="selRadio('rg-jornada','Teletrabajo')">Teletrabajo</div>
+        <div class="radio-opt" onclick="selRadio('rg-jornada','No trabaja actualmente')">No trabaja</div>
+      </div>
+    </div>
+    <!-- Deporte -->
+    <div style="margin-top:12px">
+      <label style="display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:6px">¿Realiza actividad física o deporte?</label>
+      <div class="radio-group" id="rg-deporte">
+        <div class="radio-opt" onclick="selRadio('rg-deporte','No realizo actividad')">No</div>
+        <div class="radio-opt" onclick="selRadio('rg-deporte','Caminata / recreativa')">Caminata / recreativa</div>
+        <div class="radio-opt" onclick="selRadio('rg-deporte','Deporte recreativo')">Deporte recreativo</div>
+        <div class="radio-opt" onclick="selRadio('rg-deporte','Deporte competitivo')">Competitivo</div>
+        <div class="radio-opt" onclick="selRadio('rg-deporte','Alto rendimiento')">Alto rendimiento</div>
+      </div>
+    </div>
+    <div class="field" style="margin-top:10px">
+      <label>¿Qué deporte o actividad física? ¿Con qué frecuencia?</label>
+      <input id="f-deporte-det" placeholder="Ej: Fútbol 2 veces/semana · Natación diaria…">
+    </div>
+    <!-- Observaciones finales -->
+    <div class="field" style="margin-top:12px">
+      <label>¿Hay algo más que quiera contarle al médico antes de la consulta?</label>
+      <textarea id="f-obs" placeholder="Cualquier dato adicional que considere importante…"></textarea>
+    </div>
+    <div class="nav">
+      <button class="btn-prev" onclick="irASec(3)">← Anterior</button>
+      <button class="btn-submit" onclick="enviarRIDM()">✅ Enviar datos al Dr. Muratori</button>
+    </div>
+  </div>
+
+  <!-- CONFIRMACIÓN -->
+  <div class="section-card" id="sec-confirm">
+    <div class="confirm-card">
+      <div class="confirm-icon">✅</div>
+      <div class="confirm-title">¡Datos enviados correctamente!</div>
+      <div class="confirm-sub">
+        El Dr. Muratori ya tiene sus datos disponibles para la consulta.<br>
+        Por favor guarde este mensaje como confirmación.
+      </div>
+      <div class="confirm-resumen" id="confirm-resumen"></div>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:14px">
+        <button onclick="window.print()" style="background:var(--accent);color:#fff;border:none;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">🖨 Imprimir confirmación</button>
+        <button onclick="compartirWA()" style="background:#25D366;color:#fff;border:none;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">📲 Compartir por WhatsApp</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<script>
+// URL del backend (Google Apps Script) — la misma que usa OCM para sus backups.
+// Reemplazar por la URL real una vez desplegado el script (ver AppsScript_Backend_SIM.gs).
+const RIDM_BACKEND_URL = 'https://script.google.com/macros/s/AKfycbwYdoFuU8mQL4YKqufSBQ9AD_yqWEEesLtGzYQjNw2JG1BZIQF7ug80mHB5sLMXhaUpvQ/exec';
+
+/* ══════════════════════════════════════════════════════════════════
+   MODO DEL FORMULARIO — detectado por parámetros URL
+   ?modo=rapido   → solo filiación (el médico carga en el momento)
+   ?modo=clinico  → solo antecedentes (el paciente completa en casa)
+   sin parámetro  → formulario completo (5 pasos)
+   ══════════════════════════════════════════════════════════════════ */
+const _params = new URLSearchParams(window.location.search);
+const MODO    = _params.get('modo') || 'completo';
+const P_DNI   = _params.get('dni') || '';
+const P_APEL  = decodeURIComponent(_params.get('apellido') || '');
+const P_NOM   = decodeURIComponent(_params.get('nombre') || '');
+const P_TEL   = decodeURIComponent(_params.get('tel') || '');
+
+const SECS_MODO = {
+  rapido  : [0, 1],
+  clinico : [2, 3, 4],
+  completo: [0, 1, 2, 3, 4]
+};
+
+function initModo() {
+  const secs = SECS_MODO[MODO] || SECS_MODO.completo;
+
+  if (!navigator.onLine) document.getElementById('banner-offline').style.display='block';
+  window.addEventListener('offline', ()=>document.getElementById('banner-offline').style.display='block');
+  window.addEventListener('online',  ()=>document.getElementById('banner-offline').style.display='none');
+  if (MODO==='clinico') document.getElementById('banner-clinico').style.display='block';
+
+  const badge = document.getElementById('header-badge');
+  if (badge) {
+    if (MODO==='rapido')  badge.textContent='⚡ Datos rápidos — completar en el consultorio';
+    if (MODO==='clinico') badge.textContent='📋 Complete sus antecedentes médicos en casa';
+  }
+
+  for (let i=0; i<5; i++) {
+    const el = document.getElementById('sec-'+i);
+    if (!el) continue;
+    if (!secs.includes(i)) { el.style.display='none'; el.classList.remove('active'); }
+  }
+  secActual = secs[0];
+  document.getElementById('sec-'+secActual).classList.add('active');
+
+  if (P_APEL) { const el=document.getElementById('f-apellido'); if(el){el.value=P_APEL;el.readOnly=true;el.style.background='#f8fafc';} }
+  if (P_NOM)  { const el=document.getElementById('f-nombre');   if(el){el.value=P_NOM; el.readOnly=true;el.style.background='#f8fafc';} }
+  if (P_DNI)  { const el=document.getElementById('f-dni');      if(el){el.value=P_DNI; el.readOnly=true;el.style.background='#f8fafc';} }
+  if (P_TEL)  { const el=document.getElementById('f-tel');      if(el){el.value=P_TEL; el.readOnly=true;el.style.background='#f8fafc';} }
+
+  document.querySelectorAll('.prog-step').forEach((el,i)=>{
+    el.style.display = secs.includes(i) ? '' : 'none';
+  });
+  document.querySelectorAll('.prog-line').forEach((el,i)=>{
+    el.style.display = (secs.includes(i) && secs.includes(i+1)) ? '' : 'none';
+  });
+
+  // ── FIX BOTÓN FINAL: en modo rapido/clinico, el último paso tiene un botón
+  // que navega a una sección oculta → lo reemplazamos para que envíe directamente
+  const ultimaSec = secs[secs.length - 1];
+  const ultimaSecEl = document.getElementById('sec-' + ultimaSec);
+  if (ultimaSecEl) {
+    const btnNext = ultimaSecEl.querySelector('.btn-next');
+    if (btnNext) {
+      btnNext.textContent = MODO === 'rapido' ? '✅ Enviar datos de filiación' : '✅ Enviar antecedentes';
+      btnNext.setAttribute('onclick', 'enviarRIDM()');
+    }
+  }
+}
+
+function generarLinkParte2(apellido, nombre, dni, tel) {
+  const base = window.location.href.split('?')[0];
+  return `${base}?modo=clinico&apellido=${encodeURIComponent(apellido)}&nombre=${encodeURIComponent(nombre)}&dni=${encodeURIComponent(dni)}&tel=${encodeURIComponent(tel)}`;
+}
+
+window.addEventListener('DOMContentLoaded', initModo);
+
+let secActual = 0;
+const escalaVals = {};
+
+function irASec(n) {
+  const secs = SECS_MODO[MODO] || SECS_MODO.completo;
+  // Si es confirm siempre va
+  if (n === 'confirm') {
+    document.querySelectorAll('.section-card').forEach(c=>c.classList.remove('active'));
+    document.getElementById('sec-confirm')?.classList.add('active');
+    window.scrollTo({top:0,behavior:'smooth'});
+    return;
+  }
+  // Solo navegar a secciones del modo actual
+  if (!secs.includes(n)) return;
+  document.querySelectorAll('.section-card').forEach(c=>c.classList.remove('active'));
+  document.getElementById(`sec-${n}`)?.classList.add('active');
+  secActual = n;
+  actualizarProgreso(n);
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function actualizarProgreso(n) {
+  const secs = SECS_MODO[MODO] || SECS_MODO.completo;
+  const pos  = secs.indexOf(n);
+  for (let i=1; i<=5; i++) {
+    const step = document.getElementById(`ps${i}`);
+    const line = document.getElementById(`pl${i}`);
+    step?.classList.remove('active','done');
+    line?.classList.remove('done');
+    const secIdx = i-1;
+    if (!secs.includes(secIdx)) continue;
+    const secp = secs.indexOf(secIdx);
+    if (secp < pos)  { step?.classList.add('done'); if(line)line.classList.add('done'); }
+    if (secp === pos) step?.classList.add('active');
+  }
+}
+
+// ── Trabajos (hasta 3) — rubro, empresa, puesto y fuente de exposición ──
+let cantTrabajos = 0;
+function trabajoBlockHTML(i){
+  return `
+  <div class="field trabajo-block" id="trabajo-${i}" style="border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px;position:relative">
+    ${i>0 ? `<button type="button" onclick="quitarTrabajo(${i})" style="position:absolute;top:8px;right:8px;background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer">✕</button>` : ''}
+    <label style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:8px">Trabajo ${i+1}${i===0?'':' (adicional)'}</label>
+    <div class="form-grid fg2">
+      <div class="field"><label>Rubro / industria</label>
+        <input id="f-trab-rubro-${i}" placeholder="Ej: Construcción, Salud, Metalúrgica…"></div>
+      <div class="field"><label>Empresa / institución</label>
+        <input id="f-trab-empresa-${i}" placeholder="Ej: Empresa XYZ, autónomo…"></div>
+    </div>
+    <div class="form-grid fg2">
+      <div class="field"><label>Puesto / tarea</label>
+        <input id="f-trab-puesto-${i}" placeholder="Ej: Maestro, Albañil, Oficinista…"></div>
+    </div>
+    <div style="margin-top:6px">
+      <label style="display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:6px">Fuente de exposición — grupos OIT (puede seleccionar varias)</label>
+      <div class="check-group" id="cg-exposicion-${i}">
+        <div class="check-opt" onclick="toggleCheck(this)">Físico — Ruido</div>
+        <div class="check-opt" onclick="toggleCheck(this)">Físico — Vibraciones</div>
+        <div class="check-opt" onclick="toggleCheck(this)">Radiación / Electromagnética</div>
+        <div class="check-opt" onclick="toggleCheck(this)">Químico</div>
+        <div class="check-opt" onclick="toggleCheck(this)">Biológico (ámbito de salud)</div>
+        <div class="check-opt" onclick="toggleCheck(this)">Ergonómico (esfuerzos / posturas / repetitivo)</div>
+        <div class="check-opt" onclick="toggleCheck(this)">Psicosocial (estresante)</div>
+        <div class="check-opt" onclick="toggleCheck(this)">Ninguna en particular</div>
+      </div>
+    </div>
+  </div>`;
+}
+function agregarTrabajo(){
+  if(cantTrabajos >= 3){ alert('Se pueden cargar hasta 3 trabajos.'); return; }
+  document.getElementById('trabajos-wrap').insertAdjacentHTML('beforeend', trabajoBlockHTML(cantTrabajos));
+  cantTrabajos++;
+  if(cantTrabajos >= 3) document.getElementById('btn-add-trabajo').style.display = 'none';
+}
+function quitarTrabajo(i){
+  const el = document.getElementById(`trabajo-${i}`);
+  if(el) el.remove();
+  document.getElementById('btn-add-trabajo').style.display = '';
+}
+function getTrabajos(){
+  const arr = [];
+  document.querySelectorAll('.trabajo-block').forEach(block=>{
+    const i = block.id.split('-')[1];
+    const rubro = document.getElementById(`f-trab-rubro-${i}`)?.value.trim() || '';
+    const empresa = document.getElementById(`f-trab-empresa-${i}`)?.value.trim() || '';
+    const puesto = document.getElementById(`f-trab-puesto-${i}`)?.value.trim() || '';
+    const exposicion = getChecked(`cg-exposicion-${i}`).join(', ');
+    if(rubro || empresa || puesto || exposicion){ arr.push({ rubro, empresa, puesto, exposicion }); }
+  });
+  return arr;
+}
+if(!cantTrabajos){ agregarTrabajo(); } // siempre mostrar al menos el Trabajo 1
+
+function onCalefaccionChange(){
+  const val = document.getElementById('f-vivienda-calefaccion').value;
+  const conRiesgoCO = (val === 'Leña' || val === 'Gas envasado (garrafa)' || val === 'Gas natural');
+  document.getElementById('wrap-ventilacion').style.display = conRiesgoCO ? 'block' : 'none';
+}
+
+function selRadio(groupId, valor) {
+  document.querySelectorAll(`#${groupId} .radio-opt`).forEach(o => o.classList.remove('sel'));
+  const opts = document.querySelectorAll(`#${groupId} .radio-opt`);
+  opts.forEach(o => { if (o.textContent.trim() === valor) o.classList.add('sel'); });
+  // Mostrar detalle de alergia
+  if (groupId === 'rg-alergia') {
+    const det = document.getElementById('f-alergia-detalle');
+    if (det) det.style.display = valor === 'Sí' ? 'block' : 'none';
+  }
+}
+
+function getRadio(groupId) {
+  const sel = document.querySelector(`#${groupId} .radio-opt.sel`);
+  return sel ? sel.textContent.trim() : '';
+}
+
+function toggleCheck(el) {
+  el.classList.toggle('sel');
+}
+
+function getChecked(groupId) {
+  return [...document.querySelectorAll(`#${groupId} .check-opt.sel`)].map(o => o.textContent.trim());
+}
+
+function selEscala(id, val) {
+  escalaVals[id] = val;
+  document.querySelectorAll(`#${id} .esc-btn`).forEach((b,i) => {
+    b.className = 'esc-btn';
+    if (i <= val) b.classList.add(`sel${val}`);
+  });
+}
+
+function enviarRIDM() {
+  const apellido = document.getElementById('f-apellido')?.value.trim() || P_APEL;
+  const nombre   = document.getElementById('f-nombre')?.value.trim()   || P_NOM;
+  const dni      = document.getElementById('f-dni')?.value.trim()      || P_DNI;
+  const tel      = document.getElementById('f-tel')?.value.trim()      || P_TEL;
+  const motivo   = document.getElementById('f-motivo')?.value.trim()   || '';
+
+  // Validación adaptada al modo
+  if (MODO==='rapido' && (!apellido || !nombre || !tel)) {
+    alert('Por favor completá apellido, nombre y teléfono.');
+    return;
+  }
+  if (MODO!=='rapido' && (!apellido || !nombre || !motivo)) {
+    alert('Por favor completá apellido, nombre y el motivo de consulta.');
+    return;
+  }
+
+  const datos = {
+    apellido, nombre, dni,
+    fnac      : document.getElementById('f-fnac')?.value || '',
+    sexo      : document.getElementById('f-sexo')?.value || '',
+    tel, mail : document.getElementById('f-mail')?.value || '',
+    domicilio : document.getElementById('f-domicilio')?.value || '',
+    localidad : document.getElementById('f-localidad')?.value || '',
+    os        : document.getElementById('f-os')?.value || '',
+    plan      : document.getElementById('f-plan')?.value || '',
+    afil      : document.getElementById('f-afil')?.value || '',
+    radio     : document.getElementById('f-radio')?.value || '',
+    autorizacion: getRadio('rg-autorizacion'),
+    enfermedades: getChecked('cg-enfermedades').join(', '),
+    infancia  : getChecked('cg-infancia').join(', '),
+    vacunas   : getChecked('cg-vacunas').join(', '),
+    covid     : getRadio('rg-covid'),
+    covid_secuelas: getChecked('cg-covid-secuelas').join(', '),
+    otras_enf : document.getElementById('f-otras-enf')?.value || '',
+    cirugias  : document.getElementById('f-cirugias')?.value || '',
+    medicacion: document.getElementById('f-medicacion')?.value || '',
+    alergia   : getRadio('rg-alergia'),
+    alergia_det: document.getElementById('f-alergia-detalle')?.value || '',
+    motivo,
+    zonas     : getChecked('cg-zona').join(', '),
+    dolor     : escalaVals['esc-dolor'] !== undefined ? escalaVals['esc-dolor'] : '—',
+    evolucion : getRadio('rg-evolucion'),
+    tratamientos: document.getElementById('f-tratamientos')?.value || '',
+    trabajos  : getTrabajos(),
+    profesion : getTrabajos()[0]?.puesto || '',
+    empresa   : getTrabajos()[0]?.empresa || '',
+    vivienda_agua       : document.getElementById('f-vivienda-agua')?.value || '',
+    vivienda_excretas   : document.getElementById('f-vivienda-excretas')?.value || '',
+    vivienda_calefaccion: document.getElementById('f-vivienda-calefaccion')?.value || '',
+    vivienda_ventilacion: document.getElementById('f-vivienda-ventilacion')?.value || '',
+    jornada   : getRadio('rg-jornada'),
+    deporte   : getRadio('rg-deporte'),
+    deporte_det: document.getElementById('f-deporte-det')?.value || '',
+    obs       : document.getElementById('f-obs')?.value || '',
+    fecha_envio: new Date().toLocaleString('es-AR'),
+    modo      : MODO
+  };
+
+  // ── Guardar en localStorage con clave que OCM puede detectar ──
+  // Clave estándar: ridm_local_{dni} → OCM lee cualquier clave que empiece con ridm_local_
+  const keyLocal = `ridm_local_${dni || Date.now()}`;
+  try {
+    // Si ya había datos del modo rápido, mezclarlos con los del modo clínico
+    const anterior = JSON.parse(localStorage.getItem(keyLocal) || '{}');
+    const merged   = Object.assign({}, anterior, datos);
+    localStorage.setItem(keyLocal, JSON.stringify(merged));
+  } catch(_) {}
+
+  // ── Enviar al backend (Google Sheets) — si falla, el localStorage es el respaldo ──
+  const envioBackend = MODO === 'clinico' ? 'ridm_antecedentes' : 'ridm_submit';
+  fetch(RIDM_BACKEND_URL, {
+    method: 'POST',
+    headers: {'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify({ action: envioBackend, dni, apellido, nombre, tel, mail: datos.mail, datos })
+  }).catch(()=>{});
+
+  // ── Pantalla de confirmación ──
+  const r = document.getElementById('confirm-resumen');
+  if (r) {
+    if (MODO === 'rapido') {
+      const linkP2 = generarLinkParte2(apellido, nombre, dni, tel);
+      r.innerHTML = `
+        <strong>👤 ${apellido}, ${nombre}</strong> · DNI: ${dni || '—'} · 📞 ${tel}<br>
+        🏥 ${datos.os || '—'} · Plan: ${datos.plan || '—'}<br>
+        📅 Registrado: ${datos.fecha_envio}<br><br>
+        <strong>Próximo paso:</strong> enviá este link al paciente para que complete sus antecedentes médicos en casa:<br>
+        <a href="${linkP2}" target="_blank" style="word-break:break-all;color:#2563eb">${linkP2}</a><br><br>
+        <button onclick="navigator.clipboard.writeText('${linkP2}').then(()=>alert('¡Link copiado!'))" style="background:#2563eb;color:#fff;border:none;padding:8px 16px;border-radius:7px;font-size:12px;cursor:pointer;font-family:inherit">📋 Copiar link</button>
+        &nbsp;
+        <button onclick="window.open('https://wa.me/${tel.replace(/\\D/g,'')}?text='+encodeURIComponent('Estimado/a ${nombre}, por favor complete sus antecedentes médicos antes de su próxima consulta con el Dr. Muratori: ${linkP2}'),'_blank')" style="background:#25D366;color:#fff;border:none;padding:8px 16px;border-radius:7px;font-size:12px;cursor:pointer;font-family:inherit">📲 Enviar por WhatsApp</button>`;
+    } else {
+      r.innerHTML = `
+        <strong>👤 ${apellido}, ${nombre}</strong> · DNI: ${dni || '—'}<br>
+        🎯 Motivo: ${motivo}<br>
+        📍 Zona: ${datos.zonas || '—'} · 🔴 Dolor: ${datos.dolor}/10<br>
+        💊 Medicación: ${datos.medicacion || 'No refiere'}<br>
+        📅 Enviado: ${datos.fecha_envio}`;
+    }
+  }
+
+  irASec('confirm');
+
+  // WhatsApp al doctor (solo en modo completo o clínico — en modo rápido el link se muestra en pantalla)
+  if (MODO !== 'rapido') {
+    setTimeout(() => {
+      const msg = buildMsgWA(datos);
+      window.open(`https://wa.me/5492616586234?text=${encodeURIComponent(msg)}`, '_blank');
+    }, 800);
+  }
+}
+
+function buildMsgWA(d) {
+  return `📋 *RIDM — DATOS PREVIOS A CONSULTA*
+` +
+    `*${d.apellido}, ${d.nombre}* · DNI: ${d.dni || '—'}
+` +
+    `📞 ${d.tel} · ${d.mail || ''}
+` +
+    `🎂 ${d.fnac || '—'} · ${d.sexo || '—'}
+` +
+    `🏠 ${d.domicilio || '—'}
+
+` +
+    `🏥 *COBERTURA:* ${d.os || '—'} · Plan: ${d.plan || '—'} · N°: ${d.afil || '—'}
+` +
+    `Autorizó: ${d.autorizacion || '—'}
+
+` +
+    `🎯 *MOTIVO:* ${d.motivo}
+` +
+    `📍 Zona: ${d.zonas || '—'}
+` +
+    `🔴 Dolor actual: ${d.dolor}/10
+` +
+    `⏱ Evolución: ${d.evolucion || '—'}
+` +
+    `🔧 Tratamientos previos: ${d.tratamientos || 'No refiere'}
+
+` +
+    `📋 *ANTECEDENTES:*
+` +
+    `Enfermedades: ${d.enfermedades || 'Ninguna relevante'}
+` +
+    `${d.otras_enf ? 'Otras: ' + d.otras_enf + '\n' : ''}` +
+    `Cirugías: ${d.cirugias || 'Sin cirugías previas'}
+` +
+    `💊 Medicación: ${d.medicacion || 'No refiere'}
+` +
+    `⚠️ Alergias: ${d.alergia || '—'} ${d.alergia_det ? '— ' + d.alergia_det : ''}
+
+` +
+    `💼 *ACTIVIDAD:*
+` +
+    `Profesión: ${d.profesion || '—'}
+` +
+    `Jornada: ${d.jornada || '—'}
+` +
+    `Deporte: ${d.deporte || '—'} ${d.deporte_det ? '(' + d.deporte_det + ')' : ''}
+
+` +
+    `${d.obs ? '💬 *Observaciones:* ' + d.obs + '\n\n' : ''}` +
+    `📅 ${d.fecha_envio}`;
+}
+
+function compartirWA() {
+  const apellido = document.getElementById('f-apellido')?.value || '';
+  const nombre   = document.getElementById('f-nombre')?.value || '';
+  const msg = `✅ Envié mis datos al Dr. Muratori antes de mi consulta.
+Paciente: *${apellido}, ${nombre}*`;
+  window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Sistema Médico Muratori — S.M.M. 2026</title>
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="manifest" href="manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--navy:#0b1f3a;--green:#22c55e;--blue:#2563eb;--border:#e2e8f0}
+body{font-family:'Inter',sans-serif;background:#f0f4f8;min-height:100vh;display:flex;flex-direction:column}
+.header{background:var(--navy);color:#fff;padding:18px 24px;display:flex;align-items:center;gap:16px}
+.logo{width:52px;height:52px}
+.logo-txt{flex:1}
+.logo-dr{font-family:'Playfair Display',serif;font-size:18px;font-style:italic}
+.logo-sub{font-size:10px;opacity:.6;text-transform:uppercase;letter-spacing:.06em;margin-top:2px}
+.net-badge{font-size:11px;font-weight:600;padding:5px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.3)}
+.net-badge.local{background:#16a34a;border-color:#16a34a}
+.net-badge.remote{background:#d97706;border-color:#d97706}
+.main{flex:1;padding:24px;max-width:900px;margin:0 auto;width:100%}
+.section-lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#64748b;margin:0 0 12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-bottom:24px}
+.card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:18px;cursor:pointer;transition:all .2s;text-decoration:none;display:block}
+.card:hover{box-shadow:0 4px 20px rgba(0,0,0,.1);transform:translateY(-2px);border-color:#93c5fd}
+.card-ico{font-size:28px;margin-bottom:10px}
+.card-title{font-size:14px;font-weight:600;color:#1e293b;margin-bottom:4px}
+.card-desc{font-size:11px;color:#64748b;line-height:1.5}
+.card-badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:600;margin-top:8px}
+.footer{background:var(--navy);color:rgba(255,255,255,.5);text-align:center;padding:12px;font-size:10px}
+@media(max-width:480px){.grid{grid-template-columns:1fr 1fr}.main{padding:16px}}
+</style>
+</head>
+<body>
+<div class="header">
+  <svg class="logo" viewBox="0 0 100 100"><circle cx="50" cy="50" r="50" fill="#0b1f3a"/><rect x="44" y="12" width="12" height="10" rx="3" fill="#22c55e"/><rect x="43" y="25" width="14" height="10" rx="3" fill="#22c55e"/><rect x="42" y="38" width="16" height="10" rx="3" fill="#22c55e"/><rect x="41" y="51" width="18" height="10" rx="3" fill="#22c55e"/><rect x="42" y="64" width="16" height="10" rx="3" fill="#22c55e"/><rect x="43" y="77" width="14" height="11" rx="3" fill="#22c55e"/><rect x="48" y="12" width="4" height="76" rx="2" fill="#0b1f3a" opacity="0.4"/></svg>
+  <div class="logo-txt">
+    <div class="logo-dr">Dr. Luis Alberto Muratori</div>
+    <div class="logo-sub">Sistema Médico Muratori — S.M.M. 2026 · v1.0</div>
+  </div>
+  <div class="net-badge" id="net-badge">⏳ Detectando red...</div>
+</div>
+<div class="main">
+  <div class="section-lbl">🩺 Consulta diaria — lo que usás en cada paciente</div>
+  <div class="grid" id="grid-consulta"></div>
+  <div class="section-lbl">💰 Cobros y Kinesiología</div>
+  <div class="grid" id="grid-cobros"></div>
+  <div class="section-lbl">📐 Mediciones GONIO — según el estudio del día</div>
+  <div class="grid" id="grid-mediciones"></div>
+  <div class="section-lbl">📄 Documento para el paciente</div>
+  <div class="grid" id="grid-paciente"></div>
+  <div class="section-lbl">🔬 Investigación y Análisis</div>
+  <div class="grid" id="grid-investigacion"></div>
+  <div class="section-lbl">👨‍👩‍👧 Contactos y Discapacidad</div>
+  <div class="grid" id="grid-agenda"></div>
+</div>
+<div class="footer">S.M.M. 2026 v1.0 — Dr. Luis Alberto Muratori · M.N. 100.540 · M.P. 9943</div>
+<script>
+const LOCAL_BASE   = 'http://192.168.100.247:8080/';
+const TAILSCALE_BASE = 'http://100.103.9.9:8080/';
+let BASE = LOCAL_BASE;
+
+// Orden por FRECUENCIA DE USO real (de más a menos frecuente dentro de cada grupo),
+// según el flujo típico de consulta: CAM → OCM → RIMP, con RSP de referencia
+// constante. Las mediciones GONIO son situacionales (según el estudio del día),
+// por eso van en su propio grupo, no mezcladas con la consulta diaria.
+const APPS = {
+  consulta: [
+    {id:'ocm',   ico:'🩺', titulo:'OCM',   desc:'Recetario, certificados, indicaciones y carrito de recetas IM — el módulo que más se usa',   file:'OCM_Muratori_v13.html',   badge:'Principal'},
+    {id:'cam',   ico:'🧠', titulo:'CAM',   desc:'Consulta asistida — antecedentes, examen físico, banderas rojas y diagnóstico',   file:'CAM.html',   badge:'Antesala'},
+    {id:'rimp',  ico:'📋', titulo:'RIMP',  desc:'Formulario de datos del paciente — filiación y antecedentes',     file:'RIDM_Muratori_v1.html',          badge:'Paciente'},
+    {id:'rsp',   ico:'📁', titulo:'RSP',   desc:'Registro de seguimiento — historial, evolución y ficha clínica',  file:'RSP_Muratori_v1.html',            badge:'Seguimiento'},
+  ],
+  cobros: [
+    {id:'rcm',   ico:'💰', titulo:'RCM',   desc:'Cobros rápidos por Mercado Pago y agenda de turnos',              file:'RCM_Muratori_v1.html',            badge:'Cobros'},
+    {id:'ksm',   ico:'🏃', titulo:'KSM',   desc:'Módulo de kinesiología — evolución de sesiones',                  file:'KSM_Muratori_v1.html',            badge:'Kinesio'},
+    {id:'eval',  ico:'📊', titulo:'EVAL',  desc:'Formulario de evaluación semanal del paciente',                   file:'EVAL_Muratori_v1.html',           badge:'Evaluación'},
+  ],
+  mediciones: [
+    {id:'gonio-podo', ico:'🦶', titulo:'Podoscopia', desc:'Largo, ancho y superficie de apoyo — patrón de pisada por pie derecho e izquierdo', file:'GONIO_Podoscopia_v1.html', badge:'Medición'},
+    {id:'gonio', ico:'📐', titulo:'Valgo/Varo', desc:'Medición angular digital sobre foto — valgo/varo de retropié', file:'GONIO_ValgoVaro_v1.html', badge:'Medición'},
+    {id:'gonio-cb', ico:'🦴', titulo:'Costa-Bártani', desc:'Ángulo de Costa-Bártani sobre radiografía de perfil — pie derecho e izquierdo', file:'GONIO_CostaBartani_v1.html', badge:'Medición'},
+    {id:'gonio-frente', ico:'👣', titulo:'Ángulos de Frente', desc:'Intermetatarsiano 1°-2°/1°-3° e Interfalángico — Hallux Valgus pediátrico y remodelación fisaria', file:'GONIO_AnguloFrente_v1.html', badge:'Medición'},
+  ],
+  paciente: [
+    {id:'imdcymt',ico:'📄',titulo:'IMDCYMT Paciente',desc:'Documento completo para el paciente: diagnóstico, medicación, ejercicios, evaluación y directorio',file:'IMDCYMT_Paciente_v1.html',badge:'Para el paciente'},
+  ],
+  investigacion: [
+    {id:'estadisticas', ico:'📊', titulo:'Estadísticas SMM', desc:'Localidad, exposición laboral OIT, rubros, antecedentes psiquiátricos y COVID — para análisis y presentaciones', file:'Estadisticas_SMM.html', badge:'Análisis'},
+    {id:'seguimiento-cientifico', ico:'🔬', titulo:'Seguimiento Científico', desc:'Líneas de investigación: Retropié Valgo, Escoliosis/Corset, Hallux Valgus, Actitud Flexa de Rodilla', file:'GONIO_SeguimientoCientifico_v1.html', badge:'Investigación'},
+  ],
+  agenda: [
+    {id:'agenda-familiar', ico:'👨‍👩‍👧', titulo:'Agenda Familiar', desc:'Contactos, fichas familiares, zona geográfica y envío directo a RSP', file:'agenda-familiar/index.html', badge:'Contactos'},
+    {id:'lector-cud', ico:'🪪', titulo:'Lector CUD', desc:'Lectura y análisis de Certificados Únicos de Discapacidad, clasificación Ley 22.431', file:'lector-cud/index.html', badge:'Discapacidad'},
+    {id:'cud-seguimiento', ico:'📎', titulo:'Seguimiento Carpeta CUD', desc:'Checklist de análisis + documentos (recetas, formularios de Junta, DNI, transporte) con trazabilidad', file:'CUD_Seguimiento_v1.html', badge:'Discapacidad'},
+    {id:'isa', ico:'🤝', titulo:'Isa — Asistente Discapacidad', desc:'Chat para pacientes: orienta sobre el trámite y ayuda a enviar documentación al hospital', file:'Asistente_Isa_Discapacidad.html', badge:'Discapacidad'},
+  ]
+};
+const BADGE_COLORS = {
+  Antesala:'#e0e7ff:#3730a3', Principal:'#dbeafe:#1e40af', Paciente:'#d1fae5:#065f46', Seguimiento:'#ede9fe:#5b21b6',
+  Kinesio:'#dcfce7:#166534', Evaluación:'#fef3c7:#92400e', Cobros:'#fee2e2:#b91c1c',
+  'Para el paciente':'#e0f2fe:#0369a1', Contactos:'#fdf2f8:#9d174d', Discapacidad:'#f0fdfa:#134e4a',
+  'Análisis':'#faf5ff:#7c3aed', 'Medición':'#ecfeff:#0e7490', 'Investigación':'#f5f3ff:#6d28d9'
+};
+
+async function detectarRed(){
+  const badge = document.getElementById('net-badge');
+  // Modo Pen Drive: si se abrió el archivo directo (doble clic), sin servidor,
+  // usar rutas relativas a la misma carpeta — no hace falta threaded_server.py.
+  if (window.location.protocol === 'file:'){
+    BASE = '';
+    badge.className = 'net-badge local';
+    badge.textContent = '💾 Modo Pen Drive (archivos locales)';
+    renderApps();
+    return;
+  }
+  // Modo GitHub Pages / hosting web: si el dominio NO es la IP del MyCloud,
+  // usar rutas relativas a la misma carpeta (todos los módulos viven en el
+  // mismo repositorio) en vez de intentar apuntar al MyCloud.
+  const host = window.location.hostname;
+  const esHostingWeb = host.endsWith('github.io') || (host !== '192.168.100.247' && host !== '100.103.9.9' && host !== 'localhost' && host !== '127.0.0.1');
+  if (esHostingWeb){
+    BASE = '';
+    badge.className = 'net-badge remote';
+    badge.textContent = '🌐 Acceso temporal (GitHub Pages)';
+    renderApps();
+    return;
+  }
+  try{
+    const r = await fetch(LOCAL_BASE+'manifest.json',{signal:AbortSignal.timeout(2000),mode:'no-cors'});
+    BASE = LOCAL_BASE;
+    badge.className='net-badge local';
+    badge.textContent='🟢 Consultorio (red local)';
+  }catch(_){
+    BASE = TAILSCALE_BASE;
+    badge.className='net-badge remote';
+    badge.textContent='🟡 Remoto (Tailscale)';
+  }
+  renderApps();
+}
+
+function renderApps(){
+  ['consulta','cobros','mediciones','paciente','investigacion','agenda'].forEach(grupo=>{
+    const div = document.getElementById('grid-'+grupo);
+    div.innerHTML = APPS[grupo].map(app=>{
+      const [bg,color]=(BADGE_COLORS[app.badge]||'#f1f5f9:#334155').split(':');
+      return `<a class="card" href="${BASE}${app.file}" target="_blank">
+        <div class="card-ico">${app.ico}</div>
+        <div class="card-title">${app.titulo}</div>
+        <div class="card-desc">${app.desc}</div>
+        <span class="card-badge" style="background:${bg};color:${color}">${app.badge}</span>
+      </a>`;
+    }).join('');
+  });
+}
+
+detectarRed();
+</script>
+<script>
+  if ("serviceWorker" in navigator && window.location.protocol !== 'file:') {
+    window.addEventListener("load", () => navigator.serviceWorker.register("service-worker.js"));
+  }
+</script>
+</body>
+</html>

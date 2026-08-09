@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seguimiento de Carpeta CUD · SMM</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--navy:#0b1f3a;--green:#22c55e;--blue:#2563eb;--red:#dc2626;--border:#e2e8f0}
+body{font-family:'Inter',Arial,sans-serif;background:#f0f4f8;min-height:100vh;color:#1e293b;font-size:14px}
+.header{background:var(--navy);color:#fff;padding:16px 20px;display:flex;align-items:center;justify-content:space-between}
+.header h1{font-size:15px;font-weight:700}
+.header a{color:#93c5fd;font-size:12px;text-decoration:none}
+.main{max-width:820px;margin:0 auto;padding:16px}
+.card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px}
+.card h2{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:10px;text-transform:uppercase;letter-spacing:.04em}
+.card h3{font-size:12px;font-weight:700;color:#334155;margin:14px 0 6px;text-transform:uppercase;letter-spacing:.03em;color:#64748b}
+label{display:block;font-size:12px;font-weight:600;color:#475569;margin-bottom:4px;margin-top:8px}
+input[type=text],select,textarea{width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:8px;font-size:13.5px;font-family:inherit}
+textarea{resize:vertical;min-height:50px}
+.fila2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn{display:inline-block;background:var(--blue);color:#fff;border:none;padding:9px 14px;border-radius:8px;font-size:12.5px;font-weight:600;cursor:pointer;margin-top:8px;margin-right:6px}
+.btn:hover{background:#1d4ed8}
+.btn.gris{background:#64748b}.btn.gris:hover{background:#475569}
+.btn.verde{background:var(--green)}.btn.verde:hover{background:#16a34a}
+.btn.chico{padding:6px 11px;font-size:11.5px}
+.doc-slot{border:1px dashed #cbd5e1;border-radius:8px;padding:10px;margin-top:8px}
+.doc-slot-titulo{font-size:12.5px;font-weight:700;color:#334155;margin-bottom:6px}
+.doc-lista{margin-top:6px}
+.doc-item{display:flex;justify-content:space-between;align-items:center;font-size:11.5px;padding:4px 0;border-bottom:1px solid #f1f5f9}
+.doc-item a{color:var(--blue);text-decoration:none}
+.msg{font-size:12px;margin-top:6px}
+.msg-ok{color:#166534}.msg-error{color:#dc2626}
+.diag-fila{display:flex;gap:6px;margin-bottom:8px;align-items:center}
+.diag-fila input[type=text]{flex:1}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🪪 Seguimiento de Carpeta CUD</h1>
+  <a href="INDEX_SIM.html">← Menú principal</a>
+</div>
+
+<div class="main">
+
+  <!-- MARCO NORMATIVO + PARÁMETRO DE ACTUALIZACIÓN -->
+  <div class="card">
+    <h2>⚖️ Marco Normativo de Discapacidad (Argentina)</h2>
+    <div id="alerta-normativa" style="border-radius:8px;padding:10px 12px;font-size:12px;margin-bottom:10px"></div>
+
+    <table style="width:100%;border-collapse:collapse;font-size:11.5px">
+      <tr><th style="text-align:left;border-bottom:1px solid #e2e8f0;padding:5px">Norma</th><th style="text-align:left;border-bottom:1px solid #e2e8f0;padding:5px">Qué establece</th></tr>
+      <tr><td style="padding:5px;border-bottom:1px solid #f1f5f9"><b>Ley 22.431</b> (1981)</td><td style="padding:5px;border-bottom:1px solid #f1f5f9">Sistema de Protección Integral de los Discapacitados — la base de todo el sistema</td></tr>
+      <tr><td style="padding:5px;border-bottom:1px solid #f1f5f9"><b>Ley 24.901</b> (1997)</td><td style="padding:5px;border-bottom:1px solid #f1f5f9">Sistema de Prestaciones Básicas en Habilitación y Rehabilitación Integral</td></tr>
+      <tr><td style="padding:5px;border-bottom:1px solid #f1f5f9"><b>Ley 25.504</b></td><td style="padding:5px;border-bottom:1px solid #f1f5f9">Modifica la 22.431 — el Ministerio de Salud expide el CUD</td></tr>
+      <tr><td style="padding:5px;border-bottom:1px solid #f1f5f9"><b>Ley 26.378</b></td><td style="padding:5px;border-bottom:1px solid #f1f5f9">Aprueba la Convención sobre los Derechos de las Personas con Discapacidad (CDPD) de la ONU</td></tr>
+      <tr><td style="padding:5px;border-bottom:1px solid #f1f5f9"><b>Ley 27.044</b></td><td style="padding:5px;border-bottom:1px solid #f1f5f9">Otorga jerarquía constitucional a la CDPD</td></tr>
+      <tr><td style="padding:5px;border-bottom:1px solid #f1f5f9"><b>Ley 26.657</b></td><td style="padding:5px;border-bottom:1px solid #f1f5f9">Ley de Salud Mental</td></tr>
+      <tr><td style="padding:5px;border-bottom:1px solid #f1f5f9"><b>Ley 27.269</b></td><td style="padding:5px;border-bottom:1px solid #f1f5f9">Obligación de informar los derechos al entregar el CUD</td></tr>
+      <tr><td style="padding:5px;border-bottom:1px solid #f1f5f9"><b>Ley 26.923</b></td><td style="padding:5px;border-bottom:1px solid #f1f5f9">Equipos compatibles con órtesis/prótesis auditivas</td></tr>
+      <tr><td style="padding:5px;border-bottom:1px solid #f1f5f9"><b>Ley 26.858</b></td><td style="padding:5px;border-bottom:1px solid #f1f5f9">Derecho a circular acompañado de perro guía/asistencia</td></tr>
+      <tr><td style="padding:5px;border-bottom:1px solid #f1f5f9"><b>Ley 27.420</b></td><td style="padding:5px;border-bottom:1px solid #f1f5f9">Personas con sordoceguera — instrumento de orientación y movilidad</td></tr>
+      <tr><td style="padding:5px;border-bottom:1px solid #f1f5f9"><b>Ley 27.061</b></td><td style="padding:5px;border-bottom:1px solid #f1f5f9">Tratado de Marrakech — acceso a obras publicadas para ciegos/baja visión</td></tr>
+      <tr><td style="padding:5px;border-bottom:1px solid #f1f5f9"><b>Ley 27.711</b> (2023)</td><td style="padding:5px;border-bottom:1px solid #f1f5f9">Actualización del régimen del CUD</td></tr>
+      <tr><td style="padding:5px;border-bottom:1px solid #f1f5f9"><b>Decreto 843/2024</b></td><td style="padding:5px;border-bottom:1px solid #f1f5f9">CMO Digital obligatorio para PNC por Invalidez Laboral</td></tr>
+      <tr><td style="padding:5px"><b>Ley 27.793</b> (2025) 🆕</td><td style="padding:5px"><b>Emergencia en Discapacidad</b> — vigente hasta el 31/12/2026. Modifica el art. 2 de la Ley 22.431 (definición de discapacidad según la CDPD) y financia compensaciones a prestadores</td></tr>
+    </table>
+
+    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px;margin-top:12px">
+      <div style="font-size:12px;font-weight:700;color:#334155;margin-bottom:6px">🔄 Parámetro de actualización</div>
+      <div style="font-size:12px;color:#64748b" id="texto-ultima-verificacion">Cargando...</div>
+      <button class="btn chico" onclick="marcarVerificado()">✅ Marqué que revisé la normativa hoy</button>
+      <a class="btn gris chico" href="https://www.argentina.gob.ar/cud/marco-legal" target="_blank" style="text-decoration:none;display:inline-block">🔗 Ver Marco Legal oficial (Argentina.gob.ar)</a>
+      <a class="btn gris chico" href="https://www.boletinoficial.gob.ar" target="_blank" style="text-decoration:none;display:inline-block">🔗 Boletín Oficial</a>
+      <div style="font-size:11px;color:#94a3b8;margin-top:8px">⚠️ Esta lista es una referencia recopilada en agosto 2026, verificada contra fuentes oficiales.
+      El sistema no puede monitorear cambios legales de forma automática — te va a avisar si pasaron más de 90 días
+      sin que marques una revisión, pero la verificación real la tenés que hacer vos entrando a los links de arriba.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Paciente</h2>
+    <label>DNI</label>
+    <div style="display:flex;gap:6px">
+      <input type="text" id="dni" placeholder="Ej: 12345678" inputmode="numeric" style="flex:1">
+      <button class="btn chico" onclick="cargarTodo()">🔎 Cargar</button>
+    </div>
+  </div>
+
+  <!-- CHECKLIST DE ANÁLISIS (según planilla 00-CHECK) -->
+  <div class="card">
+    <h2>Informe de Análisis de Contenido y Actualización de Estudios</h2>
+
+    <h3>Trámite(s) en curso</h3>
+    <div class="fila2">
+      <label style="display:flex;align-items:center;gap:6px;font-weight:500"><input type="checkbox" id="c-tramite-cud" style="width:auto"> CUD</label>
+      <label style="display:flex;align-items:center;gap:6px;font-weight:500"><input type="checkbox" id="c-tramite-pnc" style="width:auto"> PNC por Invalidez Laboral</label>
+    </div>
+    <label style="display:flex;align-items:center;gap:6px;font-weight:500;margin-top:4px"><input type="checkbox" id="c-tramite-contributiva" style="width:auto"> Discapacidad Contributiva (Retiro por Invalidez)</label>
+
+    <h3>Situación actual de su CUD — Realidad médica</h3>
+    <textarea id="c-otras-patologias" placeholder="Otras patologías"></textarea>
+    <textarea id="c-medicacion" placeholder="Medicación actual"></textarea>
+
+    <h3>Realidad social</h3>
+    <div class="fila2">
+      <input type="text" id="c-trabajo" placeholder="Trabajo">
+      <input type="text" id="c-pensiones" placeholder="Pensiones">
+    </div>
+    <input type="text" id="c-obra-social" placeholder="Obra social">
+    <div class="fila2">
+      <select id="c-vive-hijo-menor"><option value="">¿Vive con hijo menor en la misma casa?</option><option>Sí</option><option>No</option></select>
+      <input type="text" id="c-hijos" placeholder="Hijos (cantidad/edades)">
+    </div>
+
+    <h3>Vivienda y transporte</h3>
+    <div class="fila2">
+      <input type="text" id="c-vivienda-tipo" placeholder="Tipo de vivienda">
+      <input type="text" id="c-vivienda-servicios" placeholder="Servicios">
+    </div>
+    <div class="fila2">
+      <input type="text" id="c-transporte-publico" placeholder="Transporte público">
+      <input type="text" id="c-transporte-propio" placeholder="Transporte propio">
+    </div>
+
+    <h3>Trabajo — detalle</h3>
+    <div class="fila2">
+      <input type="text" id="c-trabajo-distancia" placeholder="Distancia al trabajo">
+      <input type="text" id="c-trabajo-tipo" placeholder="Tipo de trabajo">
+    </div>
+    <textarea id="c-exposicion" placeholder="Exposición a medios físicos/químicos"></textarea>
+
+    <h3>Diagnósticos y estudios</h3>
+    <textarea id="c-diagnosticos" placeholder="Diagnósticos discapacitantes"></textarea>
+    <textarea id="c-estudios-avalan" placeholder="Estudios que avalan el diagnóstico"></textarea>
+    <input type="text" id="c-medicos-cargo" placeholder="Médicos a cargo">
+
+    <h3>Trámite Incluir Salud</h3>
+    <textarea id="c-certificados-avalan" placeholder="Certificados que avalan la propuesta"></textarea>
+    <input type="text" id="c-solicita-certificado" placeholder="Solicita certificado (detalle)">
+    <textarea id="c-necesidad-ampliar" placeholder="Necesidad de ampliar estudios por falta de los mismos"></textarea>
+    <textarea id="c-necesidad-actualizar" placeholder="Necesidad de actualizar estudios"></textarea>
+
+    <h3>Tipo de discapacidad</h3>
+    <select id="c-tipo-discapacidad">
+      <option value="">Seleccionar...</option>
+      <option value="Contributiva">Contributiva</option>
+      <option value="No contributiva">No contributiva</option>
+    </select>
+
+    <h3>Conclusión</h3>
+    <textarea id="c-conclusion" placeholder="Informe del decodificador que hace la IA del CUD (o conclusión manual)" style="min-height:90px"></textarea>
+
+    <button class="btn verde" id="btn-guardar-checklist">💾 Guardar checklist</button>
+    <div class="msg" id="msg-checklist"></div>
+  </div>
+
+  <!-- DOCUMENTOS ESCANEADOS CON TRAZABILIDAD -->
+  <div class="card">
+    <h2>📎 Documentos de la carpeta — por trámite (ANDIS / ANSES)</h2>
+
+    <h3 style="color:#0369a1">🪪 Trámite CUD (Certificado Único de Discapacidad)</h3>
+    <div class="doc-slot">
+      <div class="doc-slot-titulo">Formulario de Solicitud de CUD</div>
+      <input type="file" accept="image/*,application/pdf" onchange="subirDocumento(this,'CUD_Solicitud','')">
+      <div class="doc-lista" id="lista-CUD_Solicitud"></div>
+    </div>
+    <div class="doc-slot">
+      <div class="doc-slot-titulo">Planilla Motriz (traumatólogo/neurólogo) — la más frecuente en tu práctica</div>
+      <input type="file" accept="image/*,application/pdf" onchange="subirDocumento(this,'CUD_Planilla_Motriz','')">
+      <div class="doc-lista" id="lista-CUD_Planilla_Motriz"></div>
+    </div>
+    <div class="doc-slot">
+      <div class="doc-slot-titulo">Planilla Visual (oftalmólogo)</div>
+      <input type="file" accept="image/*,application/pdf" onchange="subirDocumento(this,'CUD_Planilla_Visual','')">
+      <div class="doc-lista" id="lista-CUD_Planilla_Visual"></div>
+    </div>
+    <div class="doc-slot">
+      <div class="doc-slot-titulo">Planilla Auditiva / Otorrinolaringológica</div>
+      <input type="file" accept="image/*,application/pdf" onchange="subirDocumento(this,'CUD_Planilla_Auditiva','')">
+      <div class="doc-lista" id="lista-CUD_Planilla_Auditiva"></div>
+    </div>
+    <div class="doc-slot">
+      <div class="doc-slot-titulo">Planilla P1 (Deficiencia Mental-Intelectual / Cognitiva)</div>
+      <input type="file" accept="image/*,application/pdf" onchange="subirDocumento(this,'CUD_Planilla_P1','')">
+      <div class="doc-lista" id="lista-CUD_Planilla_P1"></div>
+    </div>
+    <div class="doc-slot">
+      <div class="doc-slot-titulo">Planilla Visceral (respiratorio/cardiológico/renal/digestivo)</div>
+      <input type="file" accept="image/*,application/pdf" onchange="subirDocumento(this,'CUD_Planilla_Visceral','')">
+      <div class="doc-lista" id="lista-CUD_Planilla_Visceral"></div>
+    </div>
+
+    <h3 style="color:#b45309">💰 Trámite PNC por Invalidez Laboral (ANDIS)</h3>
+    <div class="doc-slot">
+      <div class="doc-slot-titulo">CMO Digital (Certificado Médico Oficial) — obligatorio, Decreto 843/2024</div>
+      <input type="file" accept="image/*,application/pdf" onchange="subirDocumento(this,'PNC_CMO_Digital','')">
+      <div class="doc-lista" id="lista-PNC_CMO_Digital"></div>
+    </div>
+    <div class="doc-slot">
+      <div class="doc-slot-titulo">Formulario P.S. 6.4 (Apoderado) — solo si designa a un tercero</div>
+      <input type="file" accept="image/*,application/pdf" onchange="subirDocumento(this,'PNC_PS_6_4_Apoderado','')">
+      <div class="doc-lista" id="lista-PNC_PS_6_4_Apoderado"></div>
+    </div>
+    <div class="doc-slot">
+      <div class="doc-slot-titulo">Solicitud de Prestación (Mi ANSES / TAD)</div>
+      <input type="file" accept="image/*,application/pdf" onchange="subirDocumento(this,'PNC_Solicitud_Prestacion','')">
+      <div class="doc-lista" id="lista-PNC_Solicitud_Prestacion"></div>
+    </div>
+
+    <h3 style="color:#7c2d12">🏭 Discapacidad Contributiva (Retiro por Invalidez — SRT/ANSES)</h3>
+    <div class="doc-slot">
+      <div class="doc-slot-titulo">Formulario P.S. 6.18 — "Retiro por Invalidez"</div>
+      <input type="file" accept="image/*,application/pdf" onchange="subirDocumento(this,'Contrib_PS_6_18','')">
+      <div class="doc-lista" id="lista-Contrib_PS_6_18"></div>
+    </div>
+    <div class="doc-slot">
+      <div class="doc-slot-titulo">Solicitud de Evaluación de Incapacidad Laboral (Comisión Médica, ≥66%)</div>
+      <input type="file" accept="image/*,application/pdf" onchange="subirDocumento(this,'Contrib_Solicitud_Evaluacion','')">
+      <div class="doc-lista" id="lista-Contrib_Solicitud_Evaluacion"></div>
+    </div>
+    <div class="doc-slot">
+      <div class="doc-slot-titulo">Detalle de Historia Clínica y Estudios Complementarios (con membrete)</div>
+      <input type="file" accept="image/*,application/pdf" onchange="subirDocumento(this,'Contrib_Historia_Clinica','')">
+      <div class="doc-lista" id="lista-Contrib_Historia_Clinica"></div>
+    </div>
+
+    <h3 style="color:#334155">🪪 Identidad y Transporte</h3>
+    <div class="doc-slot">
+      <div class="doc-slot-titulo">Foto DNI — Frente</div>
+      <input type="file" accept="image/*" onchange="subirDocumento(this,'DNI_Frente','')">
+      <div class="doc-lista" id="lista-DNI_Frente"></div>
+    </div>
+    <div class="doc-slot">
+      <div class="doc-slot-titulo">Foto DNI — Reverso</div>
+      <input type="file" accept="image/*" onchange="subirDocumento(this,'DNI_Reverso','')">
+      <div class="doc-lista" id="lista-DNI_Reverso"></div>
+    </div>
+    <div class="doc-slot">
+      <div class="doc-slot-titulo">Formulario de Transporte Público Gratuito</div>
+      <input type="file" accept="image/*,application/pdf" onchange="subirDocumento(this,'Formulario_Transporte_Publico','')">
+      <div class="doc-lista" id="lista-Formulario_Transporte_Publico"></div>
+    </div>
+
+    <h3 style="color:#334155">📋 Otros formularios</h3>
+    <div class="doc-slot">
+      <div class="doc-slot-titulo">Formularios de Discapacidad por Diagnóstico (nomenclador internacional)</div>
+      <div class="diag-fila">
+        <input type="text" id="nombre-diagnostico" placeholder="Nombre del diagnóstico (Ej: Escoliosis idiopática)">
+        <input type="file" id="archivo-diagnostico" accept="image/*,application/pdf" style="flex:1">
+        <button class="btn chico" onclick="subirDocumentoDiagnostico()">Subir</button>
+      </div>
+      <div class="doc-lista" id="lista-Formulario_Discapacidad_Por_Diagnostico"></div>
+    </div>
+    <div class="doc-slot">
+      <div class="doc-slot-titulo">Otros formularios (no contemplados arriba)</div>
+      <div class="diag-fila">
+        <input type="text" id="descripcion-otro" placeholder="Descripción del formulario">
+        <input type="file" id="archivo-otro" accept="image/*,application/pdf" style="flex:1">
+        <button class="btn chico" onclick="subirDocumentoOtro()">Subir</button>
+      </div>
+      <div class="doc-lista" id="lista-Otro"></div>
+    </div>
+
+    <div class="nota" style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px 12px;font-size:11.5px;color:#1e3a5f;margin-top:10px">
+      ℹ️ Recordá: para saber exactamente qué planilla del CUD corresponde a cada caso, se puede consultar el
+      <a href="https://www.argentina.gob.ar/cud/consulta-de-requisitos-para-tramitar-el-cud" target="_blank">Simulador de Requisitos del CUD</a>
+      en Argentina.gob.ar. La vigencia de las planillas médicas es menor a 6 meses desde la firma.
+    </div>
+  </div>
+
+</div>
+
+<script>
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbwYdoFuU8mQL4YKqufSBQ9AD_yqWEEesLtGzYQjNw2JG1BZIQF7ug80mHB5sLMXhaUpvQ/exec';
+
+const CAMPOS_CHECKLIST = [
+  'otras-patologias','medicacion','trabajo','pensiones','obra-social','vive-hijo-menor','hijos',
+  'vivienda-tipo','vivienda-servicios','transporte-publico','transporte-propio',
+  'trabajo-distancia','trabajo-tipo','exposicion','diagnosticos','estudios-avalan','medicos-cargo',
+  'certificados-avalan','solicita-certificado','necesidad-ampliar','necesidad-actualizar',
+  'tipo-discapacidad','conclusion'
+];
+const CAMPOS_CHECKBOX = ['tramite-cud','tramite-pnc','tramite-contributiva'];
+
+function getDni(){ return document.getElementById('dni').value.trim(); }
+
+async function cargarEstadoNormativa(){
+  const cont = document.getElementById('texto-ultima-verificacion');
+  const alerta = document.getElementById('alerta-normativa');
+  try{
+    const resp = await fetch(GAS_URL + '?action=get_verificacion_normativa');
+    const data = await resp.json();
+    if (!data.fecha){
+      cont.textContent = 'Todavía no se registró ninguna verificación.';
+      alerta.style.display = 'block';
+      alerta.style.background = '#fef3c7'; alerta.style.color='#92400e'; alerta.style.border='1px solid #fde68a';
+      alerta.textContent = '⚠️ Nunca se marcó una revisión de la normativa — te recomiendo hacerlo hoy.';
+      return;
+    }
+    const fecha = new Date(data.fecha);
+    const dias = Math.floor((new Date() - fecha) / 86400000);
+    cont.textContent = 'Última verificación: ' + fecha.toLocaleDateString('es-AR') + ' (hace ' + dias + ' días)';
+    if (dias > 90){
+      alerta.style.display='block'; alerta.style.background='#fee2e2'; alerta.style.color='#991b1b'; alerta.style.border='1px solid #fecaca';
+      alerta.textContent = '🔴 Pasaron más de 90 días desde la última verificación — revisá si hubo cambios en el Boletín Oficial o en Argentina.gob.ar/cud/marco-legal.';
+    } else if (dias > 60){
+      alerta.style.display='block'; alerta.style.background='#fef3c7'; alerta.style.color='#92400e'; alerta.style.border='1px solid #fde68a';
+      alerta.textContent = '🟡 Ya pasaron ' + dias + ' días — conviene revisar pronto.';
+    } else {
+      alerta.style.display='block'; alerta.style.background='#f0fdf4'; alerta.style.color='#166534'; alerta.style.border='1px solid #bbf7d0';
+      alerta.textContent = '🟢 Verificación reciente — normativa al día.';
+    }
+  }catch(e){ cont.textContent = 'No se pudo consultar el estado.'; }
+}
+async function marcarVerificado(){
+  try{
+    await fetch(GAS_URL, {
+      method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({action:'marcar_verificacion_normativa', notas:''})
+    });
+    cargarEstadoNormativa();
+  }catch(e){ alert('No se pudo guardar la verificación'); }
+}
+cargarEstadoNormativa();
+
+async function cargarTodo(){
+  const dni = getDni();
+  if (!dni){ alert('Ingresá un DNI primero'); return; }
+  await cargarChecklist(dni);
+  await cargarTodosLosDocumentos(dni);
+}
+
+async function cargarChecklist(dni){
+  try{
+    const resp = await fetch(GAS_URL + '?action=get_checklist_cud&dni=' + encodeURIComponent(dni));
+    const data = await resp.json();
+    const datos = (data && data.datos) || {};
+    CAMPOS_CHECKLIST.forEach(campo => {
+      const el = document.getElementById('c-'+campo);
+      if (el) el.value = datos[campo] || '';
+    });
+    CAMPOS_CHECKBOX.forEach(campo => {
+      const el = document.getElementById('c-'+campo);
+      if (el) el.checked = !!datos[campo];
+    });
+  }catch(e){ console.warn('No se pudo cargar el checklist', e); }
+}
+
+document.getElementById('btn-guardar-checklist').addEventListener('click', async function(){
+  const dni = getDni();
+  const msg = document.getElementById('msg-checklist');
+  if (!dni){ msg.className='msg msg-error'; msg.textContent='⚠️ Ingresá el DNI primero'; return; }
+  const datos = {};
+  CAMPOS_CHECKLIST.forEach(campo => {
+    const el = document.getElementById('c-'+campo);
+    if (el) datos[campo] = el.value;
+  });
+  CAMPOS_CHECKBOX.forEach(campo => {
+    const el = document.getElementById('c-'+campo);
+    if (el) datos[campo] = el.checked;
+  });
+  msg.className='msg'; msg.textContent='Guardando...';
+  try{
+    const resp = await fetch(GAS_URL, {
+      method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({action:'guardar_checklist_cud', dni, datos})
+    });
+    const data = await resp.json();
+    msg.className = data.success ? 'msg msg-ok' : 'msg msg-error';
+    msg.textContent = data.success ? '✅ Checklist guardado' : '❌ Error al guardar';
+  }catch(e){ msg.className='msg msg-error'; msg.textContent='❌ No se pudo conectar con el backend'; }
+});
+
+function leerArchivoComoDataURL(file){
+  return new Promise((resolve,reject)=>{
+    const reader = new FileReader();
+    reader.onload = e => resolve(e.target.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function subirDocumento(inputEl, categoria, subcategoria, descripcion){
+  const dni = getDni();
+  if (!dni){ alert('Ingresá el DNI del paciente primero'); inputEl.value=''; return; }
+  const file = inputEl.files[0];
+  if (!file) return;
+  const dataURL = await leerArchivoComoDataURL(file);
+  try{
+    const resp = await fetch(GAS_URL, {
+      method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({
+        action:'guardar_documento_cud', dni, categoria, subcategoria: subcategoria||'',
+        descripcion: descripcion||'', nombre_archivo: file.name, archivo_base64: dataURL
+      })
+    });
+    const data = await resp.json();
+    if (data.success){ cargarDocumentosCategoria(dni, categoria); }
+    else alert('Error al subir: ' + (data.error||'desconocido'));
+  }catch(e){ alert('No se pudo conectar con el backend'); }
+  inputEl.value = '';
+}
+
+async function subirDocumentoDiagnostico(){
+  const nombreDiag = document.getElementById('nombre-diagnostico').value.trim();
+  const inputEl = document.getElementById('archivo-diagnostico');
+  if (!nombreDiag){ alert('Ingresá el nombre del diagnóstico'); return; }
+  await subirDocumento(inputEl, 'Formulario_Discapacidad_Por_Diagnostico', nombreDiag, '');
+  document.getElementById('nombre-diagnostico').value = '';
+}
+async function subirDocumentoOtro(){
+  const desc = document.getElementById('descripcion-otro').value.trim();
+  const inputEl = document.getElementById('archivo-otro');
+  if (!desc){ alert('Ingresá una descripción para este formulario'); return; }
+  await subirDocumento(inputEl, 'Otro', '', desc);
+  document.getElementById('descripcion-otro').value = '';
+}
+
+const CATEGORIAS_LISTA = [
+  'CUD_Solicitud','CUD_Planilla_Motriz','CUD_Planilla_Visual','CUD_Planilla_Auditiva','CUD_Planilla_P1','CUD_Planilla_Visceral',
+  'PNC_CMO_Digital','PNC_PS_6_4_Apoderado','PNC_Solicitud_Prestacion',
+  'Contrib_PS_6_18','Contrib_Solicitud_Evaluacion','Contrib_Historia_Clinica',
+  'DNI_Frente','DNI_Reverso','Formulario_Transporte_Publico',
+  'Formulario_Discapacidad_Por_Diagnostico','Otro'
+];
+
+async function cargarTodosLosDocumentos(dni){
+  try{
+    const resp = await fetch(GAS_URL + '?action=get_documentos_cud&dni=' + encodeURIComponent(dni));
+    const data = await resp.json();
+    const todos = (data && data.data) || [];
+    CATEGORIAS_LISTA.forEach(cat => renderListaDocumentos(cat, todos.filter(d=>d.Categoria===cat)));
+  }catch(e){ console.warn('No se pudieron cargar los documentos', e); }
+}
+async function cargarDocumentosCategoria(dni, categoria){
+  try{
+    const resp = await fetch(GAS_URL + '?action=get_documentos_cud&dni=' + encodeURIComponent(dni));
+    const data = await resp.json();
+    const todos = (data && data.data) || [];
+    renderListaDocumentos(categoria, todos.filter(d=>d.Categoria===categoria));
+  }catch(e){}
+}
+function renderListaDocumentos(categoria, lista){
+  const cont = document.getElementById('lista-'+categoria);
+  if (!cont) return;
+  if (!lista.length){ cont.innerHTML = '<span style="color:#94a3b8;font-size:11px">Sin documentos cargados todavía.</span>'; return; }
+  cont.innerHTML = lista.map(d => {
+    const etiqueta = d.Subcategoria ? (d.Subcategoria + ' — ') : '';
+    const fecha = new Date(d.Timestamp).toLocaleDateString('es-AR');
+    return `<div class="doc-item"><span>${etiqueta}${d.Nombre_Archivo||'archivo'} · ${fecha}</span>
+      <a href="${d.Archivo_URL}" target="_blank">Ver</a></div>`;
+  }).join('');
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seguimiento Científico · SMM</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--navy:#0b1f3a;--green:#22c55e;--blue:#2563eb;--red:#dc2626;--purple:#7c3aed;--border:#e2e8f0}
+body{font-family:'Inter',Arial,sans-serif;background:#f0f4f8;min-height:100vh;color:#1e293b}
+.header{background:var(--navy);color:#fff;padding:16px 20px;display:flex;align-items:center;justify-content:space-between}
+.header h1{font-size:15px;font-weight:700}
+.header a{color:#93c5fd;font-size:12px;text-decoration:none}
+.main{max-width:820px;margin:0 auto;padding:16px}
+.linea-card{background:#fff;border:1px solid var(--border);border-radius:12px;margin-bottom:14px;overflow:hidden}
+.linea-head{padding:14px 18px;display:flex;align-items:center;gap:12px;cursor:pointer;justify-content:space-between}
+.linea-head:hover{background:#f8fafc}
+.linea-titulo{font-size:14px;font-weight:700;color:var(--navy);display:flex;align-items:center;gap:8px}
+.linea-badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px}
+.badge-vinculado{background:#dcfce7;color:#166534}
+.badge-adefinir{background:#fef3c7;color:#92400e}
+.linea-body{display:none;padding:0 18px 18px}
+.linea-body.abierto{display:block}
+label{display:block;font-size:12px;font-weight:600;color:#475569;margin-bottom:4px;margin-top:10px}
+textarea,input[type=text]{width:100%;padding:9px 10px;border:1px solid #cbd5e1;border-radius:8px;font-size:13.5px;font-family:inherit}
+textarea{resize:vertical;min-height:60px}
+.params-lista{margin-top:6px}
+.param-item{display:flex;gap:6px;align-items:center;margin-bottom:6px}
+.param-item input{flex:1}
+.btn{display:inline-block;background:var(--blue);color:#fff;border:none;padding:9px 14px;border-radius:8px;font-size:12.5px;font-weight:600;cursor:pointer;margin-top:8px;margin-right:6px}
+.btn:hover{background:#1d4ed8}
+.btn.gris{background:#64748b}.btn.gris:hover{background:#475569}
+.btn.verde{background:var(--green)}.btn.verde:hover{background:#16a34a}
+.btn.rojo{background:var(--red)}.btn.rojo:hover{background:#b91c1c}
+.btn.chico{padding:5px 10px;font-size:11px}
+.pacientes-lista{margin-top:10px;border-top:1px solid #f1f5f9;padding-top:10px}
+.paciente-fila{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:12.5px;border-bottom:1px solid #f8fafc}
+.agregar-pac{display:flex;gap:6px;margin-top:8px}
+.agregar-pac input{flex:1}
+.msg{font-size:12px;margin-top:6px}
+.msg-ok{color:#166534}.msg-error{color:#dc2626}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🔬 Seguimiento Científico</h1>
+  <a href="INDEX_SIM.html">← Menú principal</a>
+</div>
+
+<div class="main" id="contenedor-lineas"></div>
+
+<script>
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbwYdoFuU8mQL4YKqufSBQ9AD_yqWEEesLtGzYQjNw2JG1BZIQF7ug80mHB5sLMXhaUpvQ/exec';
+
+// Líneas de investigación predefinidas. Las que ya tienen módulo de medición
+// (tipo_medicion_vinculado) muestran el conteo real de mediciones guardadas.
+// Las que todavía no, quedan como "espacio a construir".
+const LINEAS_BASE = [
+  {
+    linea: 'Retropie_Valgo_SenoTarso',
+    titulo: '🦶 Retropié Valgo — Osteosíntesis de Seno del Tarso',
+    tipo_medicion_vinculado: 'ValgoVaro_Retropie',
+    objetivo_default: 'Evaluar la corrección angular del retropié valgo antes y después de la osteosíntesis de seno del tarso, correlacionando el ángulo medido con la evolución clínica.',
+    parametros_default: ['Ángulo de valgo/varo de retropié (°)', 'Estado quirúrgico (candidato/pre/post-operatorio)', 'Técnica e implante utilizado', 'Fecha de cirugía']
+  },
+  {
+    linea: 'Escoliosis_Corset',
+    titulo: '🦴 Escoliosis — Efectividad del Corset',
+    tipo_medicion_vinculado: '',
+    objetivo_default: 'Evaluar la efectividad del corset en el control/corrección de la curva escoliótica, comparando imágenes con y sin corset, y su correlación con la talla y media talla medidas el mismo día de cada radiografía de control.',
+    parametros_default: ['Ángulo de Cobb (pendiente — módulo de medición a construir)', 'Talla (cm) — medida el mismo día de la Rx', 'Media talla (cm) — medida el mismo día de la Rx', 'Horas de uso diario del corset', 'Imagen con corset / sin corset (comparativa)']
+  },
+  {
+    linea: 'HalluxValgus_RemodelacionFisaria',
+    titulo: '👣 Hallux Valgus — Efectividad Modulación Fisaria',
+    tipo_medicion_vinculado: 'Intermetatarsiano_1_2',
+    objetivo_default: 'Evaluar la efectividad de la modulación fisaria (fisis distal y/o proximal del 1er metatarsiano) en la corrección del ángulo intermetatarsiano en Hallux Valgus pediátrico.',
+    parametros_default: ['Ángulo intermetatarsiano 1°-2° (°)', 'Fisis tratada (distal/proximal/ambas)', 'Fecha de inicio del tratamiento']
+  },
+  {
+    linea: 'ActitudFlexaRodilla_ModulacionFisariaAnterior',
+    titulo: '🦵 Actitud Flexa de Rodilla — Modulación Fisaria Anterior (Osteosíntesis)',
+    tipo_medicion_vinculado: '',
+    objetivo_default: 'Evaluar la efectividad de la osteosíntesis para modulación fisaria anterior en la corrección de la actitud en flexo de rodilla.',
+    parametros_default: ['Ángulo de flexo de rodilla (pendiente — módulo de medición a construir)', 'Técnica e implante utilizado', 'Fecha de cirugía', 'Evaluación clínica de la marcha']
+  }
+];
+
+let lineasGuardadas = {};
+
+async function cargarLineas(){
+  try{
+    const resp = await fetch(GAS_URL + '?action=get_lineas_investigacion');
+    const data = await resp.json();
+    if (data.success){
+      (data.data||[]).forEach(l => { lineasGuardadas[l.linea] = l; });
+    }
+  }catch(e){ console.warn('No se pudieron cargar las líneas guardadas, se usan los valores por defecto', e); }
+  renderLineas();
+}
+
+function renderLineas(){
+  const cont = document.getElementById('contenedor-lineas');
+  cont.innerHTML = '';
+  LINEAS_BASE.forEach(base => {
+    const guardada = lineasGuardadas[base.linea];
+    const objetivo = guardada ? guardada.objetivo : base.objetivo_default;
+    const parametros = (guardada && guardada.parametros && guardada.parametros.length) ? guardada.parametros : base.parametros_default;
+    const vinculado = base.tipo_medicion_vinculado;
+
+    const card = document.createElement('div');
+    card.className = 'linea-card';
+    card.innerHTML = `
+      <div class="linea-head" onclick="toggleLinea('${base.linea}')">
+        <div class="linea-titulo">${base.titulo}</div>
+        <span class="linea-badge ${vinculado ? 'badge-vinculado' : 'badge-adefinir'}">
+          ${vinculado ? '✅ Medición conectada' : '🛠 Espacio a construir'}
+        </span>
+      </div>
+      <div class="linea-body" id="body-${base.linea}">
+        <label>Objetivo de esta línea de investigación</label>
+        <textarea id="objetivo-${base.linea}">${objetivo}</textarea>
+
+        <label>Parámetros a seguir / medir</label>
+        <div class="params-lista" id="params-${base.linea}"></div>
+        <button class="btn gris chico" onclick="agregarParametro('${base.linea}')">+ Agregar parámetro</button>
+        <button class="btn verde chico" onclick="guardarLinea('${base.linea}')">💾 Guardar línea</button>
+        <div class="msg" id="msg-linea-${base.linea}"></div>
+
+        <div class="pacientes-lista">
+          <label style="margin-top:4px">Pacientes incluidos en esta línea</label>
+          <div id="pacientes-${base.linea}">Cargando...</div>
+          <div class="agregar-pac">
+            <input type="text" id="nuevo-dni-${base.linea}" placeholder="DNI a incluir" inputmode="numeric">
+            <button class="btn chico" onclick="agregarPaciente('${base.linea}')">+ Incluir</button>
+          </div>
+          <div class="msg" id="msg-pac-${base.linea}"></div>
+        </div>
+      </div>`;
+    cont.appendChild(card);
+
+    const paramsDiv = card.querySelector(`#params-${base.linea}`);
+    parametros.forEach(p => paramsDiv.appendChild(crearFilaParametro(p)));
+  });
+}
+
+function crearFilaParametro(valor){
+  const div = document.createElement('div');
+  div.className = 'param-item';
+  div.innerHTML = `<input type="text" value="${valor.replace(/"/g,'&quot;')}">
+    <button class="btn rojo chico" onclick="this.parentElement.remove()">✕</button>`;
+  return div;
+}
+function agregarParametro(linea){
+  document.getElementById('params-'+linea).appendChild(crearFilaParametro(''));
+}
+
+function toggleLinea(linea){
+  const body = document.getElementById('body-'+linea);
+  const abierto = body.classList.toggle('abierto');
+  if (abierto) cargarPacientesLinea(linea);
+}
+
+async function guardarLinea(linea){
+  const objetivo = document.getElementById('objetivo-'+linea).value.trim();
+  const params = [...document.querySelectorAll('#params-'+linea+' input')].map(i=>i.value.trim()).filter(Boolean);
+  const base = LINEAS_BASE.find(l=>l.linea===linea);
+  const msg = document.getElementById('msg-linea-'+linea);
+  msg.className='msg'; msg.textContent='Guardando...';
+  try{
+    const resp = await fetch(GAS_URL, {
+      method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({action:'guardar_linea_investigacion', linea, objetivo, parametros:params, tipo_medicion_vinculado: base.tipo_medicion_vinculado})
+    });
+    const data = await resp.json();
+    msg.className = data.success ? 'msg msg-ok' : 'msg msg-error';
+    msg.textContent = data.success ? '✅ Guardado' : '❌ Error al guardar';
+  }catch(e){ msg.className='msg msg-error'; msg.textContent='❌ No se pudo conectar con el backend'; }
+}
+
+async function cargarPacientesLinea(linea){
+  const cont = document.getElementById('pacientes-'+linea);
+  cont.innerHTML = 'Cargando...';
+  try{
+    const resp = await fetch(GAS_URL + '?action=get_pacientes_linea&linea=' + encodeURIComponent(linea));
+    const data = await resp.json();
+    const lista = (data && data.data) || [];
+    if (!lista.length){ cont.innerHTML = '<span style="color:#94a3b8;font-size:12px">Todavía no hay pacientes incluidos en esta línea.</span>'; return; }
+    cont.innerHTML = '';
+    lista.forEach(p => {
+      const fila = document.createElement('div');
+      fila.className = 'paciente-fila';
+      fila.innerHTML = `<span>DNI ${p.dni} · incluido ${new Date(p.fecha_inclusion).toLocaleDateString('es-AR')}</span>
+        <button class="btn rojo chico" onclick="quitarPaciente('${linea}','${p.dni}')">Quitar</button>`;
+      cont.appendChild(fila);
+    });
+  }catch(e){ cont.innerHTML = '<span style="color:#dc2626;font-size:12px">Error al cargar pacientes</span>'; }
+}
+
+async function agregarPaciente(linea){
+  const dni = document.getElementById('nuevo-dni-'+linea).value.trim();
+  const msg = document.getElementById('msg-pac-'+linea);
+  if (!dni){ msg.className='msg msg-error'; msg.textContent='Ingresá un DNI'; return; }
+  msg.className='msg'; msg.textContent='Agregando...';
+  try{
+    const resp = await fetch(GAS_URL, {
+      method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({action:'agregar_paciente_linea', linea, dni})
+    });
+    const data = await resp.json();
+    msg.className = data.success ? 'msg msg-ok' : 'msg msg-error';
+    msg.textContent = data.message || '';
+    document.getElementById('nuevo-dni-'+linea).value = '';
+    cargarPacientesLinea(linea);
+  }catch(e){ msg.className='msg msg-error'; msg.textContent='❌ No se pudo conectar con el backend'; }
+}
+
+async function quitarPaciente(linea, dni){
+  if (!confirm('¿Quitar al paciente DNI ' + dni + ' de esta línea de investigación?')) return;
+  try{
+    await fetch(GAS_URL, {
+      method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({action:'quitar_paciente_linea', linea, dni})
+    });
+    cargarPacientesLinea(linea);
+  }catch(e){ alert('No se pudo conectar con el backend'); }
+}
+
+cargarLineas();
+</script>
+
+</body>
+</html>
