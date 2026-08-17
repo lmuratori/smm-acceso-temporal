@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>S.I.M-M — Sistema Médico Integral Muratori</title>
+<style>
+  :root{--azul:#0369a1;--azul-osc:#0c4a6e;--verde:#16a34a;--ambar:#d97706;--rojo:#dc2626;--muted:#64748b;--border:#e2e8f0;--bg:#f4fbfd;--surface:#fff}
+  *{box-sizing:border-box}
+  body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);margin:0;color:#0f172a}
+  .topbar{background:linear-gradient(135deg,var(--azul),var(--azul-osc));color:#fff;padding:28px 20px;text-align:center}
+  .topbar h1{margin:0 0 4px;font-size:22px}
+  .topbar p{margin:0;font-size:13px;opacity:.9}
+  main{max-width:920px;margin:0 auto;padding:24px 20px 60px}
+  .grupo{margin-top:28px}
+  .grupo-titulo{font-size:13px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px;padding-left:2px}
+  .tarjetas{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+  a.tarjeta{display:block;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 18px;text-decoration:none;color:inherit;transition:box-shadow .15s,border-color .15s}
+  a.tarjeta:hover{box-shadow:0 4px 16px rgba(3,105,161,.12);border-color:var(--azul)}
+  .tarjeta .emoji{font-size:22px}
+  .tarjeta .nombre{font-weight:800;font-size:14px;margin-top:8px;color:var(--azul-osc)}
+  .tarjeta .desc{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.5}
+  .aviso{background:#fffbeb;border:1px solid #fde68a;color:#92400e;border-radius:10px;padding:12px 16px;font-size:12.5px;margin-top:28px;line-height:1.6}
+  footer{text-align:center;color:var(--muted);font-size:11.5px;padding:24px 20px 40px}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>🩺 S.I.M-M</h1>
+  <p>Sistema Médico Integral Muratori — Dr. Luis Alberto Muratori (M.N. 100.540 / M.P. 9943)</p>
+</div>
+
+<main>
+
+  <div class="grupo">
+    <div class="grupo-titulo">Uso diario en el consultorio</div>
+    <div class="tarjetas">
+      <a class="tarjeta" href="OCM_Muratori_v14_0_26.html">
+        <div class="emoji">🗂️</div>
+        <div class="nombre">OCM — Historia Clínica</div>
+        <div class="desc">Consultorio: pacientes, recetas, certificados, Catastro de Empresas.</div>
+      </a>
+      <a class="tarjeta" href="CAM_Herramientas_Clinicas.html">
+        <div class="emoji">🧬</div>
+        <div class="nombre">CAM — Herramientas Clínicas</div>
+        <div class="desc">Goniometría, síndromes, interrogatorio, examen físico, podoscopía, escoliosis.</div>
+      </a>
+      <a class="tarjeta" href="Lector_Historias.html">
+        <div class="emoji">📋</div>
+        <div class="nombre">Lector de Fichas</div>
+        <div class="desc">Cargar filiación de un paciente pegando el texto de una ficha.</div>
+      </a>
+      <a class="tarjeta" href="Lector_CUD.html">
+        <div class="emoji">📸</div>
+        <div class="nombre">Lector CUD</div>
+        <div class="desc">Foto del Certificado Único de Discapacidad → carga asistida por IA.</div>
+      </a>
+    </div>
+  </div>
+
+  <div class="grupo">
+    <div class="grupo-titulo">Administración</div>
+    <div class="tarjetas">
+      <a class="tarjeta" href="Agenda_Mensajes.html">
+        <div class="emoji">✉️</div>
+        <div class="nombre">Agenda de Mensajes</div>
+        <div class="desc">Revisar borradores de la IA, confirmar pagos y aprobar envíos.</div>
+      </a>
+      <a class="tarjeta" href="Panel_Especialistas.html">
+        <div class="emoji">🔐</div>
+        <div class="nombre">Panel de Especialistas</div>
+        <div class="desc">Autorizar kinesiólogos y colegas, y qué módulos ve cada uno.</div>
+      </a>
+    </div>
+  </div>
+
+  <div class="grupo">
+    <div class="grupo-titulo">Para kinesiólogos y colegas</div>
+    <div class="tarjetas">
+      <a class="tarjeta" href="KSM_Kinesiologia.html">
+        <div class="emoji">🦵</div>
+        <div class="nombre">KSM — Kinesiología</div>
+        <div class="desc">Evoluciones, informes al médico, videollamada, cobro directo.</div>
+      </a>
+      <a class="tarjeta" href="COL_Colegas_SIMM.html">
+        <div class="emoji">🤝</div>
+        <div class="nombre">Colegas (SIM-M)</div>
+        <div class="desc">Acceso para otros especialistas no kinesiólogos.</div>
+      </a>
+    </div>
+  </div>
+
+</main>
+
+<div class="aviso" style="max-width:920px;margin-left:auto;margin-right:auto">
+  ⚠️ Estos accesos son para uso interno del consultorio, los kinesiólogos y colegas autorizados. El formulario RIMP para pacientes (RIDM_Muratori_v1.html) no está listado acá a propósito — se envía siempre con un link personalizado desde el sistema, no se comparte suelto.
+</div>
+
+<footer>S.I.M-M — Sistema Médico Integral Muratori</footer>
+
+</body>
+</html>
