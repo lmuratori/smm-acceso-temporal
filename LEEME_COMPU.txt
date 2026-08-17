@@ -1,0 +1,82 @@
+CARPETA "COMPU" — Sistema Médico Integral Muratori (S.I.M-M)
+════════════════════════════════════════════════════════════
+
+Estos son los archivos que se usan desde la computadora del consultorio.
+
+CONTENIDO:
+
+1) Codigo.gs
+   → Es el backend completo y ACTUALIZADO del sistema (Apps Script).
+   → YA INCLUYE integrado en un solo archivo:
+       - RMYT (autoevaluación semanal)
+       - Kinesiología (KSM): canal de comunicación, evoluciones,
+         preguntas, informes al médico, videollamada, cobros con peaje
+         al sistema (5% configurable)
+       - Optimización de consumo de tokens de Gemini (thinkingLevel
+         "minimal" — respuestas iguales, mucho menor costo)
+       - Disparador automático de la bandeja de entrada
+       - Listas personalizadas de CAM (diccionario propio de síndromes)
+       - Sistema de permisos por especialista (generalizado a todos,
+         no solo kinesiología) + sincronización a la nube de Catastro
+         de Empresas, Libro de Discapacidad (CUD) y Plantillas
+       - La clave de Gemini ya no está escrita en el archivo: se carga
+         una vez desde la función configurarGeminiAPI() (ver PENDIENTE)
+
+   CÓMO INSTALARLO (reemplaza el código actual, no crea nada nuevo):
+     a) Entrar a la planilla "Sistema Medico Muratori" en Google Sheets.
+     b) Extensiones → Apps Script.
+     c) Abrir el archivo Código.gs del proyecto y BORRAR todo su
+        contenido actual.
+     d) Pegar ahí todo el contenido de este Codigo.gs.
+     e) Guardar (Ctrl+S / ícono de disquete).
+     f) Implementar → Gestionar implementaciones → ícono de lápiz
+        (editar) → en "Versión" elegir "Nueva versión" → Implementar.
+        (OJO: si se crea una implementación NUEVA en vez de editar la
+        existente, la URL cambia y hay que actualizarla en todos los
+        módulos. Por eso: EDITAR la implementación existente, no crear
+        otra.)
+     g) La primera vez que corra procesarBandejaEntrada(), Google va a
+        pedir autorizar permisos de Gmail y Calendar — es normal,
+        aceptar.
+     h) Ejecutar UNA sola vez, manualmente, la función
+        crearTriggerProcesarBandejaEntrada() desde el editor (▶ Ejecutar)
+        para que la revisión de mails quede automática cada 15 min.
+
+2) OCM_Muratori_v14_0_26.html
+   → Historia clínica / consultorio (versión más nueva, incluye el
+     módulo de Catastro de Empresas). Se usa igual que hasta ahora.
+
+3) Agenda_Mensajes.html
+   → Panel para revisar los borradores de respuesta que arma la IA,
+     confirmar pagos y aprobar el envío. Ya apunta a la URL real del
+     sistema, no necesita configuración.
+
+4) CAM_Beta_Herramientas_Clinicas_2.html
+   → Herramientas clínicas (goniometría, síndromes genéticos, etc.).
+     Ya apunta a la URL real. El diccionario de síndromes propios ahora
+     se guarda en la nube (antes no tenía dónde guardarse — se agregó
+     la hoja "Listas_Personalizadas" al backend para esto).
+
+5) Panel_Especialistas.html
+   → Es TUYO, no de los kinesiólogos/colegas. Desde acá autorizás, uno
+     por uno, qué especialista puede usar el sistema y qué módulos ve
+     de cada paciente (Investigación, Discapacidad/CUD, Gráfica,
+     Plantillas). También cambiás el % de peaje por defecto, o uno
+     personalizado por especialista. Podoscopía nunca aparece como
+     opción acá — es de tu uso exclusivo. Se usa igual que KSM: la
+     primera vez pide la URL de Apps Script (la misma de siempre).
+
+6) Lector_CUD.html  (NUEVO — tercera ronda)
+   → Sacás una foto del Certificado Único de Discapacidad, la IA
+     (Gemini Vision) propone los 15 campos ya completados, los revisás/
+     corregís y recién ahí se guarda — queda conectado con la Agenda de
+     Pacientes y la Historia Clínica, igual que si lo hubieras tipeado
+     a mano. Nunca guarda nada sin que lo confirmes.
+
+PENDIENTE (importante):
+   Rotar la clave de Gemini. Dejó de estar escrita en Codigo.gs (antes
+   quedó expuesta en la conversación) — ahora se carga una sola vez
+   desde la función configurarGeminiAPI() que está cerca del final del
+   archivo, corriéndola manualmente desde el editor de Apps Script
+   (▶ Ejecutar). El detalle paso a paso está en 00_LEEME_PRIMERO.txt y
+   en AUDITORIA_SIMM_16ago2026.html.

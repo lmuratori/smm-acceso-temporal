@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel de Especialistas — S.I.M-M</title>
+<style>
+  :root{
+    --azul:#0369a1; --azul-osc:#0c4a6e; --verde:#15803d; --ambar:#b45309;
+    --rojo:#dc2626; --muted:#64748b; --border:#e2e8f0; --bg:#f8fafc; --surface:#fff;
+  }
+  *{box-sizing:border-box}
+  body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--bg);margin:0;color:#0f172a;line-height:1.5}
+  .topbar{background:linear-gradient(135deg,var(--azul),var(--azul-osc));color:#fff;padding:22px 20px;text-align:center}
+  .topbar h1{font-size:20px;margin:0 0 4px;font-weight:800}
+  .topbar p{font-size:12.5px;margin:0;opacity:.9}
+  .wrap{max-width:900px;margin:0 auto;padding:18px}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:16px}
+  .card h2{font-size:15px;margin:0 0 12px;color:var(--azul-osc);display:flex;align-items:center;gap:8px}
+  label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin:10px 0 4px}
+  input[type=text],input[type=number]{width:100%;padding:9px 10px;border:1px solid var(--border);border-radius:7px;font-size:13.5px;font-family:inherit;background:#fff}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  button{cursor:pointer;border:none;border-radius:7px;padding:9px 14px;font-size:13px;font-weight:700}
+  .btn-primary{background:var(--azul);color:#fff}
+  .btn-primary:hover{background:var(--azul-osc)}
+  .btn-secundario{background:#f1f5f9;color:#334155}
+  .muted{color:var(--muted);font-size:12px}
+  .oculto{display:none}
+  .especialista{border:1px solid var(--border);border-radius:9px;padding:14px;margin-bottom:12px}
+  .especialista.autorizado{border-left:4px solid var(--verde)}
+  .especialista.pendiente{border-left:4px solid var(--ambar)}
+  .especialista.bloqueado{border-left:4px solid var(--rojo)}
+  .especialista .nombre{font-weight:700;font-size:14px}
+  .especialista .meta{color:var(--muted);font-size:11.5px;margin-bottom:8px}
+  .badge{display:inline-block;padding:2px 8px;border-radius:9px;font-size:10px;font-weight:700}
+  .badge-ok{background:#f0fdf4;color:var(--verde)}
+  .badge-pend{background:#fffbeb;color:var(--ambar)}
+  .badge-off{background:#fef2f2;color:var(--rojo)}
+  .modulos-grid{display:flex;flex-wrap:wrap;gap:10px;margin:10px 0}
+  .modulos-grid label{display:flex;align-items:center;gap:6px;font-weight:400;color:#0f172a;font-size:12.5px;margin:0}
+  .aviso-podoscopia{background:#f1f5f9;border-radius:7px;padding:8px 10px;font-size:11px;color:var(--muted);margin-top:8px}
+  .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#0f172a;color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:99}
+  .toast.show{opacity:1}
+  .simm-nav-wrap{position:relative;display:inline-block;margin-top:8px}
+  .simm-nav-btn{cursor:pointer;border:1px solid rgba(255,255,255,.4);background:rgba(255,255,255,.12);color:#fff;border-radius:7px;padding:5px 10px;font-size:11px;font-weight:700}
+  .simm-nav-dropdown{display:none;position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:4px;background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.15);min-width:220px;z-index:200;padding:4px;text-align:left}
+  .simm-nav-item{display:block;padding:8px 10px;font-size:12px;color:#0f172a;text-decoration:none;border-radius:6px;white-space:nowrap}
+  .simm-nav-item:hover{background:#f1f5f9}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>🔐 Panel de Especialistas — S.I.M-M</h1>
+  <p>Acá autorizás, especialista por especialista, qué módulos comparte el sistema con cada uno</p>
+  <p style="margin-top:6px"><a href="#" style="color:#fff;text-decoration:underline;font-size:12px" onclick="document.getElementById('cardConfig').classList.remove('oculto');document.getElementById('sheetsUrlInput').value=SHEETS_URL||'';document.getElementById('appTokenInput').value=APP_TOKEN||'';return false;">⚙️ Configuración / token de acceso</a></p>
+  <div class="simm-nav-wrap">
+    <button class="simm-nav-btn" onclick="toggleSimmNav()" title="Ir a otro programa de SIM-M">🔀 Ir a…</button>
+    <div id="simm-nav-dropdown" class="simm-nav-dropdown">
+      <div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);padding:6px 10px 2px">Programas del consultorio</div>
+      <a href="OCM_Muratori_v14_0_26.html" class="simm-nav-item">💊 OCM — Historia clínica</a>
+      <a href="Lector_CUD.html" class="simm-nav-item">🪪 Lector CUD</a>
+      <a href="CAM_Beta_Herramientas_Clinicas_2.html" class="simm-nav-item">🩺 CAM — Herramientas Clínicas</a>
+      <a href="Agenda_Mensajes.html" class="simm-nav-item">✉️ Agenda de Mensajes</a>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- Configuración de conexión al backend (una sola vez) -->
+  <div class="card oculto" id="cardConfig">
+    <h2>⚙️ Conexión con el sistema</h2>
+    <p class="muted">Pegá acá la misma URL de implementación que usa OCM (Apps Script → Implementar → Web App).</p>
+    <input type="text" id="sheetsUrlInput" placeholder="https://script.google.com/macros/s/.../exec">
+    <div style="margin-top:8px"><button class="btn-primary" onclick="guardarSheetsUrl()">Guardar</button></div>
+    <p class="muted" style="margin-top:14px">Token de acceso (solo si ya corriste configurarAppToken() en el backend — mirá el mail que te llega al ejecutarlo).</p>
+    <input type="text" id="appTokenInput" placeholder="Token (dejar vacío si todavía no lo activaste)">
+    <div style="margin-top:8px"><button class="btn-secundario" onclick="guardarAppToken()">Guardar token</button></div>
+  </div>
+
+  <div class="card">
+    <h2>💰 Peaje del sistema — % por defecto</h2>
+    <p class="muted">Se aplica a todo especialista que no tenga un % propio cargado. Ya lo usan hoy kinesiología y tus propias Consultas Online.</p>
+    <div class="row" style="grid-template-columns:120px auto">
+      <input type="number" id="peajeGlobalInput" min="0" max="100" step="0.5">
+      <button class="btn-secundario" onclick="guardarPeajeGlobal()">Guardar % por defecto</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>👥 Especialistas registrados</h2>
+    <p class="muted">
+      Acá aparece cualquiera que haya abierto alguna vez KSM (u otra app del sistema) y aceptado el peaje.
+      Aceptar el peaje NO habilita nada por sí solo — abajo elegís, uno por uno, si lo autorizás y qué módulos ve.
+      <b>Podoscopía nunca aparece como opción</b>: es de uso exclusivo tuyo, no se comparte con nadie.
+    </p>
+    <button class="btn-secundario" onclick="cargarEspecialistas()">🔄 Actualizar lista</button>
+    <div id="listaEspecialistas" style="margin-top:12px" class="muted">Cargando...</div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// Menú rápido "Ir a…" entre programas de SIM-M (links relativos, mismos
+// archivos hermanos en esta carpeta).
+function toggleSimmNav(){
+  const dd = document.getElementById('simm-nav-dropdown');
+  if(!dd) return;
+  dd.style.display = dd.style.display==='none' || !dd.style.display ? 'block' : 'none';
+}
+document.addEventListener('click', e=>{
+  const wrap = document.querySelector('.simm-nav-wrap');
+  const dd = document.getElementById('simm-nav-dropdown');
+  if(wrap && dd && !wrap.contains(e.target)) dd.style.display='none';
+});
+let SHEETS_URL = localStorage.getItem('panel_sheets_url') || 'https://script.google.com/macros/s/AKfycbwYdoFuU8mQL4YKqufSBQ9AD_yqWEEesLtGzYQjNw2JG1BZIQF7ug80mHB5sLMXhaUpvQ/exec';
+// Token compartido (opcional hasta que corras configurarAppToken() en el
+// backend) — si ya lo activaste, pegalo acá una vez.
+let APP_TOKEN = localStorage.getItem('panel_app_token') || '';
+const MODULOS_DISPONIBLES = [
+  {clave:'investigacion', etiqueta:'🔬 Investigación (cruce OIT)'},
+  {clave:'cud',           etiqueta:'🦽 Discapacidad / CUD'},
+  {clave:'grafica',       etiqueta:'📊 Gráfica de evolución del dolor'},
+  {clave:'plantillas',    etiqueta:'👟 Plantillas (estado del pedido)'}
+];
+
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2600);
+}
+function guardarSheetsUrl(){
+  const v = document.getElementById('sheetsUrlInput').value.trim();
+  if(!v){ toast('Pegá la URL primero'); return; }
+  localStorage.setItem('panel_sheets_url', v);
+  SHEETS_URL = v;
+  document.getElementById('cardConfig').classList.add('oculto');
+  toast('Conexión guardada');
+  iniciar();
+}
+function apiGet(params){
+  const qs = new URLSearchParams(Object.assign({}, params, APP_TOKEN?{token:APP_TOKEN}:{})).toString();
+  return fetch(SHEETS_URL + '?' + qs).then(r=>r.json());
+}
+function guardarAppToken(){
+  const v = document.getElementById('appTokenInput').value.trim();
+  localStorage.setItem('panel_app_token', v);
+  APP_TOKEN = v;
+  toast(v ? 'Token guardado' : 'Token borrado');
+}
+function apiPost(payload){
+  return fetch(SHEETS_URL, {
+    method:'POST',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify(payload)
+  }).then(r=>r.json());
+}
+
+function guardarPeajeGlobal(){
+  const pct = Number(document.getElementById('peajeGlobalInput').value);
+  if(isNaN(pct) || pct<0 || pct>100){ toast('Porcentaje inválido'); return; }
+  apiPost({action:'set_peaje_sistema_pct', porcentaje: pct}).then(res=>{
+    if(res.success) toast('% por defecto actualizado');
+    else toast('Error: ' + (res.error||'desconocido'));
+  }).catch(()=> toast('Error de conexión'));
+}
+function cargarPeajeGlobal(){
+  apiGet({action:'get_peaje_sistema_pct'}).then(res=>{
+    document.getElementById('peajeGlobalInput').value = (res && res.success) ? res.porcentaje : 5;
+  }).catch(()=>{ document.getElementById('peajeGlobalInput').value = 5; });
+}
+
+function cargarEspecialistas(){
+  const cont = document.getElementById('listaEspecialistas');
+  cont.innerHTML = 'Cargando...';
+  apiGet({action:'get_lista_especialistas'}).then(res=>{
+    if(!res || !res.success){ cont.innerHTML = 'No se pudo cargar la lista.'; return; }
+    const especialistas = res.especialistas||[];
+    if(!especialistas.length){ cont.innerHTML = '<p class="muted">Todavía no hay ningún especialista registrado.</p>'; return; }
+    cont.innerHTML = '';
+    especialistas.forEach(e=> cont.appendChild(renderEspecialista_(e)));
+  }).catch(()=>{ cont.innerHTML = 'Error de conexión.'; });
+}
+
+function renderEspecialista_(e){
+  let modulosActuales = [];
+  try{ modulosActuales = JSON.parse(e.Modulos_JSON||'[]'); }catch(_){}
+  const autorizado = String(e.Autorizado||'').toUpperCase()==='SI';
+  const pendiente = String(e.Autorizado||'').toUpperCase()==='PENDIENTE' || !e.Autorizado;
+  const claseEstado = autorizado ? 'autorizado' : (pendiente ? 'pendiente' : 'bloqueado');
+  const idSafe = 'esp_' + btoa(unescape(encodeURIComponent(e.Email||''))).replace(/[^a-zA-Z0-9]/g,'');
+
+  const div = document.createElement('div');
+  div.className = 'especialista ' + claseEstado;
+  div.innerHTML =
+    '<div class="nombre">' + (e.Nombre||'(sin nombre)') + ' ' +
+      '<span class="badge ' + (autorizado?'badge-ok':(pendiente?'badge-pend':'badge-off')) + '">' +
+      (autorizado?'Autorizado':(pendiente?'Pendiente':'Bloqueado')) + '</span></div>' +
+    '<div class="meta">' + (e.Matricula||'sin matrícula') + ' — ' + (e.Email||'') +
+      (e.Tipo ? (' — ' + e.Tipo) : '') +
+      (e.Porcentaje_Aceptado ? (' — aceptó ' + e.Porcentaje_Aceptado + '% al registrarse') : '') + '</div>' +
+    '<label style="display:flex;align-items:center;gap:8px;font-weight:400"><input type="checkbox" id="' + idSafe + '_aut" style="width:auto" ' + (autorizado?'checked':'') + '> Autorizado a usar módulos compartidos</label>' +
+    '<div class="modulos-grid">' + MODULOS_DISPONIBLES.map(m=>
+      '<label><input type="checkbox" id="' + idSafe + '_mod_' + m.clave + '" style="width:auto" ' + (modulosActuales.indexOf(m.clave)>-1?'checked':'') + '> ' + m.etiqueta + '</label>'
+    ).join('') + '</div>' +
+    '<div class="row">' +
+      '<div><label>% de peaje personalizado (vacío = usa el % por defecto)</label><input type="number" id="' + idSafe + '_pct" min="0" max="100" step="0.5" value="' + (e.Porcentaje_Personalizado||'') + '"></div>' +
+      '<div style="display:flex;align-items:flex-end"><button class="btn-primary" type="button" id="' + idSafe + '_btn">💾 Guardar</button></div>' +
+    '</div>' +
+    '<div class="aviso-podoscopia">🦶 Podoscopía es de uso exclusivo tuyo — no aparece como opción para ningún especialista.</div>';
+  // Se usa addEventListener en vez de onclick inline para no tener que
+  // escapar el mail (puede traer caracteres que rompen el atributo HTML).
+  div.querySelector('#' + idSafe + '_btn').addEventListener('click', ()=> guardarPermisos_(e.Email||'', idSafe));
+  return div;
+}
+
+function guardarPermisos_(email, idSafe){
+  const autorizado = document.getElementById(idSafe + '_aut').checked;
+  const modulos = MODULOS_DISPONIBLES.filter(m=> document.getElementById(idSafe + '_mod_' + m.clave).checked).map(m=>m.clave);
+  const pctInput = document.getElementById(idSafe + '_pct').value.trim();
+  apiPost({
+    action:'set_permisos_especialista',
+    email, autorizado, modulos,
+    porcentajePersonalizado: pctInput===''? '' : Number(pctInput)
+  }).then(res=>{
+    if(res.success){ toast('Permisos guardados para ' + email); cargarEspecialistas(); }
+    else toast('Error: ' + (res.error||'desconocido'));
+  }).catch(()=> toast('Error de conexión'));
+}
+
+function iniciar(){
+  cargarPeajeGlobal();
+  cargarEspecialistas();
+}
+
+if(!SHEETS_URL){
+  document.getElementById('cardConfig').classList.remove('oculto');
+} else {
+  iniciar();
+}
+</script>
+
+</body>
+</html>

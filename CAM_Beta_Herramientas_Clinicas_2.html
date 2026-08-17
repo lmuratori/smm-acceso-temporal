@@ -1,0 +1,1680 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Herramientas Clínicas — BETA — Dr. Luis A. Muratori</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" defer></script>
+<style>
+  :root{
+    --azul:#0b1f3a; --muted:#64748b; --border:#e2e8f0; --border2:#dde3ec; --panel:#f8fafc;
+    --violeta:#7c2d92; --cian:#0891b2; --ambar:#a16207; --oliva:#4d7c0f; --rosa:#be185d; --teal:#0e7490;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:#eef1f6;color:var(--azul)}
+  .beta-banner{background:#fef3c7;border-bottom:2px solid #f59e0b;color:#78350f;text-align:center;padding:6px;font-size:11.5px;font-weight:700}
+  .topbar{background:#fff;border-bottom:1px solid var(--border);padding:12px 18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+  .topbar h1{font-size:15px;margin:0}
+  .topbar .sub{font-size:11px;color:var(--muted);font-weight:400}
+  .simm-nav-wrap{position:relative;margin-left:10px}
+  .simm-nav-btn{cursor:pointer;border:1px solid var(--border);background:#fff;border-radius:7px;padding:6px 10px;font-size:11.5px;font-weight:700;color:#0f172a}
+  .simm-nav-dropdown{display:none;position:absolute;top:100%;left:0;margin-top:4px;background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.15);min-width:220px;z-index:200;padding:4px}
+  .simm-nav-item{display:block;padding:8px 10px;font-size:12px;color:#0f172a;text-decoration:none;border-radius:6px;white-space:nowrap}
+  .simm-nav-item:hover{background:#f1f5f9}
+  .pacbar{background:#fff;border-bottom:1px solid var(--border);padding:10px 18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .pacbar input{padding:7px 10px;border:1px solid var(--border2);border-radius:6px;font-size:12px;font-family:inherit;min-width:200px}
+  .pac-chip{font-size:12.5px;background:#faf5ff;border:1px solid #e9d5ff;border-radius:20px;padding:6px 14px;display:flex;gap:8px;align-items:center}
+  .pac-chip b{color:var(--violeta)}
+  .tabs{display:flex;gap:4px;padding:10px 18px 0;background:#fff;border-bottom:1px solid var(--border);flex-wrap:wrap}
+  .tab-btn{padding:9px 14px;border:none;background:transparent;border-bottom:3px solid transparent;font-size:12.5px;font-weight:600;color:var(--muted);cursor:pointer;font-family:inherit}
+  .tab-btn.active{color:var(--azul);border-bottom-color:var(--violeta)}
+  .ef-subtabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+  .ef-subtab-btn{padding:7px 13px;border:1.5px solid var(--c,var(--border));border-radius:20px;background:#fff;color:var(--c,var(--muted));font-size:11.5px;font-weight:700;cursor:pointer;font-family:inherit;transition:.12s}
+  .ef-subtab-btn.active{background:var(--c,var(--violeta));color:#fff}
+  .ef-subpanel{display:none;border-left:3px solid var(--c,var(--border));padding-left:12px}
+  .ef-subpanel.active{display:block}
+  .panels{max-width:820px;margin:18px auto;padding:0 16px 60px}
+  .panel{display:none;background:#fff;border:1px solid var(--border);border-radius:10px;padding:18px}
+  .panel.active{display:block}
+  .panel-title{font-size:14px;font-weight:700;color:var(--azul);margin-bottom:4px}
+  .panel-desc{font-size:11.5px;color:var(--muted);margin-bottom:14px;line-height:1.5}
+  .sm-grp-lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:var(--azul);margin:14px 0 6px}
+  .sm-grp-lbl:first-child{margin-top:0}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .fg1,.fg2{display:flex;flex-direction:column;gap:3px}
+  .fg2{grid-column:1/-1}
+  .form-grid label,.field-label{font-size:10.5px;font-weight:600;color:var(--azul)}
+  input[type=text],input[type=number],input[type=date],select,textarea{
+    width:100%;border:1px solid var(--border2);border-radius:6px;padding:7px;font-size:12px;font-family:inherit;outline:none}
+  textarea{resize:vertical}
+  .btn{padding:9px 14px;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
+  .btn-primary{background:var(--violeta);color:#fff}
+  .btn-ghost{background:#f1f5f9;color:var(--azul);border:1px solid #cbd5e1}
+  .row-btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .row-btns .btn{flex:1;min-width:120px}
+  .preview-box{white-space:pre-wrap;background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:12px;font-size:12px;line-height:1.55;min-height:60px;margin-top:8px}
+  .info-box{background:#faf5ff;border:1px solid #e9d5ff;border-radius:8px;padding:12px;font-size:12px;line-height:1.6;margin-top:8px}
+  .info-box .k{font-weight:700;color:var(--violeta)}
+  #toast-box{position:fixed;bottom:18px;right:18px;display:flex;flex-direction:column;gap:8px;z-index:99}
+  .gonio3-btn{font-size:9.5px;padding:5px 8px;border-radius:5px;border:1px solid var(--violeta);background:#faf5ff;color:var(--violeta);cursor:pointer;margin-top:3px}
+  .gonio3-overlay{display:none;position:fixed;inset:0;background:rgba(11,31,58,.85);z-index:200;align-items:center;justify-content:center;padding:14px}
+  .gonio3-overlay.open{display:flex}
+  .gonio3-box{background:#fff;border-radius:12px;padding:16px;max-width:520px;width:100%;max-height:92vh;overflow-y:auto}
+  .gonio3-canvas-wrap{position:relative;width:100%;background:#111;border-radius:8px;overflow:hidden;margin-top:10px}
+  .gonio3-canvas-wrap canvas{width:100%;display:block;touch-action:none;cursor:crosshair}
+  .gonio3-valor{font-size:34px;font-weight:800;color:var(--violeta);text-align:center;margin:10px 0}
+  .toast{background:#0b1f3a;color:#fff;padding:10px 16px;border-radius:8px;font-size:12.5px;box-shadow:0 4px 14px rgba(0,0,0,.2)}
+  .toast.ok{background:#166534} .toast.err{background:#b91c1c}
+  .gonio-display{font-size:52px;font-weight:800;text-align:center;color:var(--violeta);margin:14px 0}
+  .gonio-sub{text-align:center;font-size:11px;color:var(--muted);margin-top:-8px}
+  .not-found{padding:20px;text-align:center;color:var(--muted);font-size:12px}
+</style>
+</head>
+<body>
+
+<div class="beta-banner">🧪 VERSIÓN BETA — módulo aparte de prueba, no reemplaza a CAM. Se usa solo para ir probando estas herramientas antes de integrarlas.</div>
+
+<div class="topbar">
+  <h1>🧬 Herramientas Clínicas <span class="sub">— Dr. Luis Alberto Muratori · M.N. 100.540 / M.P. 9943</span></h1>
+  <div class="simm-nav-wrap">
+    <button class="simm-nav-btn" onclick="toggleSimmNav()" title="Ir a otro programa de SIM-M">🔀 Ir a…</button>
+    <div id="simm-nav-dropdown" class="simm-nav-dropdown">
+      <div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);padding:6px 10px 2px">Programas del consultorio</div>
+      <a href="OCM_Muratori_v14_0_26.html" class="simm-nav-item">💊 OCM — Historia clínica</a>
+      <a href="Lector_CUD.html" class="simm-nav-item">🪪 Lector CUD</a>
+      <a href="Agenda_Mensajes.html" class="simm-nav-item">✉️ Agenda de Mensajes</a>
+      <a href="Panel_Especialistas.html" class="simm-nav-item">🔐 Panel de Especialistas</a>
+    </div>
+  </div>
+</div>
+
+<div class="pacbar" id="pacbar">
+  <span style="font-size:11.5px;color:var(--muted)">Cargando paciente…</span>
+</div>
+
+<div class="tabs" id="tabs">
+  <button class="tab-btn active" data-tab="interrogatorio" onclick="cambiarTab('interrogatorio')">📝 Interrogatorio</button>
+  <button class="tab-btn" data-tab="abreviada" onclick="cambiarTab('abreviada')" style="color:#b45309">⚡ Consultas Abreviadas</button>
+  <button class="tab-btn" data-tab="sindromes" onclick="cambiarTab('sindromes')">🧬 Síndromes</button>
+  <button class="tab-btn" data-tab="examenfisico" onclick="cambiarTab('examenfisico')">🔍 Examen Físico</button>
+  <button class="tab-btn" data-tab="podoscopio" onclick="cambiarTab('podoscopio')">🦶 Podoscopio y Ángulos</button>
+  <button class="tab-btn" data-tab="escoliosis" onclick="cambiarTab('escoliosis')">🦴 Columna</button>
+  <button class="tab-btn" data-tab="goniometro" onclick="cambiarTab('goniometro')">📐 Goniómetro (giroscopio)</button>
+  <button class="tab-btn" data-tab="estudios" onclick="cambiarTab('estudios')">🧪 Estudios</button>
+  <button class="tab-btn" data-tab="historial" onclick="cambiarTab('historial')">📁 Historial</button>
+</div>
+
+<div class="panels">
+
+  <!-- ═══ TAB: INTERROGATORIO ═══ -->
+  <div class="panel active" id="tab-interrogatorio">
+    <div class="panel-title">📝 Interrogatorio — Inicio de la Consulta</div>
+    <div class="panel-desc">Datos del paciente, antecedentes, motivo de consulta y segmento afectado primero — el desarrollo del interrogatorio (mecanismo y descripción) queda al final.</div>
+
+    <div class="sm-grp-lbl" style="margin-top:0">Datos del paciente</div>
+    <div id="interr-datos-paciente" class="info-box">Seleccioná un paciente para ver sus datos acá.</div>
+
+    <div class="sm-grp-lbl" style="margin-top:14px">Antecedentes positivos</div>
+    <div class="form-grid">
+      <div class="fg1"><label>Alergias</label><input id="interr-alergias" type="text" placeholder="Ej: penicilina, AINEs…"></div>
+      <div class="fg1"><label>Cirugías / procedimientos previos en la región</label><input id="interr-cirugias" type="text" placeholder="Ej: artroscopia de rodilla 2022…"></div>
+      <div class="fg1"><label>Enfermedades relevantes</label><input id="interr-enfermedades" type="text" placeholder="Ej: diabetes, hipotiroidismo…"></div>
+      <div class="fg1"><label>Medicación habitual</label><input id="interr-medicacion" type="text" placeholder="Ej: levotiroxina 50mcg…"></div>
+      <div class="fg2"><label>Estudios previos y antigüedad (opcional)</label><input id="interr-estudios-previos" type="text" placeholder="Ej: RX de rodilla, hace 6 meses…"></div>
+    </div>
+
+    <div class="sm-grp-lbl" style="margin-top:14px">Motivo de consulta</div>
+    <div class="fg2"><label>¿Qué le sucede?</label>
+      <textarea id="interr-motivo" rows="2" placeholder="Síntomas y signos presentes, en las palabras del paciente…"></textarea>
+    </div>
+
+    <div class="form-grid" style="margin-top:10px">
+      <div class="fg1"><label>Segmento afectado</label>
+        <select id="interr-segmento">
+          <option value="">Seleccionar…</option>
+          <optgroup label="Columna y pelvis">
+            <option>Columna cervical</option><option>Columna dorsal</option><option>Columna lumbar</option>
+            <option>Columna sacrocoxígea</option><option>Articulación sacroilíaca / pelvis</option>
+          </optgroup>
+          <optgroup label="Miembro superior">
+            <option>Hombro</option><option>Brazo</option><option>Codo</option><option>Antebrazo</option>
+            <option>Muñeca</option><option>Mano / dedos</option>
+          </optgroup>
+          <optgroup label="Miembro inferior">
+            <option>Cadera</option><option>Muslo</option><option>Rodilla</option><option>Pierna</option>
+            <option>Tobillo</option><option>Pie / dedos</option>
+          </optgroup>
+        </select>
+      </div>
+      <div class="fg1"><label>Fecha de inicio del síntoma</label>
+        <input type="date" id="interr-fecha-inicio" onchange="calcularAgudeza()">
+      </div>
+    </div>
+
+    <div id="interr-agudeza-badge" style="display:none;margin-top:10px;padding:10px 14px;border-radius:8px;font-size:12.5px;font-weight:700;text-align:center"></div>
+
+    <div class="sm-grp-lbl" style="margin-top:16px">Desarrollo del interrogatorio</div>
+    <div class="fg2"><label>Mecanismo — ¿cómo le ocurrió?</label>
+      <textarea id="interr-mecanismo" rows="3" placeholder="Mecanismo efector: caída, torsión, sobreuso, esfuerzo, golpe directo…"></textarea>
+    </div>
+
+    <div class="row-btns" style="margin-top:12px">
+      <button class="btn btn-primary" onclick="compilarInterrogatorio()">📝 Armar resumen del interrogatorio</button>
+    </div>
+    <div id="interr-preview" class="preview-box" style="margin-top:10px">El resumen del interrogatorio va a aparecer acá…</div>
+    <div class="row-btns">
+      <button class="btn btn-ghost" onclick="guardarTextoEnHistorialBeta('interr-preview','Interrogatorio')">💾 Guardar en el historial</button>
+    </div>
+  </div>
+
+  <!-- ═══ TAB: CONSULTAS ABREVIADAS ═══ -->
+  <div class="panel" id="tab-abreviada">
+    <div class="panel-title" style="color:#b45309">⚡ Consultas Abreviadas</div>
+    <div class="panel-desc">Consultas cortas que se saltean el interrogatorio y examen físico completo — pero quedan registradas igual, identificadas como abreviadas para no confundirlas con una consulta de rutina.</div>
+
+    <div class="fg2"><label>Tipo de consulta abreviada</label>
+      <select id="abrev-tipo" onchange="mostrarAbreviada()">
+        <option value="">Seleccionar…</option>
+        <option value="plantillas">Solicitud de plantillas / renovación</option>
+        <option value="medicacion">Solicitud de medicación</option>
+        <option value="estudios">Renovación de estudios (vencidos por tiempo)</option>
+        <option value="curacion">Curación</option>
+        <option value="retiroyeso">Retiro de yeso</option>
+        <option value="retiroplantilla">Retiro de plantilla — control</option>
+      </select>
+    </div>
+
+    <!-- 1. PLANTILLAS -->
+    <div class="abrev-sub" id="abrev-plantillas" style="display:none;margin-top:12px">
+      <div class="panel-desc" style="margin-top:0">Examen físico breve de pie + podoscopio. La indicación de plantillas se termina de generar en OCM.</div>
+      <div class="fg2"><label>Hallazgos del examen físico del pie</label><textarea id="abrev-plant-examen" rows="2" placeholder="Ej: apoyo plantar, retropié, antepié…"></textarea></div>
+      <div class="fg2" style="margin-top:8px"><label>Estudios de apoyo (si corresponde)</label>
+        <input id="abrev-plant-estudios" type="text" placeholder="Ej: escanograma, espinograma…"></div>
+      <div class="row-btns" style="margin-top:8px">
+        <button class="btn btn-ghost" onclick="cambiarTab('podoscopio')">🦶 Ir al Podoscopio</button>
+      </div>
+    </div>
+
+    <!-- 2. MEDICACIÓN -->
+    <div class="abrev-sub" id="abrev-medicacion" style="display:none;margin-top:12px">
+      <div class="fg2"><label>Medicación indicada</label><input id="abrev-med-nombre" type="text" placeholder="Ej: ibuprofeno 400mg cada 8hs"></div>
+      <div class="fg2" style="margin-top:8px"><label>Confort / control del dolor</label><input id="abrev-med-confort" type="text" placeholder="Ej: buen control del dolor, sin efectos adversos…"></div>
+    </div>
+
+    <!-- 3. RENOVACIÓN DE ESTUDIOS -->
+    <div class="abrev-sub" id="abrev-estudios" style="display:none;margin-top:12px">
+      <div class="fg2"><label>Estudios a renovar (vencidos por tiempo)</label><textarea id="abrev-estudios-cuales" rows="2" placeholder="Ej: laboratorio pre-quirúrgico, vencido a los 30 días…"></textarea></div>
+    </div>
+
+    <!-- 4. CURACIÓN -->
+    <div class="abrev-sub" id="abrev-curacion" style="display:none;margin-top:12px">
+      <div class="fg2"><label>Características de la herida</label><textarea id="abrev-cur-herida" rows="2" placeholder="Ej: bordes afrontados, sin signos de infección…"></textarea></div>
+    </div>
+
+    <!-- 5. RETIRO DE YESO -->
+    <div class="abrev-sub" id="abrev-retiroyeso" style="display:none;margin-top:12px">
+      <div class="fg2"><label>Redacción breve</label><textarea id="abrev-yeso-texto" rows="2" placeholder="Ej: se retira yeso, buena consolidación clínica…"></textarea></div>
+    </div>
+
+    <!-- 6. RETIRO DE PLANTILLA -->
+    <div class="abrev-sub" id="abrev-retiroplantilla" style="display:none;margin-top:12px">
+      <div class="form-grid">
+        <div class="fg1"><label>¿Son las correctas?</label><select id="abrev-plr-correctas"><option>Sí</option><option>No</option></select></div>
+        <div class="fg1"><label>¿Se adaptan bien al pie?</label><select id="abrev-plr-adaptan"><option>Sí, correctamente</option><option>Parcialmente — requiere ajuste</option><option>No se adaptan</option></select></div>
+      </div>
+      <div class="fg2" style="margin-top:8px"><label>Indicaciones de cuidado e higiene</label><textarea id="abrev-plr-cuidado" rows="2" placeholder="Ej: lavado diario con agua y jabón neutro, secado completo antes de calzar…"></textarea></div>
+    </div>
+
+    <div class="row-btns" style="margin-top:14px">
+      <button class="btn btn-primary" onclick="compilarAbreviada()">📝 Registrar consulta abreviada</button>
+    </div>
+    <div id="abrev-preview" class="preview-box">El registro de la consulta abreviada va a aparecer acá…</div>
+    <div class="row-btns">
+      <button class="btn btn-ghost" onclick="guardarTextoEnHistorialBeta('abrev-preview','Consulta abreviada')">💾 Guardar en el historial</button>
+    </div>
+  </div>
+
+  <!-- ═══ TAB: SÍNDROMES ═══ -->
+  <div class="panel" id="tab-sindromes">
+    <div class="panel-title">🧬 Consulta rápida de síndromes</div>
+    <div class="panel-desc">Referencia general de genética — herencia, hallazgo cromosómico si corresponde, y qué predomina/buscar en el examen. Base con 25 síndromes de relevancia pediátrica-ortopédica; los marcados con ⭐ son los que fuiste agregando a tu propio diccionario según la frecuencia con que los ves. Es una ayuda de consulta, no reemplaza el juicio clínico ni la confirmación genética.</div>
+    <div id="sind-contexto-interr" style="display:none;background:#f0f9ff;border:1px solid #7dd3fc;border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:11.5px;color:#0369a1"></div>
+    <div class="fg2"><label>Síndrome</label>
+      <select id="sind-select" onchange="mostrarSindrome()"></select>
+    </div>
+    <div id="sind-info" class="info-box">Elegí un síndrome para ver su información.</div>
+    <div class="row-btns">
+      <button class="btn btn-primary" onclick="agregarSindromeAExamen()">➕ Agregar esta nota al examen del paciente</button>
+      <button class="btn btn-ghost" onclick="agregarSindromePersonalizado()">⭐ Agregar síndrome nuevo a mi diccionario</button>
+    </div>
+    <div class="fg2" style="margin-top:14px"><label>Notas del examen (se van acumulando)</label>
+      <textarea id="sind-notas" rows="4" placeholder="Acá se agregan las notas de síndromes que vayas eligiendo…"></textarea>
+    </div>
+    <div class="row-btns">
+      <button class="btn btn-ghost" onclick="guardarEnHistorialBeta('sind-notas','Nota de síndrome / genética')">💾 Guardar en el historial</button>
+    </div>
+  </div>
+
+  <!-- ═══ TAB: EXAMEN FÍSICO ═══ -->
+  <div class="panel" id="tab-examenfisico">
+    <div class="panel-title">🔍 Examen Físico</div>
+    <div class="panel-desc">Palpación, percusión, goniometría, neurología y maniobras especiales — todo agrupado bajo Examen Físico. Cada sub-solapa queda etiquetada para que, al redactar la conclusión, el sistema sepa que estos datos pertenecen todos al mismo bloque.</div>
+
+    <div class="ef-subtabs" id="ef-subtabs">
+      <button class="ef-subtab-btn active" data-sub="palpacion" style="--c:#0891b2" onclick="cambiarEFSub('palpacion')">✋ Palpación</button>
+      <button class="ef-subtab-btn" data-sub="goniometria" style="--c:#7c2d92" onclick="cambiarEFSub('goniometria')">📐 Goniometría</button>
+      <button class="ef-subtab-btn" data-sub="neurologia" style="--c:#4d7c0f" onclick="cambiarEFSub('neurologia')">🧠 Neurología</button>
+      <button class="ef-subtab-btn" data-sub="maniobras" style="--c:#a16207" onclick="cambiarEFSub('maniobras')">🤲 Maniobras</button>
+    </div>
+
+    <!-- ── PALPACIÓN ── -->
+    <div class="ef-subpanel active" id="ef-sub-palpacion" style="--c:#0891b2">
+      <div id="palp-lista"></div>
+      <button type="button" class="btn-ghost" onclick="agregarPuntoPalpacion()">+ Agregar punto</button>
+    </div>
+
+    <!-- ── GONIOMETRÍA ── -->
+    <div class="ef-subpanel" id="ef-sub-goniometria" style="--c:#7c2d92">
+      <div class="row-btns" style="margin-top:0">
+        <button class="btn btn-ghost" onclick="cambiarTab('goniometro')">📐 Ir al goniómetro del celular (giroscopio)</button>
+      </div>
+      <div class="form-grid" style="margin-top:10px">
+        <div class="fg1"><label>Articulación</label><select id="neuro-gonio-art">
+          <option>Hombro</option><option>Codo</option><option>Muñeca</option><option>Cadera</option><option>Rodilla</option><option>Tobillo</option>
+          <option>Columna cervical</option><option>Columna lumbar</option><option>Otra</option>
+        </select></div>
+        <div class="fg1"><label>Lado</label><select id="neuro-gonio-lado"><option>Derecho</option><option>Izquierdo</option><option>Bilateral</option></select></div>
+        <div class="fg1"><label>Flexión (°)</label><input id="neuro-gonio-flex" type="number" step="1">
+          <button type="button" class="gonio3-btn" onclick="abrirGonio3('neuro-gonio-flex')">📐 Medir con el celular</button></div>
+        <div class="fg1"><label>Extensión (°)</label><input id="neuro-gonio-ext" type="number" step="1">
+          <button type="button" class="gonio3-btn" onclick="abrirGonio3('neuro-gonio-ext')">📐 Medir con el celular</button></div>
+        <div class="fg2"><label>Si eligió "Otra" articulación, especifique</label><input id="neuro-gonio-otro" type="text"></div>
+      </div>
+      <button class="btn btn-ghost" style="margin-top:6px" onclick="agregarNeuroItem('gonio')">➕ Agregar</button>
+      <div id="neuro-gonio-lista" style="margin-top:8px"></div>
+
+      <div class="sm-grp-lbl" style="margin-top:16px">Ejes articulares / alineación de segmentos</div>
+      <div class="form-grid">
+        <div class="fg1"><label>Segmento / articulación</label><input id="neuro-eje-segmento" type="text" placeholder="Ej: rodilla, codo, retropié…"></div>
+        <div class="fg1"><label>Lado</label><select id="neuro-eje-lado"><option>Derecho</option><option>Izquierdo</option><option>Bilateral</option></select></div>
+        <div class="fg1"><label>Alteración del eje</label><select id="neuro-eje-tipo"><option>Valgo</option><option>Varo</option><option>Antecurvatum</option><option>Recurvatum</option></select></div>
+        <div class="fg1"><label>Grado (°)</label><input id="neuro-eje-grado" type="number" step="0.5">
+          <button type="button" class="gonio3-btn" onclick="abrirGonio3('neuro-eje-grado')">📐 Medir con el celular</button></div>
+      </div>
+      <button class="btn btn-ghost" style="margin-top:6px" onclick="agregarNeuroItem('eje')">➕ Agregar</button>
+      <div id="neuro-eje-lista" style="margin-top:8px"></div>
+    </div>
+
+    <!-- ── NEUROLOGÍA ── -->
+    <div class="ef-subpanel" id="ef-sub-neurologia" style="--c:#4d7c0f">
+      <div class="sm-grp-lbl" style="margin-top:0">Sensibilidad</div>
+      <div class="form-grid">
+        <div class="fg1"><label>Dermatoma</label><select id="neuro-sens-derm">
+          <option>C5</option><option>C6</option><option>C7</option><option>C8</option><option>T1</option>
+          <option>L1</option><option>L2</option><option>L3</option><option>L4</option><option>L5</option><option>S1</option><option>S2</option>
+        </select></div>
+        <div class="fg1"><label>Lado</label><select id="neuro-sens-lado"><option>Derecho</option><option>Izquierdo</option><option>Bilateral</option></select></div>
+        <div class="fg1"><label>Tipo de alteración</label><select id="neuro-sens-tipo">
+          <option>Normal</option><option>Disestesia</option><option>Parestesia</option><option>Hiperalgesia</option><option>Hipoestesia</option><option>Anestesia</option>
+        </select></div>
+        <div class="fg1"><label>Nota (opcional)</label><input id="neuro-sens-nota" type="text" placeholder="Ej: cara lateral de pierna"></div>
+      </div>
+      <button class="btn btn-ghost" style="margin-top:6px" onclick="agregarNeuroItem('sens')">➕ Agregar</button>
+      <div id="neuro-sens-lista" style="margin-top:8px"></div>
+
+      <div class="sm-grp-lbl" style="margin-top:16px">Fuerza muscular (escala MRC 0-5)</div>
+      <div class="form-grid">
+        <div class="fg1"><label>Músculo</label><select id="neuro-fuerza-musc">
+          <option>Deltoides</option><option>Bíceps braquial</option><option>Tríceps braquial</option>
+          <option>Extensores de muñeca</option><option>Flexores de muñeca</option><option>Interóseos de la mano</option>
+          <option>Iliopsoas</option><option>Cuádriceps</option><option>Isquiotibiales</option>
+          <option>Tibial anterior</option><option>Extensor largo del hallux</option><option>Tríceps sural (gastrocnemio-sóleo)</option>
+          <option>Glúteo medio</option><option>Otro</option>
+        </select></div>
+        <div class="fg1"><label>Lado</label><select id="neuro-fuerza-lado"><option>Derecho</option><option>Izquierdo</option><option>Bilateral</option></select></div>
+        <div class="fg1"><label>Grado MRC</label><select id="neuro-fuerza-grado">
+          <option>5 — Normal</option><option>4+</option><option>4 — Movimiento contra resistencia parcial</option><option>4-</option>
+          <option>3 — Movimiento contra gravedad</option><option>2 — Movimiento sin gravedad</option>
+          <option>1 — Contracción visible sin movimiento</option><option>0 — Sin contracción</option>
+        </select></div>
+        <div class="fg1"><label>Si eligió "Otro" músculo, especifique</label><input id="neuro-fuerza-otro" type="text"></div>
+      </div>
+      <button class="btn btn-ghost" style="margin-top:6px" onclick="agregarNeuroItem('fuerza')">➕ Agregar</button>
+      <button type="button" class="btn-ghost" style="margin-top:6px;margin-left:6px" onclick="toggleFuerzaRapida()">📋 Desplegar todos los músculos</button>
+      <div id="neuro-fuerza-lista" style="margin-top:8px"></div>
+      <div id="fuerza-rapida-panel" style="display:none;margin-top:8px;background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:10px"></div>
+
+      <div class="sm-grp-lbl" style="margin-top:16px">Trofismo muscular</div>
+      <div class="form-grid">
+        <div class="fg1"><label>Músculo / grupo muscular</label><input id="neuro-trof-musc" type="text" placeholder="Ej: cuádriceps"></div>
+        <div class="fg1"><label>Lado</label><select id="neuro-trof-lado"><option>Derecho</option><option>Izquierdo</option><option>Bilateral</option></select></div>
+        <div class="fg1"><label>Estado</label><select id="neuro-trof-estado"><option>Eutrófico</option><option>Hipertrófico</option><option>Hipotrófico</option><option>Atrófico</option></select></div>
+        <div class="fg1"><label>Fasciculaciones</label><select id="neuro-trof-fasc"><option>Ausentes</option><option>Presentes</option></select></div>
+        <div class="fg2"><label>Alteración del volumen muscular (opcional)</label><input id="neuro-trof-volumen" type="text" placeholder="Ej: circunferencia de muslo 3 cm menor que contralateral"></div>
+      </div>
+      <button class="btn btn-ghost" style="margin-top:6px" onclick="agregarNeuroItem('trof')">➕ Agregar</button>
+      <div id="neuro-trof-lista" style="margin-top:8px"></div>
+
+      <div class="sm-grp-lbl" style="margin-top:16px">Reflejos osteomusculares</div>
+      <div class="form-grid">
+        <div class="fg1"><label>Reflejo</label><select id="neuro-ref-nombre">
+          <option>Bicipital (C5-C6)</option><option>Estilorradial (C5-C6)</option><option>Tricipital (C7-C8)</option>
+          <option>Patelar / rotuliano (L2-L4)</option><option>Aquíleo (S1-S2)</option>
+          <option>Cutáneo-abdominal</option><option>Cremasteriano</option><option>Otro</option>
+        </select></div>
+        <div class="fg1"><label>Lado</label><select id="neuro-ref-lado"><option>Derecho</option><option>Izquierdo</option><option>Bilateral</option></select></div>
+        <div class="fg1"><label>Estado</label><select id="neuro-ref-estado">
+          <option>Normal</option>
+          <option>Hiporreflexia +</option><option>Hiporreflexia ++</option>
+          <option>Hiperreflexia +</option><option>Hiperreflexia ++</option>
+          <option>Arreflexia</option>
+        </select></div>
+        <div class="fg1"><label>Si eligió "Otro" reflejo, especifique</label><input id="neuro-ref-otro" type="text"></div>
+      </div>
+      <button class="btn btn-ghost" style="margin-top:6px" onclick="agregarNeuroItem('reflejo')">➕ Agregar</button>
+      <button type="button" class="btn-ghost" style="margin-top:6px;margin-left:6px" onclick="toggleReflejosRapido()">📋 Desplegar todos los reflejos</button>
+      <div id="neuro-reflejo-lista" style="margin-top:8px"></div>
+      <div id="reflejos-rapido-panel" style="display:none;margin-top:8px;background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:10px"></div>
+
+      <div class="sm-grp-lbl" style="margin-top:16px">
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-weight:700">
+          <input type="checkbox" id="neuro-perc-toggle" onchange="document.getElementById('neuro-perc-body').style.display=this.checked?'block':'none'">
+          Percusión (técnica para evaluar reflejos y puntos dolorosos — activar solo si corresponde)
+        </label>
+      </div>
+      <div id="neuro-perc-body" style="display:none">
+        <div class="panel-desc" style="margin-top:0">Percusión con martillo de reflejos, o sobre un punto óseo/de partes blandas que al percutirlo aumenta el dolor (típico en fracturas o edema óseo).</div>
+        <div id="perc-lista"></div>
+        <button type="button" class="btn-ghost" onclick="agregarPuntoPercusion()">+ Agregar punto de percusión</button>
+      </div>
+
+      <div class="sm-grp-lbl" style="margin-top:16px">Signos y maniobras neurológicas</div>
+      <div class="form-grid">
+        <div class="fg1"><label>Clonus</label><select id="neuro-clonus"><option>Ausente</option><option>Presente — aquíleo</option><option>Presente — rotuliano</option><option>Presente — otro</option></select></div>
+        <div class="fg1"><label>Babinski</label><select id="neuro-babinski"><option>Ausente (flexor)</option><option>Presente derecho</option><option>Presente izquierdo</option><option>Presente bilateral</option></select></div>
+        <div class="fg1"><label>Meningismo (Kernig / Brudzinski)</label><select id="neuro-meningismo"><option>Ausente</option><option>Presente</option></select></div>
+        <div class="fg1"><label>Signo de Hoffmann (equivalente en MMSS)</label><select id="neuro-hoffmann"><option>Ausente</option><option>Presente derecho</option><option>Presente izquierdo</option><option>Presente bilateral</option></select></div>
+      </div>
+
+      <div class="sm-grp-lbl" style="margin-top:16px">Tono muscular — Espasticidad (Escala de Tardieu, uso en neuroortopedia)</div>
+      <div class="panel-desc" style="margin-top:-4px">R1: ángulo de "catch" (resistencia) al estirar rápido. R2: rango pasivo completo, estirando lento. La diferencia R2−R1 orienta cuánto de la limitación es espasticidad vs. contractura fija.</div>
+      <div class="form-grid">
+        <div class="fg1"><label>Músculo / grupo muscular</label><input id="neuro-tono-musc" type="text" placeholder="Ej: tríceps sural, isquiotibiales…"></div>
+        <div class="fg1"><label>Lado</label><select id="neuro-tono-lado"><option>Derecho</option><option>Izquierdo</option><option>Bilateral</option></select></div>
+        <div class="fg1"><label>R1 — ángulo de catch (°), estiramiento rápido</label><input id="neuro-tono-r1" type="number" step="1">
+          <button type="button" class="gonio3-btn" onclick="abrirGonio3('neuro-tono-r1')">📐 Medir con el celular</button></div>
+        <div class="fg1"><label>R2 — rango pasivo completo (°), estiramiento lento</label><input id="neuro-tono-r2" type="number" step="1">
+          <button type="button" class="gonio3-btn" onclick="abrirGonio3('neuro-tono-r2')">📐 Medir con el celular</button></div>
+        <div class="fg1"><label>Grado de Ashworth modificado (opcional)</label><select id="neuro-tono-ashworth">
+          <option value="">Sin especificar</option>
+          <option>0 — Sin aumento de tono</option>
+          <option>1 — Ligero aumento, catch y liberación</option>
+          <option>1+ — Ligero aumento, catch + resistencia mínima el resto del rango</option>
+          <option>2 — Aumento más marcado, casi todo el rango</option>
+          <option>3 — Aumento considerable, movimiento pasivo difícil</option>
+          <option>4 — Rígido en flexión o extensión</option>
+        </select></div>
+      </div>
+      <button class="btn btn-ghost" style="margin-top:6px" onclick="agregarNeuroItem('tono')">➕ Agregar</button>
+      <div id="neuro-tono-lista" style="margin-top:8px"></div>
+    </div>
+
+    <!-- ── MANIOBRAS ESPECIALES ── -->
+    <div class="ef-subpanel" id="ef-sub-maniobras" style="--c:#a16207">
+      <div id="ef-maniobras-lista"></div>
+      <button type="button" class="btn-ghost" onclick="agregarManiobra()">+ Agregar maniobra</button>
+    </div>
+
+    <div class="row-btns" style="margin-top:14px">
+      <button class="btn btn-primary" onclick="compilarExamenFisicoCompleto()">📝 Armar resumen completo del Examen Físico</button>
+    </div>
+    <div id="ef-preview" class="preview-box">El resumen del examen físico va a aparecer acá…</div>
+    <div class="row-btns">
+      <button class="btn btn-ghost" onclick="guardarTextoEnHistorialBeta('ef-preview','Examen Físico')">💾 Guardar en el historial</button>
+    </div>
+  </div>
+
+  <!-- ═══ TAB: PODOSCOPIO ═══ -->
+  <div class="panel" id="tab-podoscopio">
+    <div class="panel-title">🦶 Podoscopio y Ángulos</div>
+    <div class="panel-desc">Valgo/Varo de retropié, ángulos radiográficos y los índices de huella plantar — desde acá se arma después el pedido de plantillas.</div>
+
+    <div class="sm-grp-lbl">Retropié — Valgo / Varo</div>
+    <div class="form-grid">
+      <div class="fg1"><label>Lado</label><select id="podo-lado-vv"><option>Derecho</option><option>Izquierdo</option><option>Bilateral</option></select></div>
+      <div class="fg1"><label>Ángulo (°) — positivo = valgo, negativo = varo</label><input id="podo-angulo-vv" type="number" step="0.1" placeholder="Ej: 8">
+        <button type="button" class="gonio3-btn" onclick="abrirGonio3('podo-angulo-vv')">📐 Medir con el celular</button></div>
+    </div>
+
+    <div class="sm-grp-lbl">Radiografía de frente del pie</div>
+    <div class="form-grid">
+      <div class="fg1"><label>Lado</label><select id="podo-lado-frente"><option>Derecho</option><option>Izquierdo</option><option>Bilateral</option></select></div>
+      <div class="fg1"><label>Ángulo talo-calcáneo AP / de divergencia (°)</label><input id="podo-angulo-frente" type="number" step="0.1">
+        <button type="button" class="gonio3-btn" onclick="abrirGonio3('podo-angulo-frente')">📐 Medir con el celular</button></div>
+    </div>
+
+    <div class="sm-grp-lbl">Ángulo de Costa Bartani</div>
+    <div class="form-grid">
+      <div class="fg1"><label>Lado</label><select id="podo-lado-cb"><option>Derecho</option><option>Izquierdo</option><option>Bilateral</option></select></div>
+      <div class="fg1"><label>Ángulo (°)</label><input id="podo-angulo-cb" type="number" step="0.1">
+        <button type="button" class="gonio3-btn" onclick="abrirGonio3('podo-angulo-cb')">📐 Medir con el celular</button></div>
+    </div>
+
+    <div class="sm-grp-lbl">Ángulos del antepié</div>
+    <div class="form-grid">
+      <div class="fg1"><label>Lado</label><select id="podo-lado-antepie"><option>Derecho</option><option>Izquierdo</option><option>Bilateral</option></select></div>
+      <div class="fg1"></div>
+      <div class="fg1"><label>Ángulo interfalángico distal (°)</label><input id="podo-angulo-ifd" type="number" step="0.1">
+        <button type="button" class="gonio3-btn" onclick="abrirGonio3('podo-angulo-ifd')">📐 Medir con el celular</button></div>
+      <div class="fg1"><label>Ángulo interfalángico proximal (°)</label><input id="podo-angulo-ifp" type="number" step="0.1">
+        <button type="button" class="gonio3-btn" onclick="abrirGonio3('podo-angulo-ifp')">📐 Medir con el celular</button></div>
+      <div class="fg1"><label>Ángulo intermetatarsiano (°)</label><input id="podo-angulo-imt" type="number" step="0.1">
+        <button type="button" class="gonio3-btn" onclick="abrirGonio3('podo-angulo-imt')">📐 Medir con el celular</button></div>
+    </div>
+
+    <div class="sm-grp-lbl">Medidas de longitud</div>
+    <div class="form-grid">
+      <div class="fg1"><label>Lado</label><select id="podo-lado-long"><option>Derecho</option><option>Izquierdo</option><option>Bilateral</option></select></div>
+      <div class="fg1"></div>
+      <div class="fg1"><label>Longitud del pie (cm)</label><input id="podo-longitud-pie" type="number" step="0.1"></div>
+      <div class="fg1"><label>Longitud de la plantilla / zapatilla (cm)</label><input id="podo-longitud-plantilla" type="number" step="0.1"></div>
+    </div>
+
+    <div class="sm-grp-lbl">Índices de huella plantar</div>
+    <div class="form-grid">
+      <div class="fg1"><label>Índice de Chippaux-Smirak (%)</label><input id="podo-chippaux" type="number" step="0.1" placeholder="Ancho medio / ancho antepié × 100"></div>
+      <div class="fg1"><label>Índice de Hernández-Corvo</label><input id="podo-hcorvo" type="text" placeholder="Ej: Grado I a IV"></div>
+      <div class="fg1"><label>Arch Index (Cavanagh-Rodgers)</label><input id="podo-archindex" type="number" step="0.01" placeholder="0.00 a 1.00"></div>
+    </div>
+
+    <div class="fg2" style="margin-top:8px"><label>Observaciones adicionales</label><textarea id="podo-obs" rows="2"></textarea></div>
+
+    <div class="row-btns">
+      <button class="btn btn-primary" onclick="generarInformePodoscopia()">📄 Generar informe de podoscopía</button>
+    </div>
+    <div id="podo-preview" class="preview-box">El informe va a aparecer acá…</div>
+    <div class="row-btns">
+      <button class="btn btn-ghost" onclick="guardarTextoEnHistorialBeta('podo-preview','Podoscopía y ángulos')">💾 Guardar en el historial</button>
+    </div>
+  </div>
+
+  <!-- ═══ TAB: ESCOLIOSIS ═══ -->
+  <div class="panel" id="tab-escoliosis">
+    <div class="panel-title">🦴 Columna — Escoliosis y Balance Sagital</div>
+    <div class="panel-desc">Frente (coronal): vértebras límite y ápex para el Cobb, lateralización y rotación. Perfil (sagital): parámetros espinopélvicos (incidencia pélvica, pendiente sacra, inclinación pélvica), lordosis lumbar, cifosis torácica, y eje sagital vertical (SVA / línea de plomada de C7).</div>
+
+    <div class="sm-grp-lbl">Radiografía y crecimiento (mismo día)</div>
+    <div class="form-grid">
+      <div class="fg1"><label>Fecha de la radiografía</label><input id="esco-fecha" type="date"></div>
+      <div class="fg1"></div>
+      <div class="fg1"><label>Talla (cm)</label><input id="esco-talla" type="number" step="0.1"></div>
+      <div class="fg1"><label>Media talla (talla sentado, cm)</label><input id="esco-mediatalla" type="number" step="0.1"></div>
+    </div>
+
+    <div class="sm-grp-lbl">Edad ósea y madurez esquelética</div>
+    <div class="form-grid">
+      <div class="fg1"><label>Método de Risser (cresta ilíaca)</label><select id="esco-risser">
+        <option value="0">Risser 0 — sin osificación (alto potencial de crecimiento)</option>
+        <option value="1">Risser 1 — osificación hasta 25%</option>
+        <option value="2">Risser 2 — osificación 25–50%</option>
+        <option value="3">Risser 3 — osificación 50–75%</option>
+        <option value="4">Risser 4 — osificación completa (100%)</option>
+        <option value="5">Risser 5 — fusión completa (fin del crecimiento)</option>
+      </select></div>
+      <div class="fg1"><label>Carpograma (núcleos del carpo — Greulich-Pyle)</label><select id="esco-carpograma">
+        <option>Pre-puberal — centros del carpo en desarrollo</option>
+        <option>Inicio de pubertad — aparición del sesamoideo del pulgar</option>
+        <option>Pubertad avanzada — fusión avanzada de falanges</option>
+        <option>Madurez esquelética — cierre total de epífisis de radio/cúbito</option>
+      </select></div>
+    </div>
+
+    <div class="sm-grp-lbl">Estadios de Tanner — caracteres sexuales secundarios</div>
+    <div class="form-grid">
+      <div class="fg1"><label>Sexo</label><select id="esco-tanner-sexo" onchange="mostrarCamposTanner()"><option value="F">Femenino</option><option value="M">Masculino</option></select></div>
+      <div class="fg1"></div>
+      <div class="fg1" id="esco-tanner-mama-wrap"><label>Estadio mamario (Tanner M)</label><select id="esco-tanner-mama">
+        <option>M1 — prepuberal</option><option>M2 — botón mamario</option><option>M3</option><option>M4</option><option>M5 — adulto</option>
+      </select></div>
+      <div class="fg1" id="esco-tanner-genital-wrap" style="display:none"><label>Estadio genital (Tanner G)</label><select id="esco-tanner-genital">
+        <option>G1 — prepuberal</option><option>G2</option><option>G3</option><option>G4</option><option>G5 — adulto</option>
+      </select></div>
+      <div class="fg1"><label>Estadio de vello púbico (Tanner P)</label><select id="esco-tanner-vello">
+        <option>P1 — prepuberal</option><option>P2</option><option>P3</option><option>P4</option><option>P5 — adulto</option>
+      </select></div>
+    </div>
+
+    <div class="sm-grp-lbl">Frente (coronal) — curva y ángulo de Cobb</div>
+    <div class="form-grid">
+      <div class="fg1"><label>Vértebra límite proximal</label><select id="esco-vert-prox">
+        <option>T1</option><option>T2</option><option>T3</option><option>T4</option><option>T5</option><option>T6</option>
+        <option>T7</option><option>T8</option><option>T9</option><option>T10</option><option>T11</option><option>T12</option>
+        <option>L1</option><option>L2</option><option>L3</option><option>L4</option><option>L5</option>
+      </select></div>
+      <div class="fg1"><label>Vértebra límite distal</label><select id="esco-vert-dist">
+        <option>T1</option><option>T2</option><option>T3</option><option>T4</option><option>T5</option><option>T6</option>
+        <option>T7</option><option>T8</option><option>T9</option><option>T10</option><option>T11</option><option>T12</option>
+        <option>L1</option><option>L2</option><option>L3</option><option>L4</option><option>L5</option>
+      </select></div>
+      <div class="fg1"><label>Vértebra ápex</label><select id="esco-vert-apex">
+        <option>T1</option><option>T2</option><option>T3</option><option>T4</option><option>T5</option><option>T6</option>
+        <option>T7</option><option>T8</option><option>T9</option><option>T10</option><option>T11</option><option>T12</option>
+        <option>L1</option><option>L2</option><option>L3</option><option>L4</option><option>L5</option>
+      </select></div>
+      <div class="fg1"><label>Ángulo de Cobb coronal (°)</label><input id="esco-cobb" type="number" step="0.5">
+        <button type="button" class="gonio3-btn" onclick="abrirGonio3('esco-cobb')">📐 Medir con el celular</button></div>
+    </div>
+
+    <div class="sm-grp-lbl">Lateralización y rotación</div>
+    <div class="form-grid">
+      <div class="fg1"><label>Lateralización de la línea media (ejes de plomada frontales)</label><select id="esco-lateraliz-lado"><option>Sin lateralización</option><option>Derecha</option><option>Izquierda</option></select></div>
+      <div class="fg1"><label>Distancia (mm)</label><input id="esco-lateraliz-mm" type="number" step="1"></div>
+      <div class="fg1"><label>Rotación vertebral en ápex (Nash-Moe)</label><select id="esco-rotacion">
+        <option>Grado 0 — sin rotación</option><option>Grado I</option><option>Grado II</option><option>Grado III</option><option>Grado IV</option>
+      </select></div>
+      <div class="fg1"></div>
+    </div>
+
+    <div class="sm-grp-lbl">Perfil (sagital) — parámetros espinopélvicos</div>
+    <div class="panel-desc" style="margin-bottom:6px">PI = SS + PT, como control cruzado de las tres mediciones.</div>
+    <div class="form-grid">
+      <div class="fg1"><label>Incidencia Pélvica — PI (°)</label><input id="esco-pi" type="number" step="0.5">
+        <button type="button" class="gonio3-btn" onclick="abrirGonio3('esco-pi')">📐 Medir con el celular</button></div>
+      <div class="fg1"><label>Pendiente Sacra — SS (°)</label><input id="esco-ss" type="number" step="0.5">
+        <button type="button" class="gonio3-btn" onclick="abrirGonio3('esco-ss')">📐 Medir con el celular</button></div>
+      <div class="fg1"><label>Inclinación Pélvica — PT (°)</label><input id="esco-pt" type="number" step="0.5">
+        <button type="button" class="gonio3-btn" onclick="abrirGonio3('esco-pt')">📐 Medir con el celular</button></div>
+      <div class="fg1"></div>
+    </div>
+
+    <div class="sm-grp-lbl">Perfil (sagital) — lordosis lumbar</div>
+    <div class="form-grid">
+      <div class="fg1"><label>Vértebra límite superior</label><select id="esco-ll-sup">
+        <option>T12</option><option>L1</option><option>L2</option>
+      </select></div>
+      <div class="fg1"><label>Vértebra límite inferior</label><select id="esco-ll-inf">
+        <option>L5</option><option>S1</option>
+      </select></div>
+      <div class="fg1"><label>Lordosis Lumbar — LL (°)</label><input id="esco-ll" type="number" step="0.5">
+        <button type="button" class="gonio3-btn" onclick="abrirGonio3('esco-ll')">📐 Medir con el celular</button></div>
+      <div class="fg1"></div>
+    </div>
+
+    <div class="sm-grp-lbl">Perfil (sagital) — cifosis torácica</div>
+    <div class="form-grid">
+      <div class="fg1"><label>Tipo de cifosis</label><select id="esco-cifosis-tipo"><option>Corta</option><option>Larga</option></select></div>
+      <div class="fg1"><label>Cifosis Torácica — TK (°)</label><input id="esco-cifosis-valor" type="number" step="0.5">
+        <button type="button" class="gonio3-btn" onclick="abrirGonio3('esco-cifosis-valor')">📐 Medir con el celular</button></div>
+      <div class="fg2"><label>Vértebras límite de la cifosis medida (habitualmente T4 a T12)</label><input id="esco-cifosis-vertebras" type="text" placeholder="Ej: T4 a T12"></div>
+    </div>
+
+    <div class="sm-grp-lbl">Perfil (sagital) — eje sagital vertical</div>
+    <div class="form-grid">
+      <div class="fg1"><label>SVA / línea de plomada de C7 (mm)</label><input id="esco-sva" type="number" step="1"></div>
+      <div class="fg1"><label>Dirección respecto al borde posterosuperior de S1</label><select id="esco-sva-dir"><option>Sin desbalance (0)</option><option>Anterior (positivo)</option><option>Posterior (negativo)</option></select></div>
+    </div>
+
+    <div class="sm-grp-lbl">Listesis — desplazamiento de Meyerding</div>
+    <div class="form-grid">
+      <div class="fg1"><label>Nivel vertebral</label><select id="esco-list-nivel">
+        <option>L1-L2</option><option>L2-L3</option><option>L3-L4</option><option>L4-L5</option><option>L5-S1</option><option>Otro</option>
+      </select></div>
+      <div class="fg1"><label>Si es "Otro" nivel, especifique</label><input id="esco-list-nivel-otro" type="text"></div>
+      <div class="fg1"><label>Tipo</label><select id="esco-list-tipo"><option>Anterolistesis</option><option>Retrolistesis</option><option>Lateral</option></select></div>
+      <div class="fg1"><label>Desplazamiento (%)</label><input id="esco-list-pct" type="number" step="1" min="0" max="100" oninput="actualizarGradoMeyerding()"></div>
+      <div class="fg2"><label>Grado de Meyerding</label>
+        <select id="esco-list-grado">
+          <option value="I">Grado I (0–25%)</option>
+          <option value="II">Grado II (25–50%)</option>
+          <option value="III">Grado III (50–75%)</option>
+          <option value="IV">Grado IV (75–100%)</option>
+          <option value="V">Grado V — espondiloptosis (&gt;100%)</option>
+        </select>
+        <div style="font-size:9.5px;color:var(--muted);margin-top:2px">Se sugiere solo a partir del % cargado — el grado final queda a su criterio.</div>
+      </div>
+    </div>
+
+    <div class="fg2" style="margin-top:8px"><label>Observaciones adicionales</label><textarea id="esco-obs" rows="2"></textarea></div>
+
+    <div class="row-btns">
+      <button class="btn btn-primary" onclick="generarInformeEscoliosis()">📄 Generar informe de escoliosis y balance sagital</button>
+    </div>
+    <div id="esco-preview" class="preview-box">El informe va a aparecer acá…</div>
+    <div class="row-btns">
+      <button class="btn btn-ghost" onclick="guardarTextoEnHistorialBeta('esco-preview','Escoliosis y balance sagital')">💾 Guardar en el historial</button>
+    </div>
+  </div>
+
+  <!-- ═══ TAB: GONIÓMETRO ═══ -->
+  <div class="panel" id="tab-goniometro">
+    <div class="panel-title">📐 Goniómetro con el giroscopio del celular</div>
+    <div class="panel-desc">Apoyá el celular sobre el segmento a medir (o contra la radiografía en la pantalla) y leé el ángulo de inclinación en tiempo real. Requiere un navegador móvil con sensores de orientación (Chrome/Safari en celular) y, en iPhone, otorgar el permiso cuando lo pida.</div>
+
+    <button class="btn btn-primary" onclick="activarGiroscopio()">▶ Activar sensor de inclinación</button>
+    <div id="gonio-estado" style="font-size:11px;color:var(--muted);margin-top:8px">Sensor no activado todavía.</div>
+
+    <div class="gonio-display" id="gonio-valor">—°</div>
+    <div class="gonio-sub" id="gonio-eje">Inclinación (beta)</div>
+
+    <div class="row-btns">
+      <button class="btn btn-ghost" onclick="congelarAnguloGonio()">📌 Congelar este ángulo</button>
+    </div>
+
+    <div class="sm-grp-lbl" style="margin-top:14px">Mediciones congeladas</div>
+    <div id="gonio-lista"><div class="not-found">Todavía no congelaste ninguna medición.</div></div>
+
+    <div class="fg2" style="margin-top:10px"><label>Referencia de la medición (ej: eje anatómico de rodilla, ángulo de espinograma…)</label>
+      <input id="gonio-ref" type="text" placeholder="Escribí a qué corresponde antes de congelar el ángulo"></div>
+
+    <div class="row-btns">
+      <button class="btn btn-primary" onclick="generarInformeGonio()">📄 Generar informe de goniometría</button>
+    </div>
+    <div id="gonio-preview" class="preview-box">El informe va a aparecer acá…</div>
+    <div class="row-btns">
+      <button class="btn btn-ghost" onclick="guardarTextoEnHistorialBeta('gonio-preview','Goniometría')">💾 Guardar en el historial</button>
+    </div>
+  </div>
+
+  <!-- ═══ TAB: ESTUDIOS ═══ -->
+  <div class="panel" id="tab-estudios">
+    <div class="panel-title">🧪 Estudios</div>
+    <div class="panel-desc">Qué se solicitó, o qué informes trae el paciente — esto queda como dato a tener en cuenta en la redacción final de la consulta.</div>
+    <div id="estudios-lista"></div>
+    <button type="button" class="btn-ghost" onclick="agregarEstudio()">+ Agregar estudio</button>
+    <div class="row-btns" style="margin-top:14px">
+      <button class="btn btn-primary" onclick="compilarEstudios()">📝 Armar resumen de estudios</button>
+    </div>
+    <div id="estudios-preview" class="preview-box">El resumen de estudios va a aparecer acá…</div>
+    <div class="row-btns">
+      <button class="btn btn-ghost" onclick="guardarTextoEnHistorialBeta('estudios-preview','Estudios')">💾 Guardar en el historial</button>
+    </div>
+  </div>
+
+  <!-- ═══ TAB: HISTORIAL ═══ -->
+  <div class="panel" id="tab-historial">
+    <div class="panel-title">📁 Historial (Herramientas Clínicas — BETA)</div>
+    <div class="panel-desc">Todo lo guardado desde este módulo para el paciente seleccionado.</div>
+    <div id="historial-lista"><div class="not-found">Seleccioná un paciente para ver su historial.</div></div>
+  </div>
+
+</div>
+
+<div id="toast-box"></div>
+
+<!-- ═══ GONIÓMETRO DIGITAL — 3 PUNTOS DE REFERENCIA ═══ -->
+<div class="gonio3-overlay" id="gonio3-overlay">
+  <div class="gonio3-box">
+    <div class="panel-title">📐 Goniómetro digital — celular</div>
+    <div class="panel-desc">Sacá una foto del segmento (o de la radiografía) y tocá, en orden, 3 puntos: <b>1</b> el punto de referencia proximal, <b>2</b> el vértice/eje articular, y <b>3</b> el punto de referencia distal. El ángulo se calcula solo.</div>
+
+    <input type="file" id="gonio3-file" accept="image/*" capture="environment" onchange="cargarFotoGonio3(event)">
+
+    <div class="gonio3-canvas-wrap">
+      <canvas id="gonio3-canvas" width="600" height="450"></canvas>
+    </div>
+
+    <div class="gonio3-valor" id="gonio3-valor">—°</div>
+    <div style="text-align:center;font-size:11px;color:var(--muted)" id="gonio3-estado">Cargá una foto y marcá los 3 puntos.</div>
+
+    <div class="row-btns">
+      <button class="btn btn-ghost" onclick="reiniciarPuntosGonio3()">🔄 Reiniciar puntos</button>
+      <button class="btn btn-primary" onclick="confirmarGonio3()">✅ Usar este valor</button>
+    </div>
+    <div class="row-btns">
+      <button class="btn btn-ghost" onclick="cerrarGonio3()">Cerrar sin usar</button>
+    </div>
+  </div>
+</div>
+
+
+<script>
+// ══════════════════════════════════════════════════════════════════
+// Menú rápido "Ir a…" entre los programas de SIM-M — links relativos
+// (mismos archivos hermanos en esta misma carpeta), funciona igual si se
+// abre por servidor local, GitHub Pages o doble clic desde la carpeta.
+// ══════════════════════════════════════════════════════════════════
+function toggleSimmNav(){
+  const dd = document.getElementById('simm-nav-dropdown');
+  if(!dd) return;
+  dd.style.display = dd.style.display==='none' || !dd.style.display ? 'block' : 'none';
+}
+document.addEventListener('click', e=>{
+  const wrap = document.querySelector('.simm-nav-wrap');
+  const dd = document.getElementById('simm-nav-dropdown');
+  if(wrap && dd && !wrap.contains(e.target)) dd.style.display='none';
+});
+// ══════════════════════════════════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════════════════════════════════
+const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbwYdoFuU8mQL4YKqufSBQ9AD_yqWEEesLtGzYQjNw2JG1BZIQF7ug80mHB5sLMXhaUpvQ/exec';
+// ══════════════════════════════════════════════════════════════════
+// INTERROGATORIO — clasificación automática de agudeza según la fecha
+// de inicio del síntoma: agudo <30 días, subagudo 30-90 días, crónico >90.
+// ══════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════
+// EXAMEN FÍSICO — sub-solapas de colores: Palpación, Percusión,
+// Goniometría, Neurología, Maniobras. Cada una queda etiquetada para
+// que el resumen final (y más adelante la conclusión) sepa que todos
+// estos datos pertenecen al mismo bloque "Examen Físico".
+// ══════════════════════════════════════════════════════════════════
+function cambiarEFSub(sub){
+  document.querySelectorAll('.ef-subtab-btn').forEach(b=>b.classList.toggle('active', b.dataset.sub===sub));
+  document.querySelectorAll('.ef-subpanel').forEach(p=>p.classList.toggle('active', p.id==='ef-sub-'+sub));
+}
+// PALPACIÓN — punto evaluado + hallazgo.
+let palpacionCount = 0;
+function agregarPuntoPalpacion(){
+  const i = palpacionCount++;
+  const cont = document.getElementById('palp-lista');
+  const fila = document.createElement('div');
+  fila.id = 'palp-fila-'+i;
+  fila.style.cssText = 'display:flex;gap:6px;align-items:center;margin-bottom:6px;background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:6px 8px;flex-wrap:wrap';
+  fila.innerHTML = `
+    <input type="text" id="palp-punto-${i}" placeholder="Punto evaluado (ej: interlínea articular medial de rodilla…)" style="flex:2;min-width:170px">
+    <select id="palp-hallazgo-${i}" style="flex:1;min-width:130px">
+      <option value="Sin hallazgos">Sin hallazgos</option>
+      <option value="Dolor a la palpación">Dolor a la palpación</option>
+      <option value="Tumefacción">Tumefacción</option>
+      <option value="Aumento de temperatura local">Aumento de temperatura local</option>
+      <option value="Crepitación">Crepitación</option>
+      <option value="Contractura muscular">Contractura muscular</option>
+    </select>
+    <span style="cursor:pointer;color:var(--muted)" onclick="document.getElementById('palp-fila-${i}').remove()">✕</span>`;
+  cont.appendChild(fila);
+}
+function textoPalpacion_(){
+  const items = [];
+  document.querySelectorAll('#palp-lista [id^="palp-fila-"]').forEach(fila=>{
+    const i = fila.id.replace('palp-fila-','');
+    const punto = document.getElementById('palp-punto-'+i).value.trim();
+    if(!punto) return;
+    items.push(`${punto}: ${document.getElementById('palp-hallazgo-'+i).value}`);
+  });
+  return items;
+}
+function textoPercusion_(){
+  const items = [];
+  document.querySelectorAll('#perc-lista [id^="perc-fila-"]').forEach(fila=>{
+    const i = fila.id.replace('perc-fila-','');
+    const punto = document.getElementById('perc-punto-'+i).value.trim();
+    if(!punto) return;
+    items.push(`${punto}: ${document.getElementById('perc-resultado-'+i).value}`);
+  });
+  return items;
+}
+function textoManiobras_(){
+  const items = [];
+  document.querySelectorAll('#ef-maniobras-lista [id^="maniobra-fila-"]').forEach(fila=>{
+    const i = fila.id.replace('maniobra-fila-','');
+    const nombre = document.getElementById('maniobra-nombre-'+i).value.trim();
+    if(!nombre) return;
+    const resultado = document.getElementById('maniobra-resultado-'+i).value;
+    const nota = document.getElementById('maniobra-nota-'+i).value.trim();
+    items.push(`${nombre}: ${resultado}${nota?' — '+nota:''}`);
+  });
+  return items;
+}
+let maniobraCount = 0;
+function agregarManiobra(){
+  const i = maniobraCount++;
+  const cont = document.getElementById('ef-maniobras-lista');
+  const fila = document.createElement('div');
+  fila.id = 'maniobra-fila-'+i;
+  fila.style.cssText = 'display:flex;gap:6px;align-items:center;margin-bottom:6px;background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:6px 8px;flex-wrap:wrap';
+  fila.innerHTML = `
+    <input type="text" id="maniobra-nombre-${i}" placeholder="Ej: Lachman, Thomas, Ober, Phalen, Finkelstein…" style="flex:2;min-width:150px">
+    <select id="maniobra-resultado-${i}" style="flex:1;min-width:110px">
+      <option value="Positiva">Positiva</option>
+      <option value="Negativa">Negativa</option>
+      <option value="Dudosa / equívoca">Dudosa / equívoca</option>
+    </select>
+    <input type="text" id="maniobra-nota-${i}" placeholder="Nota (opcional)" style="flex:1.4;min-width:120px">
+    <span style="cursor:pointer;color:var(--muted)" onclick="document.getElementById('maniobra-fila-${i}').remove()">✕</span>`;
+  cont.appendChild(fila);
+}
+// Junta las 5 sub-secciones en un solo resumen, cada una con su encabezado —
+// así queda claro que todo pertenece al mismo bloque "Examen Físico" a la
+// hora de redactar la conclusión.
+function compilarExamenFisicoCompleto(){
+  const palpacion = textoPalpacion_();
+  const percusion = textoPercusion_(); // técnica de neurología (reflejos/puntos dolorosos) — solo participa si se activó
+  const maniobras = textoManiobras_();
+  // Goniometría y Neurología ya arman su propio texto con las funciones
+  // existentes (agregarNeuroItem) — acá se los suma.
+  const gonioLista = NEURO_LISTAS.gonio.concat(NEURO_LISTAS.eje).map(i=>i.texto);
+  const neuroLista = NEURO_LISTAS.sens.concat(NEURO_LISTAS.fuerza, NEURO_LISTAS.trof, NEURO_LISTAS.reflejo, NEURO_LISTAS.tono).map(i=>i.texto);
+  const signos=[];
+  const clonus=document.getElementById('neuro-clonus').value; if(clonus!=='Ausente') signos.push('Clonus: '+clonus);
+  const babinski=document.getElementById('neuro-babinski').value; if(!babinski.startsWith('Ausente')) signos.push('Babinski: '+babinski);
+  const mening=document.getElementById('neuro-meningismo').value; if(mening==='Presente') signos.push('Meningismo: presente');
+  const hoffmann=document.getElementById('neuro-hoffmann').value; if(!hoffmann.startsWith('Ausente')) signos.push('Hoffmann: '+hoffmann);
+  if(document.getElementById('neuro-perc-toggle').checked && percusion.length){
+    signos.push(...percusion.map(t=>'Percusión — '+t));
+  }
+
+  if(!palpacion.length && !gonioLista.length && !neuroLista.length && !signos.length && !maniobras.length){
+    toast('⚠️ Completá al menos un dato del examen físico','err'); return;
+  }
+
+  const bloques = [];
+  if(palpacion.length) bloques.push(`── PALPACIÓN ──\n${palpacion.map(t=>'• '+t).join('\n')}`);
+  if(gonioLista.length) bloques.push(`── GONIOMETRÍA ──\n${gonioLista.map(t=>'• '+t).join('\n')}`);
+  if(neuroLista.length || signos.length) bloques.push(`── NEUROLOGÍA ──\n${neuroLista.concat(signos).map(t=>'• '+t).join('\n')}`);
+  if(maniobras.length) bloques.push(`── MANIOBRAS ESPECIALES ──\n${maniobras.map(t=>'• '+t).join('\n')}`);
+
+  document.getElementById('ef-preview').textContent = 'EXAMEN FÍSICO:\n\n' + bloques.join('\n\n');
+  toast('✅ Examen físico armado','ok');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// PERCUSIÓN — puntos de exacerbación, positivos o negativos.
+// ══════════════════════════════════════════════════════════════════
+let percusionCount = 0;
+function agregarPuntoPercusion(){
+  const i = percusionCount++;
+  const cont = document.getElementById('perc-lista');
+  const fila = document.createElement('div');
+  fila.id = 'perc-fila-'+i;
+  fila.style.cssText = 'display:flex;gap:6px;align-items:center;margin-bottom:6px;background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:6px 8px;flex-wrap:wrap';
+  fila.innerHTML = `
+    <input type="text" id="perc-punto-${i}" placeholder="Punto evaluado (ej: tercio distal de tibia, apófisis espinosa L4…)" style="flex:2;min-width:170px">
+    <select id="perc-resultado-${i}" style="flex:1;min-width:110px">
+      <option value="Positiva — aumenta el dolor">Positiva — aumenta el dolor</option>
+      <option value="Negativa — sin cambios">Negativa — sin cambios</option>
+    </select>
+    <span style="cursor:pointer;color:var(--muted)" onclick="document.getElementById('perc-fila-${i}').remove()">✕</span>`;
+  cont.appendChild(fila);
+}
+
+// ══════════════════════════════════════════════════════════════════
+// ESTUDIOS — qué se solicitó o qué informes trae el paciente.
+// ══════════════════════════════════════════════════════════════════
+let estudioCount = 0;
+function agregarEstudio(){
+  const i = estudioCount++;
+  const cont = document.getElementById('estudios-lista');
+  const fila = document.createElement('div');
+  fila.id = 'estudio-fila-'+i;
+  fila.style.cssText = 'border:1px solid var(--border);border-radius:6px;padding:8px;margin-bottom:6px;background:var(--panel)';
+  fila.innerHTML = `
+    <div style="display:flex;gap:6px;margin-bottom:6px">
+      <input type="text" id="estudio-nombre-${i}" placeholder="Estudio (ej: RX tobillo frente y perfil)" style="flex:2">
+      <select id="estudio-estado-${i}" style="flex:1">
+        <option value="Solicitado">Solicitado ahora</option>
+        <option value="Trae informe previo">Trae informe previo</option>
+        <option value="Pendiente de resultado">Pendiente de resultado</option>
+      </select>
+    </div>
+    <textarea id="estudio-desc-${i}" rows="2" placeholder="Descripción del hallazgo / resumen del informe…" style="width:100%"></textarea>
+    <div style="text-align:right;margin-top:4px"><span style="cursor:pointer;color:#dc2626;font-size:11px" onclick="document.getElementById('estudio-fila-${i}').remove()">✕ Quitar</span></div>`;
+  cont.appendChild(fila);
+}
+function compilarEstudios(){
+  const items = [];
+  document.querySelectorAll('#estudios-lista [id^="estudio-fila-"]').forEach(fila=>{
+    const i = fila.id.replace('estudio-fila-','');
+    const nombre = document.getElementById('estudio-nombre-'+i).value.trim();
+    if(!nombre) return;
+    const estado = document.getElementById('estudio-estado-'+i).value;
+    const desc = document.getElementById('estudio-desc-'+i).value.trim();
+    items.push(`${nombre} (${estado})${desc?':\n  '+desc:''}`);
+  });
+  if(!items.length){ toast('⚠️ Agregá al menos un estudio','err'); return; }
+  document.getElementById('estudios-preview').textContent = 'ESTUDIOS:\n' + items.map(it=>'• '+it).join('\n\n');
+  toast('✅ Estudios armados','ok');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// CONSULTAS ABREVIADAS — se saltean el interrogatorio/examen físico
+// completo, pero quedan registradas igual, con la etiqueta "ABREVIADA"
+// bien visible para no confundirlas con una consulta de rutina.
+// ══════════════════════════════════════════════════════════════════
+function mostrarAbreviada(){
+  const tipo = document.getElementById('abrev-tipo').value;
+  document.querySelectorAll('.abrev-sub').forEach(s=>s.style.display='none');
+  if(tipo) document.getElementById('abrev-'+tipo).style.display='block';
+}
+function compilarAbreviada(){
+  const tipo = document.getElementById('abrev-tipo').value;
+  if(!tipo){ toast('⚠️ Elegí el tipo de consulta abreviada','err'); return; }
+  const g = id => { const el=document.getElementById(id); return el?el.value.trim():''; };
+  const etiquetas = {
+    plantillas:'Solicitud de plantillas / renovación',
+    medicacion:'Solicitud de medicación',
+    estudios:'Renovación de estudios',
+    curacion:'Curación',
+    retiroyeso:'Retiro de yeso',
+    retiroplantilla:'Retiro de plantilla — control'
+  };
+  let cuerpo = '';
+  if(tipo==='plantillas'){
+    cuerpo = `Examen físico del pie: ${g('abrev-plant-examen')||'—'}\nEstudios de apoyo: ${g('abrev-plant-estudios')||'—'}\n(La indicación de plantillas se completa en OCM)`;
+  } else if(tipo==='medicacion'){
+    cuerpo = `Medicación indicada: ${g('abrev-med-nombre')||'—'}\nConfort / control del dolor: ${g('abrev-med-confort')||'—'}`;
+  } else if(tipo==='estudios'){
+    cuerpo = `Estudios a renovar (vencidos por tiempo): ${g('abrev-estudios-cuales')||'—'}\n(Pasa a OCM para la solicitud)`;
+  } else if(tipo==='curacion'){
+    cuerpo = `Características de la herida: ${g('abrev-cur-herida')||'—'}\n(Próximo control se coordina en OCM)`;
+  } else if(tipo==='retiroyeso'){
+    cuerpo = g('abrev-yeso-texto') || '—';
+  } else if(tipo==='retiroplantilla'){
+    cuerpo = `¿Son las correctas?: ${g('abrev-plr-correctas')}\n¿Se adaptan bien al pie?: ${g('abrev-plr-adaptan')}\nIndicaciones de cuidado e higiene: ${g('abrev-plr-cuidado')||'—'}`;
+  }
+  const fecha = new Date().toLocaleDateString('es-AR');
+  const texto = `⚡ CONSULTA ABREVIADA — ${etiquetas[tipo]} — ${fecha}\n\n${cuerpo}`;
+  document.getElementById('abrev-preview').textContent = texto;
+  toast('✅ Consulta abreviada registrada','ok');
+}
+
+function calcularAgudeza(){
+  const fechaEl = document.getElementById('interr-fecha-inicio');
+  const badge = document.getElementById('interr-agudeza-badge');
+  if(!fechaEl.value){ badge.style.display='none'; return null; }
+  const inicio = new Date(fechaEl.value+'T00:00:00');
+  const hoy = new Date();
+  const dias = Math.round((hoy - inicio) / (1000*60*60*24));
+  let categoria, color, bg;
+  if(dias < 0){ badge.style.display='none'; return null; } // fecha futura, ignorar
+  if(dias <= 30){ categoria='AGUDO'; color='#166534'; bg='#f0fdf4'; }
+  else if(dias <= 90){ categoria='SUBAGUDO'; color='#b45309'; bg='#fffbeb'; }
+  else { categoria='CRÓNICO'; color='#b91c1c'; bg='#fef2f2'; }
+  badge.style.display='block';
+  badge.style.color=color; badge.style.background=bg; badge.style.border='1px solid '+color;
+  badge.textContent = `${categoria} — ${dias} día${dias!==1?'s':''} de evolución`;
+  return {categoria, dias};
+}
+function compilarInterrogatorio(){
+  const motivo = document.getElementById('interr-motivo').value.trim();
+  const mecanismo = document.getElementById('interr-mecanismo').value.trim();
+  const segmento = document.getElementById('interr-segmento').value;
+  const agudeza = calcularAgudeza();
+
+  const antecedentes = [];
+  const alergias = document.getElementById('interr-alergias').value.trim();
+  const cirugias = document.getElementById('interr-cirugias').value.trim();
+  const enfermedades = document.getElementById('interr-enfermedades').value.trim();
+  const medicacion = document.getElementById('interr-medicacion').value.trim();
+  const estudiosPrevios = document.getElementById('interr-estudios-previos').value.trim();
+  if(alergias) antecedentes.push(`Alergias: ${alergias}`);
+  if(cirugias) antecedentes.push(`Cirugías/procedimientos previos en la región: ${cirugias}`);
+  if(enfermedades) antecedentes.push(`Enfermedades relevantes: ${enfermedades}`);
+  if(medicacion) antecedentes.push(`Medicación habitual: ${medicacion}`);
+  if(estudiosPrevios) antecedentes.push(`Estudios previos: ${estudiosPrevios}`);
+
+  if(!motivo && !mecanismo && !segmento && !antecedentes.length){ toast('⚠️ Completá al menos el motivo de consulta','err'); return; }
+
+  let texto = '';
+  if(pacienteActivo) texto += `PACIENTE: ${pacienteActivo.apellido||''}, ${pacienteActivo.nombre||''} · DNI ${pacienteActivo.dni||'—'}\n\n`;
+  if(antecedentes.length) texto += `ANTECEDENTES POSITIVOS:\n${antecedentes.map(a=>'• '+a).join('\n')}\n\n`;
+  if(segmento) texto += `SEGMENTO AFECTADO: ${segmento}\n\n`;
+  if(motivo) texto += `MOTIVO DE CONSULTA: ${motivo}\n\n`;
+  if(mecanismo) texto += `MECANISMO: ${mecanismo}\n\n`;
+  if(agudeza) texto += `TIEMPO DE EVOLUCIÓN: ${agudeza.categoria} (${agudeza.dias} día${agudeza.dias!==1?'s':''})`;
+
+  document.getElementById('interr-preview').textContent = texto.trim();
+
+  // Traspaso a Síndromes: el contexto del interrogatorio queda visible ahí
+  // también, para no tener que volver a esta solapa a mirar qué se cargó.
+  const ctx = document.getElementById('sind-contexto-interr');
+  if(ctx){
+    let ctxTxt = '📝 <b>Del interrogatorio:</b> ';
+    const partes=[];
+    if(segmento) partes.push(segmento);
+    if(agudeza) partes.push(agudeza.categoria.toLowerCase()+' ('+agudeza.dias+' días)');
+    if(motivo) partes.push(motivo);
+    ctx.innerHTML = ctxTxt + partes.join(' — ');
+    ctx.style.display = partes.length ? 'block' : 'none';
+  }
+
+  toast('✅ Interrogatorio armado','ok');
+}
+function toast(msg,tipo){
+  const box=document.getElementById('toast-box');
+  const t=document.createElement('div');
+  t.className='toast'+(tipo?' '+tipo:'');
+  t.textContent=msg;
+  box.appendChild(t);
+  setTimeout(()=>t.remove(),4000);
+}
+
+// ══════════════════════════════════════════════════════════════════
+// INDEXEDDB — misma base que OCM / Espacio Quirúrgico (OCMRecetario)
+// ══════════════════════════════════════════════════════════════════
+let db;
+function initDB(){
+  return new Promise((res,rej)=>{
+    const req=indexedDB.open('OCMRecetario',3);
+    req.onupgradeneeded=e=>{
+      const d=e.target.result;
+      if(!d.objectStoreNames.contains('pacientes')){
+        const ps=d.createObjectStore('pacientes',{keyPath:'id',autoIncrement:true});
+        ps.createIndex('dni','dni',{unique:true});
+        ps.createIndex('apellido','apellido',{unique:false});
+      }
+      if(!d.objectStoreNames.contains('consultas')){
+        const cs=d.createObjectStore('consultas',{keyPath:'id',autoIncrement:true});
+        cs.createIndex('paciente_id','paciente_id',{unique:false});
+      }
+      if(!d.objectStoreNames.contains('plantillas')){
+        const pl=d.createObjectStore('plantillas',{keyPath:'id',autoIncrement:true});
+        pl.createIndex('paciente_id','paciente_id',{unique:false});
+        pl.createIndex('estado','estado',{unique:false});
+        pl.createIndex('fecha','fecha',{unique:false});
+      }
+      if(!d.objectStoreNames.contains('certificados')){
+        const ce=d.createObjectStore('certificados',{keyPath:'id',autoIncrement:true});
+        ce.createIndex('paciente_id','paciente_id',{unique:false});
+        ce.createIndex('created_at','created_at',{unique:false});
+      }
+    };
+    req.onsuccess=e=>{db=e.target.result;res(db);};
+    req.onerror=e=>rej(e.target.error);
+  });
+}
+const dbTx=(store,mode='readonly')=>db.transaction(store,mode).objectStore(store);
+const dbGet=(s,k)=>new Promise((r,j)=>{const q=dbTx(s).get(k);q.onsuccess=()=>r(q.result);q.onerror=()=>j(q.error);});
+const dbGetAll=(s)=>new Promise((r,j)=>{const q=dbTx(s).getAll();q.onsuccess=()=>r(q.result);q.onerror=()=>j(q.error);});
+const dbAdd=(s,d)=>new Promise((r,j)=>{const q=dbTx(s,'readwrite').add(d);q.onsuccess=()=>r(q.result);q.onerror=()=>j(q.error);});
+
+async function buscarPacientesDB(q){
+  const todos=await dbGetAll('pacientes');
+  if(!q) return todos.sort((a,b)=>(a.apellido||'').localeCompare(b.apellido||'')).slice(0,8);
+  const ql=q.toLowerCase();
+  return todos.filter(p=>(p.apellido||'').toLowerCase().includes(ql)||(p.nombre||'').toLowerCase().includes(ql)||(p.dni||'').includes(ql)).slice(0,8);
+}
+
+// ══════════════════════════════════════════════════════════════════
+// PACIENTE ACTIVO
+// ══════════════════════════════════════════════════════════════════
+let pacienteActivo=null;
+function renderPacBarSinPaciente(){
+  const bar=document.getElementById('pacbar');
+  bar.innerHTML=`<input id="beta-buscar" placeholder="Buscar paciente por apellido o DNI…" oninput="buscarPacBeta(this.value)">
+    <div id="beta-buscar-results" style="display:flex;gap:6px;flex-wrap:wrap"></div>`;
+}
+async function buscarPacBeta(q){
+  const cont=document.getElementById('beta-buscar-results');
+  if(!cont) return;
+  if(q.length<2){cont.innerHTML='';return;}
+  const res=await buscarPacientesDB(q);
+  cont.innerHTML = res.map(p=>`<button onclick='seleccionarPacienteBeta(${JSON.stringify(p).replace(/'/g,"&#39;")})' style="font-size:11px;padding:5px 10px;border:1px solid #cbd5e1;border-radius:6px;background:#f8fafc;cursor:pointer">${p.apellido||''}, ${p.nombre||''} — ${p.dni||'s/DNI'}</button>`).join('') || '<span style="font-size:11px;color:var(--muted)">Sin resultados</span>';
+}
+function seleccionarPacienteBeta(p){
+  pacienteActivo=p;
+  const bar=document.getElementById('pacbar');
+  bar.innerHTML=`<span class="pac-chip">👤 <b>${p.apellido||''}, ${p.nombre||''}</b> · DNI ${p.dni||'—'}</span>
+    <button onclick="renderPacBarSinPaciente()" style="background:#f1f5f9;color:var(--azul);border:1px solid #cbd5e1;padding:6px 10px;border-radius:6px;font-size:11.5px;cursor:pointer">Cambiar paciente</button>`;
+  const datosBox = document.getElementById('interr-datos-paciente');
+  if(datosBox){
+    let edad = '';
+    if(p.fecha_nacimiento){
+      const nac = new Date(p.fecha_nacimiento);
+      const hoy = new Date();
+      let a = hoy.getFullYear() - nac.getFullYear();
+      if(hoy.getMonth() < nac.getMonth() || (hoy.getMonth()===nac.getMonth() && hoy.getDate()<nac.getDate())) a--;
+      edad = ` · ${a} años`;
+    }
+    datosBox.innerHTML = `<span class="k">${p.apellido||''}, ${p.nombre||''}</span> · DNI ${p.dni||'—'}${edad}${p.obra_social?' · '+p.obra_social:''}`;
+  }
+  cargarHistorialBeta();
+}
+
+// ══════════════════════════════════════════════════════════════════
+// TABS
+// ══════════════════════════════════════════════════════════════════
+function cambiarTab(tab){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  if(tab==='historial') cargarHistorialBeta();
+}
+
+// ══════════════════════════════════════════════════════════════════
+// HISTORIAL (compartido con OCM / Espacio Quirúrgico vía IndexedDB)
+// ══════════════════════════════════════════════════════════════════
+async function guardarEnHistorialBetaTexto(texto,titulo){
+  if(!pacienteActivo||!pacienteActivo.id){ toast('⚠️ Seleccioná un paciente primero','err'); return false; }
+  if(!texto||!texto.trim()){ toast('⚠️ No hay nada para guardar','err'); return false; }
+  const d=new Date();
+  try{
+    await dbAdd('consultas',{
+      paciente_id:pacienteActivo.id, centro:'',
+      area:'Herramientas Clínicas (BETA)', tipo:'herramientas_beta',
+      titulo: titulo||'Nota clínica',
+      fecha:`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`,
+      cuerpo:texto, created_at:d.toISOString()
+    });
+    toast('✅ Guardado en el historial','ok');
+    cargarHistorialBeta();
+    return true;
+  }catch(e){ toast('❌ No se pudo guardar: '+(e&&e.message?e.message:e),'err'); return false; }
+}
+function guardarEnHistorialBeta(textareaId,titulo){
+  const el=document.getElementById(textareaId);
+  guardarEnHistorialBetaTexto(el?el.value:'', titulo);
+}
+function guardarTextoEnHistorialBeta(previewId,titulo){
+  const el=document.getElementById(previewId);
+  guardarEnHistorialBetaTexto(el?el.textContent:'', titulo);
+}
+async function cargarHistorialBeta(){
+  const cont=document.getElementById('historial-lista');
+  if(!pacienteActivo||!pacienteActivo.id){ cont.innerHTML='<div class="not-found">Seleccioná un paciente para ver su historial.</div>'; return; }
+  const todas=await dbGetAll('consultas');
+  const propias=todas.filter(c=>c.paciente_id===pacienteActivo.id && c.tipo==='herramientas_beta')
+    .sort((a,b)=>(b.created_at||'').localeCompare(a.created_at||''));
+  if(!propias.length){ cont.innerHTML='<div class="not-found">Todavía no hay nada guardado para este paciente.</div>'; return; }
+  cont.innerHTML = propias.map(c=>`<div style="border-left:3px solid var(--violeta);background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:8px">
+      <div style="font-weight:700;color:var(--violeta);font-size:12.5px">${c.titulo||'Nota'}</div>
+      <div style="font-size:10.5px;color:var(--muted);margin-bottom:6px">${c.fecha||''}</div>
+      <div style="font-size:11.5px;white-space:pre-wrap">${c.cuerpo||''}</div>
+    </div>`).join('');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// SÍNDROMES — referencia general de genética (herencia, cromosoma, y
+// qué predomina/buscar). Ayuda de consulta; no reemplaza al genetista
+// ni a la confirmación por estudio molecular/cariotipo.
+// ══════════════════════════════════════════════════════════════════
+const SINDROMES = [
+  {n:'Acondroplasia', h:'Autosómico Dominante', gen:'Gen FGFR3 — cromosoma 4p16.3', d:'Predomina: rizomelia (acortamiento proximal de miembros), macrocefalia relativa, lordosis lumbar. Buscar: estenosis del canal espinal, genu varo, hipoplasia del tercio medio facial.'},
+  {n:'Síndrome de Marfan', h:'Autosómico Dominante', gen:'Gen FBN1 — cromosoma 15q21.1', d:'Predomina: aracnodactilia, hiperlaxitud, hábito longilíneo, deformidades torácicas. Buscar: escoliosis, luxación del cristalino, dilatación de la raíz aórtica (derivar a cardiología/oftalmología).'},
+  {n:'Síndrome de Ehlers-Danlos', h:'Autosómico Dominante (mayoría de subtipos) o Recesivo (algunos subtipos)', gen:'Varios genes de colágeno según subtipo', d:'Predomina: hiperlaxitud articular generalizada, piel hiperextensible y frágil. Buscar: inestabilidad articular recurrente, escoliosis, cicatrización anómala.'},
+  {n:'Síndrome de Down (Trisomía 21)', h:'Cromosómico', gen:'Trisomía del cromosoma 21', d:'Predomina: hipotonía, hiperlaxitud ligamentaria, facies característica. Buscar: inestabilidad atlantoaxoidea (radiografía cervical dinámica antes de deporte/anestesia), pie plano, displasia de cadera.'},
+  {n:'Osteogénesis Imperfecta', h:'Autosómico Dominante (mayoría) o Recesivo (formas graves)', gen:'Genes COL1A1 / COL1A2, entre otros', d:'Predomina: fragilidad ósea con fracturas a bajo impacto, escleras azuladas. Buscar: escoliosis, deformidades progresivas en huesos largos, hipoacusia.'},
+  {n:'Artrogriposis Múltiple Congénita', h:'Multifactorial / esporádica (causas heterogéneas, no siempre hereditaria)', gen:'Variable según etiología', d:'Predomina: contracturas articulares múltiples presentes desde el nacimiento. Buscar: pie equinovaro, luxación de cadera, escoliosis, compromiso de miembros superiores.'},
+  {n:'Síndrome de Larsen', h:'Autosómico Dominante', gen:'Gen FLNB', d:'Predomina: luxaciones articulares múltiples congénitas, facies característica. Buscar: luxación de rodilla/cadera/codo, inestabilidad cervical (evaluar antes de intervenciones).'},
+  {n:'Displasia del desarrollo de la cadera', h:'Multifactorial (predisposición genética + factores posicionales intraútero)', gen:'No monogénica — herencia poligénica/ambiental', d:'Predomina: inestabilidad o displasia acetabular en el neonato/lactante. Buscar: signo de Ortolani/Barlow, asimetría de pliegues, limitación de la abducción.'},
+  {n:'Neurofibromatosis tipo 1', h:'Autosómico Dominante', gen:'Gen NF1 — cromosoma 17q11.2', d:'Predomina: manchas café con leche, neurofibromas cutáneos. Buscar: escoliosis distrófica, pseudoartrosis congénita de tibia, displasias óseas focales.'},
+  {n:'Síndrome de Prader-Willi', h:'Cromosómico (microdeleción 15q11-q13 de origen paterno, u otros mecanismos)', gen:'Región 15q11-q13', d:'Predomina: hipotonía neonatal marcada, obesidad de inicio en la infancia. Buscar: escoliosis, displasia de cadera.'},
+  {n:'Síndrome de Turner', h:'Cromosómico', gen:'Monosomía total o parcial del cromosoma X (45,X)', d:'Predomina: talla baja, cuello alado, cubitus valgo. Buscar: escoliosis, displasia de cadera, luxación rotuliana.'},
+  {n:'Síndrome de Noonan', h:'Autosómico Dominante', gen:'Gen PTPN11 (vía RAS-MAPK), entre otros', d:'Predomina: talla baja, cuello alado, cardiopatía congénita. Buscar: deformidades torácicas (pectus), escoliosis.'},
+  {n:'Síndrome de Klippel-Feil', h:'Esporádico (ocasionalmente Autosómico Dominante o Recesivo)', gen:'Variable — genes GDF6/GDF3 en algunas familias', d:'Predomina: fusión congénita de vértebras cervicales, cuello corto, implantación baja del cabello. Buscar: escoliosis asociada, anomalías renales y auditivas.'},
+  {n:'Displasia Espondiloepifisaria (SED)', h:'Autosómico Dominante', gen:'Gen COL2A1, entre otros', d:'Predomina: tronco corto desproporcionado, epífisis irregulares. Buscar: inestabilidad atlantoaxoidea, coxa vara, escoliosis.'},
+  {n:'Displasia Diastrófica', h:'Autosómico Recesivo', gen:'Gen SLC26A2', d:'Predomina: talla baja, pulgar en autoestop, orejas en "coliflor". Buscar: pie equinovaro rígido bilateral, escoliosis cervical.'},
+  {n:'Mucopolisacaridosis (Hurler, Hunter, Morquio, etc.)', h:'Autosómico Recesivo (mayoría) o Ligado al X (Hunter)', gen:'Genes de enzimas lisosomales, según tipo', d:'Predomina: rigidez articular progresiva, rasgos faciales toscos, talla baja. Buscar: inestabilidad atlantoaxoidea (especialmente Morquio), displasia de cadera, deformidades espinales.'},
+  {n:'Síndrome de Rett', h:'Ligado al X (predomina en niñas)', gen:'Gen MECP2', d:'Predomina: regresión del desarrollo, estereotipias manuales. Buscar: escoliosis progresiva de aparición temprana.'},
+  {n:'Atrofia Muscular Espinal (AME)', h:'Autosómico Recesivo', gen:'Gen SMN1', d:'Predomina: debilidad muscular proximal progresiva, hipotonía. Buscar: escoliosis neuromuscular, contracturas articulares, luxación de cadera.'},
+  {n:'Distrofia Muscular de Duchenne', h:'Ligado al X recesivo (varones)', gen:'Gen DMD', d:'Predomina: debilidad muscular proximal progresiva, pseudohipertrofia de pantorrillas. Buscar: escoliosis neuromuscular, contracturas en equino, signo de Gowers.'},
+  {n:'Síndrome de Cornelia de Lange', h:'Autosómico Dominante (formas menos frecuentes ligadas al X)', gen:'Gen NIPBL, entre otros', d:'Predomina: retraso de crecimiento, sinofridia, extremidades pequeñas. Buscar: anomalías de miembros superiores, escoliosis.'},
+  {n:'Displasia Cleidocraneal', h:'Autosómico Dominante', gen:'Gen RUNX2', d:'Predomina: hipoplasia/aplasia de clavículas, hombros hipermóviles, cierre tardío de fontanelas. Buscar: hipermovilidad de hombros, talla baja, escoliosis.'},
+  {n:'Displasia Campomiélica', h:'Autosómico Dominante', gen:'Gen SOX9', d:'Predomina: curvatura de huesos largos (fémur y tibia), tórax pequeño. Buscar: pie equinovaro, displasia de cadera, compromiso respiratorio.'},
+  {n:'Síndrome de Williams', h:'Cromosómico (microdeleción 7q11.23)', gen:'Región 7q11.23', d:'Predomina: facies característica, hipercalcemia infantil, personalidad hipersociable. Buscar: hiperlaxitud articular en la infancia que evoluciona a rigidez, contracturas progresivas.'},
+  {n:'Síndrome de Sotos', h:'Autosómico Dominante', gen:'Gen NSD1', d:'Predomina: crecimiento excesivo, macrocefalia, rasgos faciales característicos. Buscar: escoliosis, laxitud articular.'},
+  {n:'Parálisis Cerebral', h:'No genética — adquirida perinatal / multifactorial', gen:'No aplica (lesión del SNC en desarrollo)', d:'Predomina: espasticidad y alteración del tono, patrón de marcha variable según topografía. Buscar: luxación de cadera progresiva, escoliosis neuromuscular, contracturas en equino.'}
+];
+// Diccionario propio: síndromes que vas agregando según la frecuencia con la
+// que los ves en tu consulta. Se guardan en la nube (misma base que
+// instituciones/procedimientos/códigos) y quedan disponibles para siempre.
+let SINDROMES_TODOS = [...SINDROMES];
+async function cargarSindromesPersonalizados(){
+  try{
+    const resp = await fetch(SHEETS_URL+'?action=get_lista_quirurgico&tipo=SindromePersonalizado');
+    const data = await resp.json();
+    const lista = (data.success && data.data) ? data.data : [];
+    return lista.map(v=>{
+      const partes = v.split('|').map(p=>p.trim());
+      return {n:partes[0]||'(sin nombre)', h:partes[1]||'—', gen:partes[2]||'—', d:partes[3]||'—', personalizado:true};
+    });
+  }catch(e){ return []; }
+}
+async function inicializarSindromes(){
+  const custom = await cargarSindromesPersonalizados();
+  SINDROMES_TODOS = [...SINDROMES, ...custom];
+  poblarSelectSindromes();
+}
+async function agregarSindromePersonalizado(){
+  const nombre = prompt('Nombre del síndrome:');
+  if(!nombre || !nombre.trim()) return;
+  const herencia = prompt('Patrón de herencia (Autosómico Dominante / Recesivo / Ligado al X / Multifactorial / Cromosómico / Esporádico):')||'—';
+  const gen = prompt('Hallazgo genético o cromosómico (gen y/o cromosoma, si se conoce):')||'—';
+  const desc = prompt('Qué predomina en el paciente y qué hay que buscar en el examen:')||'—';
+  const valor = `${nombre.trim()} | ${herencia.trim()} | ${gen.trim()} | ${desc.trim()}`;
+  try{
+    const resp = await fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({action:'guardar_item_quirurgico', tipo:'SindromePersonalizado', valor})});
+    const data = await resp.json();
+    if(!data.success) throw new Error(data.error||'Error del servidor');
+    toast('✅ Síndrome agregado a tu diccionario','ok');
+    await inicializarSindromes();
+  }catch(e){
+    toast('❌ No se pudo agregar: '+(e&&e.message?e.message:e),'err');
+  }
+}
+function poblarSelectSindromes(){
+  const sel=document.getElementById('sind-select');
+  const actual=sel.value;
+  sel.innerHTML='<option value="">Seleccionar…</option>'+SINDROMES_TODOS.map((s,i)=>`<option value="${i}">${s.n}${s.personalizado?' ⭐':''}</option>`).join('');
+  if(actual) sel.value=actual;
+}
+function mostrarSindrome(){
+  const idx=document.getElementById('sind-select').value;
+  const info=document.getElementById('sind-info');
+  if(idx===''){ info.innerHTML='Elegí un síndrome para ver su información.'; return; }
+  const s=SINDROMES_TODOS[idx];
+  info.innerHTML=`<div><span class="k">Herencia:</span> ${s.h}</div>
+    <div style="margin-top:4px"><span class="k">Hallazgo genético:</span> ${s.gen}</div>
+    <div style="margin-top:4px"><span class="k">Predomina / a buscar:</span> ${s.d}</div>
+    <div style="margin-top:8px;font-size:10px;color:var(--muted)">${s.personalizado?'⭐ Agregado a tu diccionario propio. ':''}Referencia general — confirmar con estudio genético/cariotipo cuando corresponda.</div>`;
+}
+function agregarSindromeAExamen(){
+  const idx=document.getElementById('sind-select').value;
+  if(idx===''){ toast('⚠️ Elegí un síndrome primero','err'); return; }
+  const s=SINDROMES_TODOS[idx];
+  const notas=document.getElementById('sind-notas');
+  const linea=`${s.n} — Herencia: ${s.h}. ${s.gen}. ${s.d}`;
+  notas.value = notas.value ? (notas.value+'\n\n'+linea) : linea;
+  toast('✅ Agregado a las notas del examen','ok');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// PODOSCOPIO Y ÁNGULOS
+// ══════════════════════════════════════════════════════════════════
+function generarInformePodoscopia(){
+  const g=id=>{const el=document.getElementById(id);return el?el.value.trim():'';};
+  const lineas=[];
+  if(g('podo-angulo-vv')) lineas.push(`Retropié (${g('podo-lado-vv')}): ${g('podo-angulo-vv')>=0?'Valgo':'Varo'} de ${Math.abs(g('podo-angulo-vv'))}°`);
+  if(g('podo-angulo-frente')) lineas.push(`Radiografía de frente del pie (${g('podo-lado-frente')}): ángulo talo-calcáneo / de divergencia ${g('podo-angulo-frente')}°`);
+  if(g('podo-angulo-cb')) lineas.push(`Ángulo de Costa Bartani (${g('podo-lado-cb')}): ${g('podo-angulo-cb')}°`);
+  if(g('podo-angulo-ifd')) lineas.push(`Ángulo interfalángico distal (${g('podo-lado-antepie')}): ${g('podo-angulo-ifd')}°`);
+  if(g('podo-angulo-ifp')) lineas.push(`Ángulo interfalángico proximal (${g('podo-lado-antepie')}): ${g('podo-angulo-ifp')}°`);
+  if(g('podo-angulo-imt')) lineas.push(`Ángulo intermetatarsiano (${g('podo-lado-antepie')}): ${g('podo-angulo-imt')}°`);
+  if(g('podo-longitud-pie')) lineas.push(`Longitud del pie (${g('podo-lado-long')}): ${g('podo-longitud-pie')} cm`);
+  if(g('podo-longitud-plantilla')) lineas.push(`Longitud de la plantilla / zapatilla (${g('podo-lado-long')}): ${g('podo-longitud-plantilla')} cm`);
+  if(g('podo-chippaux')) lineas.push(`Índice de Chippaux-Smirak: ${g('podo-chippaux')}%`);
+  if(g('podo-hcorvo')) lineas.push(`Índice de Hernández-Corvo: ${g('podo-hcorvo')}`);
+  if(g('podo-archindex')) lineas.push(`Arch Index (Cavanagh-Rodgers): ${g('podo-archindex')}`);
+  if(g('podo-obs')) lineas.push(`Observaciones: ${g('podo-obs')}`);
+  if(!lineas.length){ toast('⚠️ Complete al menos un dato','err'); return; }
+  const texto = `PODOSCOPÍA Y ÁNGULOS DEL PIE\n\n${lineas.join('\n')}`;
+  document.getElementById('podo-preview').textContent = texto;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// ESCOLIOSIS
+// ══════════════════════════════════════════════════════════════════
+function mostrarCamposTanner(){
+  const esF = document.getElementById('esco-tanner-sexo').value==='F';
+  document.getElementById('esco-tanner-mama-wrap').style.display = esF ? 'flex' : 'none';
+  document.getElementById('esco-tanner-genital-wrap').style.display = esF ? 'none' : 'flex';
+}
+function actualizarGradoMeyerding(){
+  const pct=parseFloat(document.getElementById('esco-list-pct').value);
+  if(isNaN(pct)) return;
+  const sel=document.getElementById('esco-list-grado');
+  if(pct<=25) sel.value='I';
+  else if(pct<=50) sel.value='II';
+  else if(pct<=75) sel.value='III';
+  else if(pct<=100) sel.value='IV';
+  else sel.value='V';
+}
+function generarInformeEscoliosis(){
+  const g=id=>{const el=document.getElementById(id);return el?el.value.trim():'';};
+  const lineas=[];
+  if(g('esco-fecha')) lineas.push(`Fecha de la radiografía: ${g('esco-fecha')}`);
+  if(g('esco-talla')) lineas.push(`Talla: ${g('esco-talla')} cm`);
+  if(g('esco-mediatalla')) lineas.push(`Media talla (talla sentado): ${g('esco-mediatalla')} cm`);
+
+  const maduracion=[];
+  maduracion.push(`Risser: ${document.getElementById('esco-risser').selectedOptions[0].text}`);
+  maduracion.push(`Carpograma (Greulich-Pyle): ${g('esco-carpograma')}`);
+  const esF = document.getElementById('esco-tanner-sexo').value==='F';
+  maduracion.push(`Tanner ${esF?'mamario':'genital'}: ${esF?g('esco-tanner-mama'):g('esco-tanner-genital')}`);
+  maduracion.push(`Tanner vello púbico: ${g('esco-tanner-vello')}`);
+  lineas.push(`── EDAD ÓSEA Y MADURACIÓN PUBERAL ──\n${maduracion.join('\n')}`);
+
+  const frente=[];
+  if(g('esco-cobb')) frente.push(`Curva: vértebra límite proximal ${g('esco-vert-prox')} — vértebra límite distal ${g('esco-vert-dist')} — vértebra ápex ${g('esco-vert-apex')} — Ángulo de Cobb: ${g('esco-cobb')}°`);
+  else if(g('esco-vert-prox')||g('esco-vert-dist')||g('esco-vert-apex')) frente.push(`Curva: vértebra límite proximal ${g('esco-vert-prox')} — vértebra límite distal ${g('esco-vert-dist')} — vértebra ápex ${g('esco-vert-apex')}`);
+  if(g('esco-lateraliz-lado')!=='Sin lateralización') frente.push(`Lateralización de la línea media: ${g('esco-lateraliz-lado')}${g('esco-lateraliz-mm')?' de '+g('esco-lateraliz-mm')+' mm':''}`);
+  if(g('esco-rotacion')!=='Grado 0 — sin rotación') frente.push(`Rotación vertebral en el ápex (Nash-Moe): ${g('esco-rotacion')}`);
+  if(frente.length) lineas.push(`── FRENTE (CORONAL) ──\n${frente.join('\n')}`);
+
+  const perfil=[];
+  if(g('esco-pi')) perfil.push(`Incidencia Pélvica (PI): ${g('esco-pi')}°`);
+  if(g('esco-ss')) perfil.push(`Pendiente Sacra (SS): ${g('esco-ss')}°`);
+  if(g('esco-pt')) perfil.push(`Inclinación Pélvica (PT): ${g('esco-pt')}°`);
+  if(g('esco-pi') && g('esco-ss') && g('esco-pt')){
+    const pi=parseFloat(g('esco-pi')), ss=parseFloat(g('esco-ss')), pt=parseFloat(g('esco-pt'));
+    const diff=Math.abs(pi-(ss+pt));
+    perfil.push(`(control PI = SS + PT: ${(ss+pt).toFixed(1)}°${diff>3?' — diferencia de '+diff.toFixed(1)+'° con la PI cargada, revisar mediciones':''})`);
+  }
+  if(g('esco-ll')) perfil.push(`Lordosis Lumbar (LL) ${g('esco-ll-sup')}-${g('esco-ll-inf')}: ${g('esco-ll')}°`);
+  if(g('esco-cifosis-valor')) perfil.push(`Cifosis Torácica (TK) ${g('esco-cifosis-tipo').toLowerCase()}${g('esco-cifosis-vertebras')?' '+g('esco-cifosis-vertebras'):''}: ${g('esco-cifosis-valor')}°`);
+  if(g('esco-sva')) perfil.push(`Eje Sagital Vertical (SVA / línea de plomada C7): ${g('esco-sva')} mm${g('esco-sva-dir')!=='Sin desbalance (0)'?' — '+g('esco-sva-dir'):''}`);
+  if(perfil.length) lineas.push(`── PERFIL (SAGITAL) ──\n${perfil.join('\n')}`);
+
+  if(g('esco-list-pct')){
+    const nivel = g('esco-list-nivel')==='Otro' ? (g('esco-list-nivel-otro')||'nivel sin especificar') : g('esco-list-nivel');
+    lineas.push(`── LISTESIS ──\n${g('esco-list-tipo')} en ${nivel}: desplazamiento del ${g('esco-list-pct')}% — Meyerding Grado ${document.getElementById('esco-list-grado').value}`);
+  }
+
+  if(g('esco-obs')) lineas.push(`Observaciones: ${g('esco-obs')}`);
+  if(!lineas.length){ toast('⚠️ Complete al menos un dato','err'); return; }
+  const texto = `EVALUACIÓN DE ESCOLIOSIS Y BALANCE SAGITAL\n\n${lineas.join('\n\n')}`;
+  document.getElementById('esco-preview').textContent = texto;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// GONIÓMETRO — DeviceOrientationEvent (giroscopio/acelerómetro del celular)
+// ══════════════════════════════════════════════════════════════════
+let anguloActualGonio=null;
+const medicionesGonio=[];
+function activarGiroscopio(){
+  const estado=document.getElementById('gonio-estado');
+  if(typeof DeviceOrientationEvent === 'undefined'){
+    estado.textContent='⚠️ Este navegador no soporta el sensor de orientación.';
+    return;
+  }
+  if(typeof DeviceOrientationEvent.requestPermission === 'function'){
+    // iOS 13+ requiere permiso explícito
+    DeviceOrientationEvent.requestPermission().then(resp=>{
+      if(resp==='granted'){ iniciarEscuchaGonio(); }
+      else{ estado.textContent='⚠️ Permiso denegado — activalo desde los ajustes del navegador.'; }
+    }).catch(()=>{ estado.textContent='⚠️ No se pudo solicitar el permiso del sensor.'; });
+  } else {
+    iniciarEscuchaGonio();
+  }
+}
+function iniciarEscuchaGonio(){
+  window.addEventListener('deviceorientation', e=>{
+    // beta = inclinación adelante/atrás (-180 a 180), gamma = inclinación izquierda/derecha (-90 a 90)
+    const beta = e.beta!==null ? e.beta.toFixed(1) : null;
+    const gamma = e.gamma!==null ? e.gamma.toFixed(1) : null;
+    if(beta!==null){
+      anguloActualGonio = beta;
+      document.getElementById('gonio-valor').textContent = beta+'°';
+      document.getElementById('gonio-eje').textContent = `Inclinación adelante/atrás (β) · lateral (γ): ${gamma}°`;
+    }
+  });
+  document.getElementById('gonio-estado').textContent='✅ Sensor activo — apoyá el celular sobre el segmento a medir.';
+}
+function congelarAnguloGonio(){
+  if(anguloActualGonio===null){ toast('⚠️ Activá el sensor primero','err'); return; }
+  const ref=document.getElementById('gonio-ref').value.trim()||'Medición sin referencia';
+  medicionesGonio.push({ref, valor:anguloActualGonio});
+  renderListaGonio();
+  document.getElementById('gonio-ref').value='';
+  toast('📌 Ángulo congelado: '+anguloActualGonio+'°','ok');
+}
+function renderListaGonio(){
+  const cont=document.getElementById('gonio-lista');
+  if(!medicionesGonio.length){ cont.innerHTML='<div class="not-found">Todavía no congelaste ninguna medición.</div>'; return; }
+  cont.innerHTML = medicionesGonio.map((m,i)=>`<div style="display:flex;justify-content:space-between;background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:7px 10px;margin-bottom:5px;font-size:12px">
+    <span><strong>${m.ref}:</strong> ${m.valor}°</span>
+    <span style="cursor:pointer;color:var(--muted)" onclick="quitarMedicionGonio(${i})">✕</span>
+  </div>`).join('');
+}
+function quitarMedicionGonio(i){ medicionesGonio.splice(i,1); renderListaGonio(); }
+function generarInformeGonio(){
+  if(!medicionesGonio.length){ toast('⚠️ Congelá al menos una medición','err'); return; }
+  const texto = `GONIOMETRÍA (medida con el sensor de inclinación del celular)\n\n`+
+    medicionesGonio.map(m=>`• ${m.ref}: ${m.valor}°`).join('\n')+
+    `\n\nNota: medición orientativa con sensor de celular; en radiografías formales confirmar con el método angular estándar (Cobb, eje mecánico, etc.).`;
+  document.getElementById('gonio-preview').textContent = texto;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// EXAMEN NEUROLÓGICO — listas repetibles por sección (sensibilidad,
+// fuerza muscular, trofismo, reflejos, goniometría, ejes articulares)
+// ══════════════════════════════════════════════════════════════════
+const NEURO_LISTAS = {sens:[], fuerza:[], trof:[], reflejo:[], gonio:[], eje:[], tono:[]};
+
+// ══════════════════════════════════════════════════════════════════
+// VISTA RÁPIDA — desplegar TODOS los reflejos o TODOS los músculos a la
+// vez, con su grado individual (de normal a alterado en calidad + / ++),
+// en vez de tener que elegir y agregar de a uno.
+// ══════════════════════════════════════════════════════════════════
+const REFLEJOS_ESTANDAR = ['Bicipital (C5-C6)','Estilorradial (C5-C6)','Tricipital (C7-C8)','Patelar / rotuliano (L2-L4)','Aquíleo (S1-S2)','Cutáneo-abdominal','Cremasteriano'];
+const GRADOS_REFLEJO = ['Normal','Hiporreflexia +','Hiporreflexia ++','Hiperreflexia +','Hiperreflexia ++','Arreflexia'];
+function toggleReflejosRapido(){
+  const panel = document.getElementById('reflejos-rapido-panel');
+  const visible = panel.style.display === 'block';
+  panel.style.display = visible ? 'none' : 'block';
+  if(!visible && !panel.dataset.built){
+    panel.innerHTML = REFLEJOS_ESTANDAR.map((r,i)=>`
+      <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;flex-wrap:wrap">
+        <span style="flex:1.4;min-width:150px;font-size:11.5px">${r}</span>
+        <select id="rr-lado-${i}" style="flex:0.8;min-width:90px"><option>Derecho</option><option>Izquierdo</option><option selected>Bilateral</option></select>
+        <select id="rr-grado-${i}" style="flex:1;min-width:130px">${GRADOS_REFLEJO.map(g=>`<option>${g}</option>`).join('')}</select>
+      </div>`).join('');
+    panel.dataset.built = '1';
+    const btnAdd = document.createElement('button');
+    btnAdd.type='button'; btnAdd.className='btn btn-primary'; btnAdd.style.marginTop='6px';
+    btnAdd.textContent = '➕ Agregar todos los marcados como alterados';
+    btnAdd.onclick = agregarReflejosRapido;
+    panel.appendChild(btnAdd);
+  }
+}
+function agregarReflejosRapido(){
+  let agregados = 0;
+  REFLEJOS_ESTANDAR.forEach((r,i)=>{
+    const grado = document.getElementById('rr-grado-'+i).value;
+    if(grado === 'Normal') return; // solo se documentan los alterados, para no saturar el informe
+    const lado = document.getElementById('rr-lado-'+i).value;
+    NEURO_LISTAS.reflejo.push({texto:`${r} (${lado}): ${grado}`});
+    agregados++;
+  });
+  if(!agregados){ toast('⚠️ No hay ningún reflejo marcado como alterado','err'); return; }
+  renderNeuroLista('reflejo');
+  toast(`✅ ${agregados} reflejo(s) agregado(s)`,'ok');
+}
+
+const MUSCULOS_ESTANDAR = ['Deltoides','Bíceps braquial','Tríceps braquial','Extensores de muñeca','Flexores de muñeca','Interóseos de la mano','Iliopsoas','Cuádriceps','Isquiotibiales','Tibial anterior','Extensor largo del hallux','Tríceps sural (gastrocnemio-sóleo)','Glúteo medio'];
+const GRADOS_MRC = ['5 — Normal','4+','4 — Movimiento contra resistencia parcial','4-','3 — Movimiento contra gravedad','2 — Movimiento sin gravedad','1 — Contracción visible sin movimiento','0 — Sin contracción'];
+function toggleFuerzaRapida(){
+  const panel = document.getElementById('fuerza-rapida-panel');
+  const visible = panel.style.display === 'block';
+  panel.style.display = visible ? 'none' : 'block';
+  if(!visible && !panel.dataset.built){
+    panel.innerHTML = MUSCULOS_ESTANDAR.map((m,i)=>`
+      <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;flex-wrap:wrap">
+        <span style="flex:1.6;min-width:170px;font-size:11.5px">${m}</span>
+        <select id="fr-lado-${i}" style="flex:0.8;min-width:90px"><option>Derecho</option><option>Izquierdo</option><option selected>Bilateral</option></select>
+        <select id="fr-grado-${i}" style="flex:1.2;min-width:140px">${GRADOS_MRC.map(g=>`<option>${g}</option>`).join('')}</select>
+      </div>`).join('');
+    panel.dataset.built = '1';
+    const btnAdd = document.createElement('button');
+    btnAdd.type='button'; btnAdd.className='btn btn-primary'; btnAdd.style.marginTop='6px';
+    btnAdd.textContent = '➕ Agregar todos los marcados como alterados';
+    btnAdd.onclick = agregarFuerzaRapida;
+    panel.appendChild(btnAdd);
+  }
+}
+function agregarFuerzaRapida(){
+  let agregados = 0;
+  MUSCULOS_ESTANDAR.forEach((m,i)=>{
+    const grado = document.getElementById('fr-grado-'+i).value;
+    if(grado === '5 — Normal') return; // solo se documentan los alterados
+    const lado = document.getElementById('fr-lado-'+i).value;
+    NEURO_LISTAS.fuerza.push({texto:`${m} (${lado}): ${grado}`});
+    agregados++;
+  });
+  if(!agregados){ toast('⚠️ No hay ningún músculo marcado como alterado','err'); return; }
+  renderNeuroLista('fuerza');
+  toast(`✅ ${agregados} músculo(s) agregado(s)`,'ok');
+}
+
+function agregarNeuroItem(tipo){
+  const g=id=>{const el=document.getElementById(id);return el?el.value.trim():'';};
+  let item=null, texto='';
+
+  if(tipo==='sens'){
+    const tipoAlt=g('neuro-sens-tipo');
+    texto = `Dermatoma ${g('neuro-sens-derm')} (${g('neuro-sens-lado')}): ${tipoAlt}`;
+    if(g('neuro-sens-nota')) texto += ` — ${g('neuro-sens-nota')}`;
+    item={texto};
+  } else if(tipo==='fuerza'){
+    const musc = g('neuro-fuerza-musc')==='Otro' ? (g('neuro-fuerza-otro')||'músculo sin especificar') : g('neuro-fuerza-musc');
+    texto = `${musc} (${g('neuro-fuerza-lado')}): ${g('neuro-fuerza-grado')}`;
+    item={texto};
+  } else if(tipo==='trof'){
+    if(!g('neuro-trof-musc')){ toast('⚠️ Indicá el músculo o grupo muscular','err'); return; }
+    texto = `${g('neuro-trof-musc')} (${g('neuro-trof-lado')}): ${g('neuro-trof-estado')} · Fasciculaciones: ${g('neuro-trof-fasc')}`;
+    if(g('neuro-trof-volumen')) texto += ` · ${g('neuro-trof-volumen')}`;
+    item={texto};
+  } else if(tipo==='reflejo'){
+    const nombre = g('neuro-ref-nombre')==='Otro' ? (g('neuro-ref-otro')||'reflejo sin especificar') : g('neuro-ref-nombre');
+    texto = `${nombre} (${g('neuro-ref-lado')}): ${g('neuro-ref-estado')}`;
+    item={texto};
+  } else if(tipo==='gonio'){
+    const art = g('neuro-gonio-art')==='Otra' ? (g('neuro-gonio-otro')||'articulación sin especificar') : g('neuro-gonio-art');
+    const flex=g('neuro-gonio-flex'), ext=g('neuro-gonio-ext');
+    if(!flex && !ext){ toast('⚠️ Cargá al menos flexión o extensión','err'); return; }
+    texto = `${art} (${g('neuro-gonio-lado')}):${flex?' Flexión '+flex+'°':''}${ext?' · Extensión '+ext+'°':''}`;
+    item={texto};
+  } else if(tipo==='eje'){
+    if(!g('neuro-eje-segmento')){ toast('⚠️ Indicá el segmento o articulación','err'); return; }
+    texto = `${g('neuro-eje-segmento')} (${g('neuro-eje-lado')}): ${g('neuro-eje-tipo')}${g('neuro-eje-grado')?' de '+g('neuro-eje-grado')+'°':''}`;
+    item={texto};
+  } else if(tipo==='tono'){
+    if(!g('neuro-tono-musc')){ toast('⚠️ Indicá el músculo o grupo muscular','err'); return; }
+    const r1=g('neuro-tono-r1'), r2=g('neuro-tono-r2');
+    if(!r1 && !r2){ toast('⚠️ Cargá al menos R1 o R2','err'); return; }
+    texto = `${g('neuro-tono-musc')} (${g('neuro-tono-lado')}):${r1?' R1 '+r1+'°':''}${r2?' · R2 '+r2+'°':''}`;
+    if(r1 && r2) texto += ` (R2−R1 = ${(parseFloat(r2)-parseFloat(r1)).toFixed(0)}°)`;
+    if(g('neuro-tono-ashworth')) texto += ` · Ashworth modificado: ${g('neuro-tono-ashworth')}`;
+    item={texto};
+  }
+  if(!item) return;
+  NEURO_LISTAS[tipo].push(item);
+  renderNeuroLista(tipo);
+}
+function quitarNeuroItem(tipo,idx){ NEURO_LISTAS[tipo].splice(idx,1); renderNeuroLista(tipo); }
+function renderNeuroLista(tipo){
+  const cont=document.getElementById('neuro-'+tipo+'-lista');
+  if(!cont) return;
+  if(!NEURO_LISTAS[tipo].length){ cont.innerHTML=''; return; }
+  cont.innerHTML = NEURO_LISTAS[tipo].map((it,i)=>`<div style="display:flex;justify-content:space-between;background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:6px 10px;margin-bottom:5px;font-size:11.5px">
+    <span>${it.texto}</span>
+    <span style="cursor:pointer;color:var(--muted)" onclick="quitarNeuroItem('${tipo}',${i})">✕</span>
+  </div>`).join('');
+}
+// (generarInformeNeuro se retiró — su contenido ahora se arma dentro de
+// compilarExamenFisicoCompleto, ya que Neurología es una sub-solapa de
+// Examen Físico y comparte el mismo resumen final.)
+
+// ══════════════════════════════════════════════════════════════════
+// GONIÓMETRO DIGITAL — 3 puntos de referencia sobre una foto.
+// Ángulo = ángulo entre el segmento (P1→P2) y el segmento (P2→P3),
+// con P2 como vértice/eje articular. Reemplaza tener que "adivinar"
+// el grado a ojo: se mide directamente sobre la imagen.
+// ══════════════════════════════════════════════════════════════════
+let gonio3Target=null, gonio3Img=null, gonio3Puntos=[];
+function abrirGonio3(targetFieldId){
+  gonio3Target=targetFieldId;
+  gonio3Img=null; gonio3Puntos=[];
+  document.getElementById('gonio3-file').value='';
+  document.getElementById('gonio3-valor').textContent='—°';
+  document.getElementById('gonio3-estado').textContent='Cargá una foto y marcá los 3 puntos.';
+  const cv=document.getElementById('gonio3-canvas');
+  const ctx=cv.getContext('2d');
+  ctx.clearRect(0,0,cv.width,cv.height);
+  ctx.fillStyle='#111'; ctx.fillRect(0,0,cv.width,cv.height);
+  document.getElementById('gonio3-overlay').classList.add('open');
+}
+function cerrarGonio3(){
+  document.getElementById('gonio3-overlay').classList.remove('open');
+  gonio3Target=null;
+}
+function cargarFotoGonio3(ev){
+  const file=ev.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const img=new Image();
+    img.onload=()=>{
+      gonio3Img=img; gonio3Puntos=[];
+      const cv=document.getElementById('gonio3-canvas');
+      // ajusta el canvas a la proporción de la foto, con un ancho fijo de trabajo
+      cv.width=600; cv.height=Math.round(600*(img.height/img.width));
+      dibujarGonio3();
+      document.getElementById('gonio3-estado').textContent='Tocá el punto 1 (proximal).';
+    };
+    img.src=e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+function coordsCanvasGonio3(ev){
+  const cv=document.getElementById('gonio3-canvas');
+  const rect=cv.getBoundingClientRect();
+  const clientX = ev.touches ? ev.touches[0].clientX : ev.clientX;
+  const clientY = ev.touches ? ev.touches[0].clientY : ev.clientY;
+  const escalaX = cv.width/rect.width, escalaY = cv.height/rect.height;
+  return {x:(clientX-rect.left)*escalaX, y:(clientY-rect.top)*escalaY};
+}
+function clickGonio3(ev){
+  if(!gonio3Img) return;
+  if(gonio3Puntos.length>=3) return;
+  const p=coordsCanvasGonio3(ev);
+  gonio3Puntos.push(p);
+  dibujarGonio3();
+  if(gonio3Puntos.length===1) document.getElementById('gonio3-estado').textContent='Tocá el punto 2 (vértice / eje articular).';
+  else if(gonio3Puntos.length===2) document.getElementById('gonio3-estado').textContent='Tocá el punto 3 (distal).';
+  else if(gonio3Puntos.length===3){
+    const angulo=calcularAnguloGonio3(gonio3Puntos[0],gonio3Puntos[1],gonio3Puntos[2]);
+    document.getElementById('gonio3-valor').textContent=angulo.toFixed(1)+'°';
+    document.getElementById('gonio3-estado').textContent='Ángulo medido. Tocá "Usar este valor" o reiniciá para volver a marcar.';
+  }
+}
+function calcularAnguloGonio3(p1,p2,p3){
+  const v1={x:p1.x-p2.x, y:p1.y-p2.y};
+  const v2={x:p3.x-p2.x, y:p3.y-p2.y};
+  const ang1=Math.atan2(v1.y,v1.x), ang2=Math.atan2(v2.y,v2.x);
+  let diff=Math.abs(ang1-ang2)*(180/Math.PI);
+  if(diff>180) diff=360-diff;
+  return diff;
+}
+function dibujarGonio3(){
+  const cv=document.getElementById('gonio3-canvas');
+  const ctx=cv.getContext('2d');
+  ctx.clearRect(0,0,cv.width,cv.height);
+  if(gonio3Img) ctx.drawImage(gonio3Img,0,0,cv.width,cv.height);
+  // líneas entre los puntos ya marcados
+  if(gonio3Puntos.length>=2){
+    ctx.strokeStyle='#c026d3'; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.moveTo(gonio3Puntos[0].x,gonio3Puntos[0].y); ctx.lineTo(gonio3Puntos[1].x,gonio3Puntos[1].y); ctx.stroke();
+  }
+  if(gonio3Puntos.length===3){
+    ctx.beginPath(); ctx.moveTo(gonio3Puntos[1].x,gonio3Puntos[1].y); ctx.lineTo(gonio3Puntos[2].x,gonio3Puntos[2].y); ctx.stroke();
+  }
+  // puntos numerados
+  gonio3Puntos.forEach((p,i)=>{
+    ctx.fillStyle='#fff'; ctx.strokeStyle='#7c2d92'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.arc(p.x,p.y,9,0,2*Math.PI); ctx.fill(); ctx.stroke();
+    ctx.fillStyle='#7c2d92'; ctx.font='bold 13px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(String(i+1), p.x, p.y);
+  });
+}
+function reiniciarPuntosGonio3(){
+  gonio3Puntos=[];
+  dibujarGonio3();
+  document.getElementById('gonio3-valor').textContent='—°';
+  document.getElementById('gonio3-estado').textContent = gonio3Img ? 'Tocá el punto 1 (proximal).' : 'Cargá una foto y marcá los 3 puntos.';
+}
+function confirmarGonio3(){
+  if(gonio3Puntos.length<3){ toast('⚠️ Marcá los 3 puntos primero','err'); return; }
+  if(!gonio3Target){ toast('⚠️ No hay un campo de destino para este valor','err'); return; }
+  const angulo=calcularAnguloGonio3(gonio3Puntos[0],gonio3Puntos[1],gonio3Puntos[2]);
+  const campo=document.getElementById(gonio3Target);
+  if(campo) campo.value = angulo.toFixed(1);
+  toast('✅ Ángulo cargado: '+angulo.toFixed(1)+'°','ok');
+  cerrarGonio3();
+}
+(function initGonio3Canvas(){
+  const cv=document.getElementById('gonio3-canvas');
+  if(!cv) return;
+  cv.addEventListener('click', clickGonio3);
+  cv.addEventListener('touchstart', e=>{ e.preventDefault(); clickGonio3(e); }, {passive:false});
+})();
+
+// ══════════════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════════════
+(async function init(){
+  await initDB();
+  await inicializarSindromes();
+  renderPacBarSinPaciente();
+})();
+</script>
+</body>
+</html>
