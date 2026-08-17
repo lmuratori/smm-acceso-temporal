@@ -9,6 +9,10 @@
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--accent:#0b1f3a;--accent2:#2563eb;--green:#16a34a;--amber:#d97706;--border:#e2e8f0;--muted:#64748b;--bg:#f0f4f8;--surface:#fff}
 body{font-family:'Inter',sans-serif;background:var(--bg);min-height:100vh;padding:0 0 40px}
+/* Modo breve (consulta habitual, no discapacidad): oculta las secciones más
+   largas (infancia, vacunas, COVID, vivienda, jornada laboral) que solo hacen
+   falta para trámites de discapacidad/CUD. Se activa con ?modo=clinico_breve */
+body.modo-breve .solo-extenso{display:none}
 /* HEADER */
 .header{background:var(--accent);color:#fff;padding:20px 24px;text-align:center;position:relative}
 .header-logo{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;opacity:.75;margin-bottom:6px}
@@ -275,7 +279,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);min-height:100vh;paddin
     </div>
 
     <!-- Enfermedades de la infancia -->
-    <div style="margin-bottom:12px">
+    <div class="solo-extenso" style="margin-bottom:12px">
       <label style="display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:6px">Enfermedades de la infancia (puede seleccionar varias)</label>
       <div class="check-group" id="cg-infancia">
         <div class="check-opt" onclick="toggleCheck(this)">Varicela</div>
@@ -289,7 +293,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);min-height:100vh;paddin
     </div>
 
     <!-- Vacunas -->
-    <div style="margin-bottom:12px">
+    <div class="solo-extenso" style="margin-bottom:12px">
       <label style="display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:6px">Vacunas recibidas (puede seleccionar varias)</label>
       <div class="check-group" id="cg-vacunas">
         <div class="check-opt" onclick="toggleCheck(this)">Antitetánica (últimos 10 años)</div>
@@ -303,7 +307,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);min-height:100vh;paddin
     </div>
 
     <!-- COVID-19: exposición y secuelas -->
-    <div style="margin-bottom:12px">
+    <div class="solo-extenso" style="margin-bottom:12px">
       <label style="display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:6px">¿Tuvo COVID-19?</label>
       <div class="radio-group" id="rg-covid">
         <div class="radio-opt" onclick="selRadio('rg-covid','No tuvo')">No tuvo</div>
@@ -435,7 +439,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);min-height:100vh;paddin
     </div>
 
     <!-- Vivienda y saneamiento -->
-    <div style="margin-top:6px;padding-top:12px;border-top:1px solid var(--border)">
+    <div class="solo-extenso" style="margin-top:6px;padding-top:12px;border-top:1px solid var(--border)">
       <label style="display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:6px">🏠 Vivienda y saneamiento</label>
       <div class="form-grid fg2">
         <div class="field">
@@ -483,7 +487,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);min-height:100vh;paddin
       </div>
     </div>
     <!-- Tipo de jornada -->
-    <div style="margin-top:12px">
+    <div class="solo-extenso" style="margin-top:12px">
       <label style="display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:6px">Tipo de jornada laboral</label>
       <div class="radio-group" id="rg-jornada">
         <div class="radio-opt" onclick="selRadio('rg-jornada','Trabajo de escritorio (sentado)')">Escritorio / sentado</div>
@@ -508,6 +512,16 @@ body{font-family:'Inter',sans-serif;background:var(--bg);min-height:100vh;paddin
     <div class="field" style="margin-top:10px">
       <label>¿Qué deporte o actividad física? ¿Con qué frecuencia?</label>
       <input id="f-deporte-det" placeholder="Ej: Fútbol 2 veces/semana · Natación diaria…">
+    </div>
+    <!-- Federado / profesional del deporte -->
+    <div style="margin-top:12px">
+      <label style="display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:6px">¿Está federado a algún deporte o es profesional del mismo?</label>
+      <div class="radio-group" id="rg-federado">
+        <div class="radio-opt" onclick="selRadio('rg-federado','No')">No</div>
+        <div class="radio-opt" onclick="selRadio('rg-federado','Federado (amateur)')">Federado (amateur)</div>
+        <div class="radio-opt" onclick="selRadio('rg-federado','Profesional')">Profesional</div>
+      </div>
+      <input id="f-federado-det" placeholder="¿En qué disciplina / club o federación?" style="margin-top:8px">
     </div>
     <!-- Observaciones finales -->
     <div class="field" style="margin-top:12px">
@@ -546,9 +560,14 @@ const RIDM_BACKEND_URL = 'https://script.google.com/macros/s/AKfycbwYdoFuU8mQL4Y
 
 /* ══════════════════════════════════════════════════════════════════
    MODO DEL FORMULARIO — detectado por parámetros URL
-   ?modo=rapido   → solo filiación (el médico carga en el momento)
-   ?modo=clinico  → solo antecedentes (el paciente completa en casa)
-   sin parámetro  → formulario completo (5 pasos)
+   ?modo=rapido         → solo filiación (el médico carga en el momento)
+   ?modo=clinico_breve  → antecedentes reducidos (consulta habitual: alergias,
+                          enfermedades, cirugías, medicación, deporte/federación,
+                          trabajo) — el paciente completa en casa
+   ?modo=clinico        → antecedentes completos (incluye infancia, vacunas,
+                          COVID, vivienda y saneamiento, jornada laboral —
+                          para trámites de discapacidad/CUD)
+   sin parámetro        → formulario completo (5 pasos)
    ══════════════════════════════════════════════════════════════════ */
 const _params = new URLSearchParams(window.location.search);
 const MODO    = _params.get('modo') || 'completo';
@@ -558,9 +577,10 @@ const P_NOM   = decodeURIComponent(_params.get('nombre') || '');
 const P_TEL   = decodeURIComponent(_params.get('tel') || '');
 
 const SECS_MODO = {
-  rapido  : [0, 1],
-  clinico : [2, 3, 4],
-  completo: [0, 1, 2, 3, 4]
+  rapido       : [0, 1],
+  clinico_breve: [2, 4],
+  clinico      : [2, 3, 4],
+  completo     : [0, 1, 2, 3, 4]
 };
 
 function initModo() {
@@ -569,12 +589,14 @@ function initModo() {
   if (!navigator.onLine) document.getElementById('banner-offline').style.display='block';
   window.addEventListener('offline', ()=>document.getElementById('banner-offline').style.display='block');
   window.addEventListener('online',  ()=>document.getElementById('banner-offline').style.display='none');
-  if (MODO==='clinico') document.getElementById('banner-clinico').style.display='block';
+  if (MODO==='clinico' || MODO==='clinico_breve') document.getElementById('banner-clinico').style.display='block';
+  if (MODO==='clinico_breve') document.body.classList.add('modo-breve');
 
   const badge = document.getElementById('header-badge');
   if (badge) {
-    if (MODO==='rapido')  badge.textContent='⚡ Datos rápidos — completar en el consultorio';
-    if (MODO==='clinico') badge.textContent='📋 Complete sus antecedentes médicos en casa';
+    if (MODO==='rapido')        badge.textContent='⚡ Datos rápidos — completar en el consultorio';
+    if (MODO==='clinico_breve') badge.textContent='📋 Complete algunos datos antes de su consulta';
+    if (MODO==='clinico')       badge.textContent='📋 Complete sus antecedentes médicos en casa';
   }
 
   for (let i=0; i<5; i++) {
@@ -671,7 +693,7 @@ function trabajoBlockHTML(i){
       <div class="field"><label>Puesto / tarea</label>
         <input id="f-trab-puesto-${i}" placeholder="Ej: Maestro, Albañil, Oficinista…"></div>
     </div>
-    <div style="margin-top:6px">
+    <div class="solo-extenso" style="margin-top:6px">
       <label style="display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:6px">Fuente de exposición — grupos OIT (puede seleccionar varias)</label>
       <div class="check-group" id="cg-exposicion-${i}">
         <div class="check-opt" onclick="toggleCheck(this)">Físico — Ruido</div>
@@ -761,7 +783,11 @@ function enviarRIDM() {
     alert('Por favor completá apellido, nombre y teléfono.');
     return;
   }
-  if (MODO!=='rapido' && (!apellido || !nombre || !motivo)) {
+  if (MODO==='clinico_breve' && (!apellido || !nombre)) {
+    alert('Por favor completá apellido y nombre.');
+    return;
+  }
+  if (MODO!=='rapido' && MODO!=='clinico_breve' && (!apellido || !nombre || !motivo)) {
     alert('Por favor completá apellido, nombre y el motivo de consulta.');
     return;
   }
@@ -803,6 +829,8 @@ function enviarRIDM() {
     jornada   : getRadio('rg-jornada'),
     deporte   : getRadio('rg-deporte'),
     deporte_det: document.getElementById('f-deporte-det')?.value || '',
+    federado  : getRadio('rg-federado'),
+    federado_det: document.getElementById('f-federado-det')?.value || '',
     obs       : document.getElementById('f-obs')?.value || '',
     fecha_envio: new Date().toLocaleString('es-AR'),
     modo      : MODO
@@ -819,7 +847,7 @@ function enviarRIDM() {
   } catch(_) {}
 
   // ── Enviar al backend (Google Sheets) — si falla, el localStorage es el respaldo ──
-  const envioBackend = MODO === 'clinico' ? 'ridm_antecedentes' : 'ridm_submit';
+  const envioBackend = (MODO === 'clinico' || MODO === 'clinico_breve') ? 'ridm_antecedentes' : 'ridm_submit';
   fetch(RIDM_BACKEND_URL, {
     method: 'POST',
     headers: {'Content-Type':'text/plain;charset=utf-8'},
@@ -921,6 +949,29 @@ function compartirWA() {
 Paciente: *${apellido}, ${nombre}*`;
   window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
 }
+</script>
+
+<!-- ══ TRIAL: bloqueo si venció el período de prueba (ver configurarTrial() en Codigo.gs) ══ -->
+<div id="trial-lock-overlay" style="display:none;position:fixed;inset:0;background:#0b1f3a;color:#fff;z-index:999999;align-items:center;justify-content:center;text-align:center;padding:24px;font-family:system-ui,-apple-system,sans-serif">
+  <div style="max-width:420px">
+    <div style="font-size:40px;margin-bottom:12px">🔒</div>
+    <div style="font-size:18px;font-weight:700;margin-bottom:8px">Período de prueba finalizado</div>
+    <div style="font-size:13px;opacity:.85">Para seguir usando el sistema, contactá al Dr. Luis Alberto Muratori.</div>
+  </div>
+</div>
+<style>body.trial-vencido>*:not(#trial-lock-overlay){display:none!important} body.trial-vencido{overflow:hidden!important}</style>
+<script>
+(function(){
+  try{
+    fetch(RIDM_BACKEND_URL+'?action=check_trial',{signal:AbortSignal.timeout(6000)})
+      .then(function(r){return r.json();}).then(function(d){
+        if(d && d.vencido){
+          document.body.classList.add('trial-vencido');
+          var ov=document.getElementById('trial-lock-overlay'); if(ov) ov.style.display='flex';
+        }
+      }).catch(function(){});
+  }catch(e){}
+})();
 </script>
 </body>
 </html>

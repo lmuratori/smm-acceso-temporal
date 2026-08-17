@@ -60,7 +60,7 @@
       <div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);padding:6px 10px 2px">Programas del consultorio</div>
       <a href="OCM_Muratori_v14_0_26.html" class="simm-nav-item">💊 OCM — Historia clínica</a>
       <a href="Lector_CUD.html" class="simm-nav-item">🪪 Lector CUD</a>
-      <a href="CAM_Beta_Herramientas_Clinicas_2.html" class="simm-nav-item">🩺 CAM — Herramientas Clínicas</a>
+      <a href="CAM_Herramientas_Clinicas.html" class="simm-nav-item">🩺 CAM — Herramientas Clínicas</a>
       <a href="Agenda_Mensajes.html" class="simm-nav-item">✉️ Agenda de Mensajes</a>
     </div>
   </div>
@@ -155,7 +155,7 @@ function apiPost(payload){
   return fetch(SHEETS_URL, {
     method:'POST',
     headers:{'Content-Type':'text/plain;charset=utf-8'},
-    body: JSON.stringify(payload)
+    body: JSON.stringify(Object.assign({}, payload, APP_TOKEN?{token:APP_TOKEN}:{}))
   }).then(r=>r.json());
 }
 
@@ -243,5 +243,27 @@ if(!SHEETS_URL){
 }
 </script>
 
+<!-- ══ TRIAL: bloqueo si venció el período de prueba (ver configurarTrial() en Codigo.gs) ══ -->
+<div id="trial-lock-overlay" style="display:none;position:fixed;inset:0;background:#0b1f3a;color:#fff;z-index:999999;align-items:center;justify-content:center;text-align:center;padding:24px;font-family:system-ui,-apple-system,sans-serif">
+  <div style="max-width:420px">
+    <div style="font-size:40px;margin-bottom:12px">🔒</div>
+    <div style="font-size:18px;font-weight:700;margin-bottom:8px">Período de prueba finalizado</div>
+    <div style="font-size:13px;opacity:.85">Para seguir usando el sistema, contactá al Dr. Luis Alberto Muratori.</div>
+  </div>
+</div>
+<style>body.trial-vencido>*:not(#trial-lock-overlay){display:none!important} body.trial-vencido{overflow:hidden!important}</style>
+<script>
+(function(){
+  try{
+    fetch(SHEETS_URL+'?action=check_trial',{signal:AbortSignal.timeout(6000)})
+      .then(function(r){return r.json();}).then(function(d){
+        if(d && d.vencido){
+          document.body.classList.add('trial-vencido');
+          var ov=document.getElementById('trial-lock-overlay'); if(ov) ov.style.display='flex';
+        }
+      }).catch(function(){});
+  }catch(e){}
+})();
+</script>
 </body>
 </html>

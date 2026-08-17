@@ -39,6 +39,7 @@
 <div class="topbar">
   <h1>🪪 Lector CUD — S.I.M-M</h1>
   <p>Foto del Certificado Único de Discapacidad → extracción automática con IA → revisión y guardado</p>
+  <p style="margin-top:6px"><a href="#" style="color:#fff;text-decoration:underline;font-size:12px" onclick="document.getElementById('cardConfig').classList.remove('oculto');document.getElementById('sheetsUrlInput').value=SHEETS_URL||'';document.getElementById('appTokenInput').value=APP_TOKEN||'';return false;">⚙️ Configuración / token de acceso</a></p>
 </div>
 
 <div class="wrap">
@@ -49,6 +50,9 @@
     <p class="muted">Pegá acá la misma URL de implementación que usa OCM (Apps Script → Implementar → Web App).</p>
     <input type="text" id="sheetsUrlInput" placeholder="https://script.google.com/macros/s/.../exec">
     <div style="margin-top:8px"><button class="btn-primary" onclick="guardarSheetsUrl()">Guardar</button></div>
+    <p class="muted" style="margin-top:12px">Token de acceso (solo si el médico ya lo activó con configurarAppToken() — si no, dejalo vacío):</p>
+    <input type="text" id="appTokenInput" placeholder="Token de acceso (opcional)">
+    <div style="margin-top:8px"><button class="btn-primary" onclick="guardarAppToken()">Guardar token</button></div>
   </div>
 
   <div class="aviso">⚠️ La IA transcribe lo que lee en la foto, pero puede equivocarse (letra manuscrita, escaneo de mala calidad, reflejos). <b>Siempre revisá y corregí cada campo antes de guardar</b> — nada se guarda automáticamente sin que lo confirmes.</div>
@@ -112,6 +116,7 @@
 
 <script>
 let SHEETS_URL = localStorage.getItem('lectorcud_sheets_url') || 'https://script.google.com/macros/s/AKfycbwYdoFuU8mQL4YKqufSBQ9AD_yqWEEesLtGzYQjNw2JG1BZIQF7ug80mHB5sLMXhaUpvQ/exec';
+let APP_TOKEN = localStorage.getItem('lectorcud_app_token') || '';
 let fotoBase64 = '';
 let fotoMime = 'image/jpeg';
 
@@ -130,11 +135,18 @@ function guardarSheetsUrl(){
   toast('Conexión guardada');
 }
 
+function guardarAppToken(){
+  const v = document.getElementById('appTokenInput').value.trim();
+  localStorage.setItem('lectorcud_app_token', v);
+  APP_TOKEN = v;
+  toast(v ? 'Token guardado' : 'Token borrado');
+}
+
 function apiPost(payload){
   return fetch(SHEETS_URL, {
     method:'POST',
     headers:{'Content-Type':'text/plain;charset=utf-8'},
-    body: JSON.stringify(payload)
+    body: JSON.stringify(Object.assign({}, payload, APP_TOKEN?{token:APP_TOKEN}:{}))
   }).then(r=>r.json());
 }
 
@@ -247,5 +259,27 @@ if(!SHEETS_URL){
 }
 </script>
 
+<!-- ══ TRIAL: bloqueo si venció el período de prueba (ver configurarTrial() en Codigo.gs) ══ -->
+<div id="trial-lock-overlay" style="display:none;position:fixed;inset:0;background:#0b1f3a;color:#fff;z-index:999999;align-items:center;justify-content:center;text-align:center;padding:24px;font-family:system-ui,-apple-system,sans-serif">
+  <div style="max-width:420px">
+    <div style="font-size:40px;margin-bottom:12px">🔒</div>
+    <div style="font-size:18px;font-weight:700;margin-bottom:8px">Período de prueba finalizado</div>
+    <div style="font-size:13px;opacity:.85">Para seguir usando el sistema, contactá al Dr. Luis Alberto Muratori.</div>
+  </div>
+</div>
+<style>body.trial-vencido>*:not(#trial-lock-overlay){display:none!important} body.trial-vencido{overflow:hidden!important}</style>
+<script>
+(function(){
+  try{
+    fetch(SHEETS_URL+'?action=check_trial',{signal:AbortSignal.timeout(6000)})
+      .then(function(r){return r.json();}).then(function(d){
+        if(d && d.vencido){
+          document.body.classList.add('trial-vencido');
+          var ov=document.getElementById('trial-lock-overlay'); if(ov) ov.style.display='flex';
+        }
+      }).catch(function(){});
+  }catch(e){}
+})();
+</script>
 </body>
 </html>

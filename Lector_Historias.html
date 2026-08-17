@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lector de Fichas de Pacientes — S.I.M-M</title>
+<style>
+  :root{
+    --azul:#0369a1; --azul-osc:#0c4a6e; --verde:#16a34a; --ambar:#b45309;
+    --rojo:#dc2626; --muted:#64748b; --border:#e2e8f0; --bg:#f8fafc; --surface:#fff;
+  }
+  *{box-sizing:border-box}
+  body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--bg);margin:0;color:#0f172a;line-height:1.5}
+  .topbar{background:linear-gradient(135deg,var(--azul),var(--azul-osc));color:#fff;padding:22px 20px;text-align:center;position:relative}
+  .topbar h1{font-size:20px;margin:0 0 4px;font-weight:800}
+  .topbar p{font-size:12.5px;margin:0;opacity:.9}
+  .wrap{max-width:760px;margin:0 auto;padding:18px}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:16px}
+  .card h2{font-size:15px;margin:0 0 12px;color:var(--azul-osc);display:flex;align-items:center;gap:8px}
+  label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin:10px 0 4px}
+  input[type=text],input[type=date],select,textarea{
+    width:100%;padding:9px 10px;border:1px solid var(--border);border-radius:7px;font-size:13.5px;font-family:inherit;background:#fff}
+  input:disabled{background:#f1f5f9;color:#94a3b8}
+  textarea{resize:vertical}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  button{cursor:pointer;border:none;border-radius:7px;padding:10px 16px;font-size:13.5px;font-weight:700}
+  .btn-primary{background:var(--azul);color:#fff}
+  .btn-primary:hover{background:var(--azul-osc)}
+  .btn-primary:disabled{background:#94a3b8;cursor:not-allowed}
+  .btn-secundario{background:#f1f5f9;color:#334155}
+  .oculto{display:none}
+  .muted{color:var(--muted);font-size:12px}
+  .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#0f172a;color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:99;max-width:90%;text-align:center}
+  .toast.show{opacity:1}
+  .aviso{background:#fffbeb;border-left:4px solid var(--ambar);padding:10px 14px;border-radius:0 6px 6px 0;font-size:12px;color:#78350f;margin-bottom:14px}
+  .campo-dudoso{border-color:var(--ambar)!important;background:#fffbeb}
+  .aviso-dudoso{font-size:11px;color:var(--ambar);margin-top:3px}
+  .check-row{display:flex;align-items:center;gap:8px;margin-top:10px;background:#f8fafc;border:1px solid var(--border);border-radius:7px;padding:9px 10px}
+  .check-row input[type=checkbox]{width:auto;margin:0}
+  .check-row label{margin:0;font-size:13px;font-weight:600;color:#334155}
+  .aviso-mail{background:#fef3c7;border-left:4px solid #b45309;padding:8px 12px;border-radius:0 6px 6px 0;font-size:11.5px;color:#78350f;margin-top:8px}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>📖 Lector de Fichas de Pacientes — S.I.M-M</h1>
+  <p>Pegá el texto de una ficha o historia vieja (Word, papel tipeado) → la IA propone los datos de filiación → revisión y guardado</p>
+  <p style="margin-top:6px"><a href="#" style="color:#fff;text-decoration:underline;font-size:12px" onclick="document.getElementById('cardConfig').classList.remove('oculto');document.getElementById('sheetsUrlInput').value=SHEETS_URL||'';document.getElementById('appTokenInput').value=APP_TOKEN||'';return false;">⚙️ Configuración / token de acceso</a></p>
+</div>
+
+<div class="wrap">
+
+  <!-- Configuración de conexión al backend (una sola vez) -->
+  <div class="card oculto" id="cardConfig">
+    <h2>⚙️ Conexión con el sistema</h2>
+    <p class="muted">Pegá acá la misma URL de implementación que usa OCM (Apps Script → Implementar → Web App).</p>
+    <input type="text" id="sheetsUrlInput" placeholder="https://script.google.com/macros/s/.../exec">
+    <div style="margin-top:8px"><button class="btn-primary" onclick="guardarSheetsUrl()">Guardar</button></div>
+    <p class="muted" style="margin-top:12px">Token de acceso (solo si el médico ya lo activó con configurarAppToken() — si no, dejalo vacío):</p>
+    <input type="text" id="appTokenInput" placeholder="Token de acceso (opcional)">
+    <div style="margin-top:8px"><button class="btn-primary" onclick="guardarAppToken()">Guardar token</button></div>
+  </div>
+
+  <div class="aviso">⚠️ La IA lee el texto que pegás y puede equivocarse (letra ambigua, datos mal tipeados en el original, códigos de acentos rotos). <b>Siempre revisá y corregí cada campo antes de guardar</b> — nada se guarda automáticamente sin que lo confirmes. No inventa fecha de nacimiento a partir de la edad: si no figura explícita, la deja vacía. Esta herramienta solo carga los <b>datos de filiación</b> del paciente — las consultas y evoluciones se siguen cargando desde OCM en cada atención.</div>
+
+  <!-- Paso 1: pegar texto -->
+  <div class="card">
+    <h2>📋 1. Pegá el texto de la ficha</h2>
+    <p class="muted">Abrí el Word, seleccioná todo (Ctrl+A), copiá (Ctrl+C), y pegá acá (Ctrl+V).</p>
+    <textarea id="textoPegado" rows="8" placeholder="NOMBRE Y APELLIDO: ...&#10;DNI: ...&#10;DIRECCION: ...&#10;TEL: ...&#10;MAIL: ..."></textarea>
+    <div style="margin-top:10px">
+      <button class="btn-primary" id="btnAnalizar" onclick="analizarTexto()">🔎 Analizar con IA</button>
+    </div>
+    <div id="analizandoMsg" class="muted oculto" style="margin-top:8px">Analizando el texto con Gemini… puede tardar unos segundos.</div>
+  </div>
+
+  <!-- Paso 2: revisión y guardado -->
+  <div class="card oculto" id="cardFormulario">
+    <h2>✏️ 2. Datos de filiación — revisar y corregir</h2>
+    <div class="row">
+      <div><label>Apellido</label><input type="text" id="f-apellido"></div>
+      <div><label>Nombre</label><input type="text" id="f-nombre"></div>
+    </div>
+    <div class="row">
+      <div><label>DNI</label><input type="text" id="f-dni"></div>
+      <div><label>Fecha de nacimiento</label><input type="text" id="f-fnac" placeholder="DD/MM/AAAA"></div>
+    </div>
+    <label>Dirección</label>
+    <input type="text" id="f-domicilio">
+    <div class="row">
+      <div><label>Teléfono</label><input type="text" id="f-telefono"></div>
+      <div><label>Mail</label><input type="text" id="f-email"></div>
+    </div>
+    <p class="aviso-dudoso oculto" id="avisoEmailDudoso">⚠️ El email parecía tener el signo @ faltante en el original — la IA lo agregó automáticamente, confirmalo antes de guardar.</p>
+    <p class="aviso-mail oculto" id="avisoSinMail">✉️ Sin mail cargado: el paciente va a quedar marcado en OCM para recordar completarlo — sin mail el sistema no le puede mandar el link de autocompletado (RIMP).</p>
+
+    <div class="check-row">
+      <input type="checkbox" id="f-nomutualizado" onchange="toggleNoMutualizado()">
+      <label for="f-nomutualizado">Particular / No mutualizado (sin obra social)</label>
+    </div>
+    <div class="row">
+      <div><label>Obra social</label><input type="text" id="f-obrasocial"></div>
+      <div><label>Plan</label><input type="text" id="f-plan"></div>
+    </div>
+    <label>N° de afiliado</label>
+    <input type="text" id="f-afiliado">
+
+    <div class="row">
+      <div><label>Centro derivador</label><input type="text" id="f-centroderivador" placeholder="Institución, colega o médico que derivó"></div>
+      <div><label>Lugar de atención</label>
+        <select id="f-centro">
+          <option value="">— Elegir —</option>
+          <option value="sicoli">H. Sicoli</option>
+          <option value="espanol">H. Español</option>
+          <option value="palmares">Palmares</option>
+          <option value="sandona">San Donà</option>
+          <option value="altomaipu">Alto Maipú</option>
+          <option value="rehab">Rehabilitarte</option>
+          <option value="norte">Cons. Norte (Consultorios Médicos Privados del Norte)</option>
+          <option value="santamaria">Cl. Santa María</option>
+        </select>
+      </div>
+    </div>
+    <label>Localidad</label>
+    <input type="text" id="f-localidad">
+
+    <div class="check-row" style="margin-top:14px">
+      <input type="checkbox" id="f-primera-consulta">
+      <label for="f-primera-consulta">Enviarle el RIMP ahora (si tiene mail) para que complete sus antecedentes — dejalo destildado si es un paciente ya conocido y solo estás cargando su ficha vieja</label>
+    </div>
+    <div class="check-row">
+      <input type="checkbox" id="f-discapacidad">
+      <label for="f-discapacidad">Trámite de discapacidad (CUD) — manda el RIMP completo (vivienda, trabajos, infancia, vacunas, COVID); si no, se manda la versión breve</label>
+    </div>
+
+    <div style="margin-top:18px;display:flex;gap:10px">
+      <button class="btn-primary" onclick="guardarPaciente()">💾 Guardar paciente</button>
+      <button class="btn-secundario" onclick="limpiarTodo()">Empezar de nuevo</button>
+    </div>
+    <p class="muted" style="margin-top:8px">Al guardar, el paciente queda creado (o actualizado, si ya existía ese DNI) con estos datos de filiación.</p>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let SHEETS_URL = localStorage.getItem('lectorhist_sheets_url') || 'https://script.google.com/macros/s/AKfycbwYdoFuU8mQL4YKqufSBQ9AD_yqWEEesLtGzYQjNw2JG1BZIQF7ug80mHB5sLMXhaUpvQ/exec';
+let APP_TOKEN = localStorage.getItem('lectorhist_app_token') || '';
+
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 3500);
+}
+
+function guardarSheetsUrl(){
+  const v = document.getElementById('sheetsUrlInput').value.trim();
+  if(!v){ toast('Pegá la URL primero'); return; }
+  localStorage.setItem('lectorhist_sheets_url', v);
+  SHEETS_URL = v;
+  document.getElementById('cardConfig').classList.add('oculto');
+  toast('Conexión guardada');
+}
+
+function guardarAppToken(){
+  const v = document.getElementById('appTokenInput').value.trim();
+  localStorage.setItem('lectorhist_app_token', v);
+  APP_TOKEN = v;
+  toast(v ? 'Token guardado' : 'Token borrado');
+}
+
+function apiPost(payload){
+  return fetch(SHEETS_URL, {
+    method:'POST',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify(Object.assign({}, payload, APP_TOKEN?{token:APP_TOKEN}:{}))
+  }).then(r=>r.json());
+}
+
+function analizarTexto(){
+  const texto = document.getElementById('textoPegado').value.trim();
+  if(!texto){ toast('Pegá el texto de la ficha primero'); return; }
+  document.getElementById('btnAnalizar').disabled = true;
+  document.getElementById('analizandoMsg').classList.remove('oculto');
+  apiPost({action:'analizar_texto_paciente', texto}).then(res=>{
+    document.getElementById('analizandoMsg').classList.add('oculto');
+    document.getElementById('btnAnalizar').disabled = false;
+    if(!res || !res.success){
+      toast('No se pudo analizar el texto: ' + (res && res.error ? res.error : 'error desconocido') + ' — podés cargar los datos a mano abajo.');
+      mostrarFormulario({});
+      return;
+    }
+    mostrarFormulario(res.registro || {});
+    toast('Listo — revisá cada campo antes de guardar');
+  }).catch(()=>{
+    document.getElementById('analizandoMsg').classList.add('oculto');
+    document.getElementById('btnAnalizar').disabled = false;
+    toast('Error de conexión — revisá la URL configurada. Podés cargar los datos a mano abajo.');
+    mostrarFormulario({});
+  });
+}
+
+function toggleNoMutualizado(){
+  const marcado = document.getElementById('f-nomutualizado').checked;
+  const os = document.getElementById('f-obrasocial');
+  const plan = document.getElementById('f-plan');
+  const afil = document.getElementById('f-afiliado');
+  if(marcado){
+    os.value = 'NO MUTUALIZADO'; os.disabled = true;
+    plan.value = ''; plan.disabled = true;
+    afil.value = ''; afil.disabled = true;
+  } else {
+    if(os.value === 'NO MUTUALIZADO') os.value = '';
+    os.disabled = false; plan.disabled = false; afil.disabled = false;
+  }
+}
+
+function actualizarAvisoSinMail(){
+  const mail = document.getElementById('f-email').value.trim();
+  document.getElementById('avisoSinMail').classList.toggle('oculto', !!mail);
+}
+
+function mostrarFormulario(reg){
+  const set = (id, val)=>{ const el = document.getElementById(id); if(el) el.value = val||''; };
+  set('f-apellido', reg.apellido);
+  set('f-nombre', reg.nombre);
+  set('f-dni', reg.dni);
+  set('f-fnac', reg.fecha_nac);
+  set('f-telefono', reg.telefono);
+  set('f-email', reg.email);
+  set('f-domicilio', reg.domicilio);
+  set('f-localidad', reg.localidad);
+  set('f-centroderivador', reg.centro_derivador);
+
+  const esNoMutualizado = /no\s*mutualizad|particular/i.test(reg.obra_social||'');
+  document.getElementById('f-nomutualizado').checked = esNoMutualizado;
+  set('f-obrasocial', esNoMutualizado ? 'NO MUTUALIZADO' : reg.obra_social);
+  set('f-plan', reg.plan);
+  set('f-afiliado', reg.nro_afiliado);
+  toggleNoMutualizado();
+  if(!esNoMutualizado){ set('f-obrasocial', reg.obra_social); set('f-plan', reg.plan); set('f-afiliado', reg.nro_afiliado); }
+
+  const emailEl = document.getElementById('f-email');
+  const avisoEmail = document.getElementById('avisoEmailDudoso');
+  if(reg.email_dudoso){
+    emailEl.classList.add('campo-dudoso');
+    avisoEmail.classList.remove('oculto');
+  } else {
+    emailEl.classList.remove('campo-dudoso');
+    avisoEmail.classList.add('oculto');
+  }
+  actualizarAvisoSinMail();
+
+  document.getElementById('cardFormulario').classList.remove('oculto');
+  document.getElementById('cardFormulario').scrollIntoView({behavior:'smooth'});
+}
+
+document.addEventListener('DOMContentLoaded', function(){
+  document.getElementById('f-email').addEventListener('input', actualizarAvisoSinMail);
+});
+
+function guardarPaciente(){
+  const get = id => document.getElementById(id).value.trim();
+  const dni = get('f-dni');
+  if(!dni){ toast('Falta el DNI — es obligatorio para guardar'); return; }
+  if(!get('f-apellido') || !get('f-nombre')){ toast('Faltan apellido o nombre — son obligatorios'); return; }
+
+  const payload = {
+    action: 'guardar_paciente_historial',
+    apellido: get('f-apellido'), nombre: get('f-nombre'), dni,
+    fecha_nac: get('f-fnac'), telefono: get('f-telefono'), email: get('f-email'),
+    obra_social: get('f-obrasocial'), plan: get('f-plan'), nro_afiliado: get('f-afiliado'),
+    domicilio: get('f-domicilio'), localidad: get('f-localidad'),
+    centro_derivador: get('f-centroderivador'),
+    lugar_atencion: document.getElementById('f-centro').value,
+    primera_consulta: document.getElementById('f-primera-consulta').checked,
+    discapacidad: document.getElementById('f-discapacidad').checked
+  };
+  apiPost(payload).then(res=>{
+    if(res && res.success){
+      const rimpEnviado = res.paciente && res.paciente.rimpEnviado;
+      toast('✅ Paciente guardado' + (get('f-email') ? (rimpEnviado ? ' — RIMP enviado' : '') : ' — recordá que falta el mail'));
+      limpiarTodo();
+    } else {
+      toast('Error al guardar: ' + (res && res.error ? res.error : 'desconocido'));
+    }
+  }).catch(()=> toast('Error de conexión al guardar'));
+}
+
+function limpiarTodo(){
+  document.getElementById('textoPegado').value = '';
+  document.getElementById('cardFormulario').classList.add('oculto');
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+// Inicio
+if(!SHEETS_URL){
+  document.getElementById('cardConfig').classList.remove('oculto');
+}
+</script>
+
+<!-- ══ TRIAL: bloqueo si venció el período de prueba (ver configurarTrial() en Codigo.gs) ══ -->
+<div id="trial-lock-overlay" style="display:none;position:fixed;inset:0;background:#0b1f3a;color:#fff;z-index:999999;align-items:center;justify-content:center;text-align:center;padding:24px;font-family:system-ui,-apple-system,sans-serif">
+  <div style="max-width:420px">
+    <div style="font-size:40px;margin-bottom:12px">🔒</div>
+    <div style="font-size:18px;font-weight:700;margin-bottom:8px">Período de prueba finalizado</div>
+    <div style="font-size:13px;opacity:.85">Para seguir usando el sistema, contactá al Dr. Luis Alberto Muratori.</div>
+  </div>
+</div>
+<style>body.trial-vencido>*:not(#trial-lock-overlay){display:none!important} body.trial-vencido{overflow:hidden!important}</style>
+<script>
+(function(){
+  try{
+    fetch(SHEETS_URL+'?action=check_trial',{signal:AbortSignal.timeout(6000)})
+      .then(function(r){return r.json();}).then(function(d){
+        if(d && d.vencido){
+          document.body.classList.add('trial-vencido');
+          var ov=document.getElementById('trial-lock-overlay'); if(ov) ov.style.display='flex';
+        }
+      }).catch(function(){});
+  }catch(e){}
+})();
+</script>
+</body>
+</html>

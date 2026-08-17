@@ -138,6 +138,18 @@ body{font-family:'Inter',system-ui,sans-serif;font-size:13px;background:var(--bg
 .cmd-btn.active{background:#eff6ff;border-color:var(--accent2);box-shadow:0 0 0 2px rgba(37,99,235,.15);}
 .cmd-btn.cmd-btn-pedido{position:relative;background:#eff6ff;border-color:#93c5fd}
 .cmd-btn.cmd-btn-pedido::after{content:'✓';position:absolute;top:1px;right:2px;font-size:10px;font-weight:900;color:#1e4fa3;background:#fff;border-radius:50%;width:13px;height:13px;line-height:13px;text-align:center;box-shadow:0 0 0 1px #93c5fd}
+/* Contador de envíos por categoría (RX, IRM, TAC, etc.): 1°=rojo, 2°=amarillo,
+   3°=verde, 4°(o más)=azul — para no repetir un pedido sin querer. El número
+   dentro del círculo muestra cuántas veces se envió ese tipo en esta consulta. */
+.cmd-btn.cmd-btn-env1,.cmd-btn.cmd-btn-env2,.cmd-btn.cmd-btn-env3,.cmd-btn.cmd-btn-env4{position:relative}
+.cmd-btn.cmd-btn-env1{background:#fee2e2;border-color:#f87171}
+.cmd-btn.cmd-btn-env2{background:#fef9c3;border-color:#eab308}
+.cmd-btn.cmd-btn-env3{background:#dcfce7;border-color:#4ade80}
+.cmd-btn.cmd-btn-env4{background:#dbeafe;border-color:#60a5fa}
+.cmd-btn.cmd-btn-env1::after{content:attr(data-envios);position:absolute;top:1px;right:2px;font-size:9px;font-weight:900;color:#fff;background:#dc2626;border-radius:50%;width:13px;height:13px;line-height:13px;text-align:center}
+.cmd-btn.cmd-btn-env2::after{content:attr(data-envios);position:absolute;top:1px;right:2px;font-size:9px;font-weight:900;color:#fff;background:#d97706;border-radius:50%;width:13px;height:13px;line-height:13px;text-align:center}
+.cmd-btn.cmd-btn-env3::after{content:attr(data-envios);position:absolute;top:1px;right:2px;font-size:9px;font-weight:900;color:#fff;background:#16a34a;border-radius:50%;width:13px;height:13px;line-height:13px;text-align:center}
+.cmd-btn.cmd-btn-env4::after{content:attr(data-envios);position:absolute;top:1px;right:2px;font-size:9px;font-weight:900;color:#fff;background:#2563eb;border-radius:50%;width:13px;height:13px;line-height:13px;text-align:center}
 .cmd-btn .icon{font-size:13px;display:block;margin-bottom:1px;}
 .cmd-btn .lbl{font-size:8.5px;color:var(--muted);display:block;font-weight:500;}
 .cmd-btn.active .lbl{color:var(--accent2);font-weight:700;}
@@ -290,6 +302,11 @@ body{font-family:'Inter',system-ui,sans-serif;font-size:13px;background:var(--bg
 .pac-table tr:hover td{background:#f8faff;}
 .badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:10px;font-weight:600;}
 .badge-azul{background:#dbeafe;color:#1e4fa3;}
+/* Fila resaltada cuando al paciente le falta el mail — sin mail, el sistema
+   no le puede mandar recordatorios ni el link de autocompletado (RIMP). */
+.pac-table tr.fila-sin-mail td{background:#fef3c7;}
+.pac-table tr.fila-sin-mail:hover td{background:#fde68a;}
+.badge-sin-mail{background:#fde68a;color:#78350f;margin-left:6px;}
 .btn-mini{padding:3px 9px;border-radius:10px;font-size:10px;cursor:pointer;border:1px solid;transition:all .12s;font-family:inherit;}
 .btn-mini-blue{color:#1e4fa3;border-color:#93c5fd;background:#eff6ff;}
 .btn-mini-blue:hover{background:#dbeafe;}
@@ -776,6 +793,14 @@ body{font-family:'Inter',system-ui,sans-serif;font-size:13px;background:var(--bg
           <div class="fg1"><label>Actividad deportiva</label>
             <input id="p-deporte" placeholder="Ej: fútbol 2x/sem, caminata, sin actividad…"></div>
         </div>
+      </div>
+      <div style="margin-top:12px;display:flex;align-items:center;gap:8px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:8px 10px">
+        <input type="checkbox" id="p-primera-consulta" style="width:auto;margin:0">
+        <label for="p-primera-consulta" style="margin:0;font-size:11.5px;font-weight:600;color:#1d4ed8;cursor:pointer">Es la primera consulta — si tiene mail cargado, enviarle ahora el RIMP para que complete sus antecedentes</label>
+      </div>
+      <div style="margin-top:6px;display:flex;align-items:center;gap:8px;background:#fff7ed;border:1px solid #fed7aa;border-radius:6px;padding:8px 10px">
+        <input type="checkbox" id="p-discapacidad" style="width:auto;margin:0">
+        <label for="p-discapacidad" style="margin:0;font-size:11.5px;font-weight:600;color:#9a3412;cursor:pointer">Trámite de discapacidad (CUD) — el RIMP que se le envíe incluirá vivienda, trabajos, infancia, vacunas y COVID (si no, se manda la versión breve)</label>
       </div>
       <div id="modal-pac-msg" class="msg-error" style="display:none"></div>
     </div>
@@ -1449,7 +1474,7 @@ body{font-family:'Inter',system-ui,sans-serif;font-size:13px;background:var(--bg
       <div id="simm-nav-dropdown" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.15);min-width:230px;z-index:200;padding:4px">
         <div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);padding:6px 10px 2px">Programas del consultorio</div>
         <a href="Lector_CUD.html" class="simm-nav-item">🪪 Lector CUD</a>
-        <a href="CAM_Beta_Herramientas_Clinicas_2.html" class="simm-nav-item">🩺 CAM — Herramientas Clínicas</a>
+        <a href="CAM_Herramientas_Clinicas.html" class="simm-nav-item">🩺 CAM — Herramientas Clínicas</a>
         <a href="Agenda_Mensajes.html" class="simm-nav-item">✉️ Agenda de Mensajes</a>
         <a href="Panel_Especialistas.html" class="simm-nav-item">🔐 Panel de Especialistas</a>
         <div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);padding:8px 10px 2px;border-top:1px solid var(--border);margin-top:4px">Capítulos de SIM-M</div>
@@ -1511,20 +1536,14 @@ body{font-family:'Inter',system-ui,sans-serif;font-size:13px;background:var(--bg
         <div class="carrito-items" id="carrito"></div>
       </div>
 
-      <!-- Carrito de Recetas IM de esta consulta -->
-      <div class="carrito-zone" id="im-zone" style="display:none">
-        <div class="zone-lbl" onclick="toggleIMZone()">
-          <span>📄 Recetas de esta consulta</span>
-          <span style="display:flex;align-items:center;gap:5px">
-            <span class="zone-toggle" id="im-zone-toggle">▾</span>
-          </span>
-        </div>
-        <div class="carrito-items" id="im-carrito-list"></div>
-        <div id="im-acciones" style="display:none;gap:6px;padding:6px 8px;flex-wrap:wrap">
-          <button class="btn btn-ghost btn-sm" onclick="enviarIMTildadas('todo')" style="background:#0b1f3a;color:#fff;border:none">📧 Enviar tildadas por mail (PDF automático)</button>
-        </div>
-        <div id="im-confirm-banner" style="display:none;margin:6px 8px;padding:8px;border-radius:6px;background:#fef3c7;border:1px solid #fcd34d;font-size:11px"></div>
-      </div>
+      <!-- El carrito de "varias IM acumuladas + envío en bloque" se sacó de la
+           interfaz (agosto 2026): ahora cada receta se envía de a una, con el
+           botón ✉ Mail de abajo, y el botón de cada categoría (RX, IRM, TAC,
+           etc.) va cambiando de color según cuántas veces se envió ese tipo de
+           estudio en esta consulta — ver marcarEnviosCmdPorClaves_(). Las
+           funciones viejas (nuevaRecetaOCM, enviarIMTildadas, etc.) se dejaron
+           en el código sin usar por si hace falta volver atrás, pero ya no
+           tienen ningún botón que las llame. -->
 
       <!-- Comandos -->
       <div class="cmd-zone expanded" id="cmd-zone"></div>
@@ -2024,7 +2043,6 @@ body{font-family:'Inter',system-ui,sans-serif;font-size:13px;background:var(--bg
   <button class="acc-btn" title="RCTA Digital" onclick="window.open('https://app.rcta.me/p/luis-alberto-muratori','_blank')">🔗 RCTA</button>
   <div class="acc-sep"></div>
   <!-- GRUPO 3: RECETA -->
-  <button class="acc-btn acc-new" title="Guardar esta receta e iniciar una nueva (queda en el carrito de la consulta)" onclick="nuevaRecetaOCM()">📄 Nueva IM</button>
   <button class="acc-btn" title="Imprimir (Ctrl+P)" onclick="imprimirReceta()">🖨 Imprimir</button>
   <div class="acc-sep"></div>
   <!-- GRUPO 4: ENVÍO -->
@@ -2563,7 +2581,8 @@ async function autoAbrirPacientePorDNI(dni){
         const datos = {
           dni:c.DNI||'', apellido:c.Apellido||'', nombre:c.Nombre||'', fecha_nac:c.Fecha_Nac||'',
           obra_social:c.Obra_Social||'', plan:c.Plan||'', nro_afiliado:c.N_Afiliado||'',
-          telefono:c.Telefono||'', mail:c.Email||'', direccion:c.Domicilio||''
+          telefono:c.Telefono||'', mail:c.Email||'', direccion:c.Domicilio||'',
+          localidad:c.Localidad||'', lugar_atencion:c.Lugar_Atencion||'', centro_derivador:c.Centro_Derivador||''
         };
         const id = await dbAdd('pacientes',{...datos,created_at:new Date().toISOString()});
         pac = {...datos,id};
@@ -3927,7 +3946,8 @@ function buscarPaciente(q){
       ...nube.map(c=>({
         dni:c.DNI||'', apellido:c.Apellido||'', nombre:c.Nombre||'', fecha_nac:c.Fecha_Nac||'',
         obra_social:c.Obra_Social||'', plan:c.Plan||'', nro_afiliado:c.N_Afiliado||'',
-        telefono:c.Telefono||'', mail:c.Email||'', direccion:c.Domicilio||'', _nube:true
+        telefono:c.Telefono||'', mail:c.Email||'', direccion:c.Domicilio||'',
+        localidad:c.Localidad||'', lugar_atencion:c.Lugar_Atencion||'', centro_derivador:c.Centro_Derivador||'', _nube:true
       }))
     ];
     if(!combinados.length){res.style.display='none';return;}
@@ -3967,6 +3987,9 @@ function seleccionarPaciente(p){
   if (p.dni) verificarRIDM(p.dni);
   // Cargar el carrito de "Recetas de esta consulta" guardado para este DNI (si había uno a medio armar)
   cargarIMCartLocal();
+  // Repintar los botones de categoría (RX, IRM, TAC, etc.) con el color que
+  // corresponda según cuántas veces se le envió cada tipo de pedido a este paciente
+  cargarEnviosCmdLocal();
   cargarFotoPacienteActivo();
 }
 
@@ -4109,14 +4132,23 @@ async function guardarFotoPacienteActivo(){
 function abrirModalNuevoPaciente(datos){
   pacEditId=datos?datos.id:null;
   document.getElementById('modal-pac-title').textContent=pacEditId?'Editar paciente':'Nuevo paciente';
-  ['p-dni','p-ape','p-nom','p-fnac','p-edad','p-dir','p-tel','p-mail','p-os','p-plan','p-afil']
+  ['p-dni','p-ape','p-nom','p-fnac','p-edad','p-dir','p-tel','p-mail','p-os','p-plan','p-afil',
+   'p-motivo','p-antec-enf','p-antec-cir','p-meds-actuales','p-trabajo','p-deporte']
     .forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  const chkPrimera=document.getElementById('p-primera-consulta');
+  if(chkPrimera) chkPrimera.checked = !pacEditId; // paciente nuevo: tildado por default; al editar uno existente, no
+  const chkDiscapacidad=document.getElementById('p-discapacidad');
+  if(chkDiscapacidad) chkDiscapacidad.checked = false;
   if(datos){
     const sv=(id,v)=>{const el=document.getElementById(id);if(el)el.value=v||'';};
     sv('p-dni',datos.dni);sv('p-ape',datos.apellido);sv('p-nom',datos.nombre);
     sv('p-fnac',datos.fecha_nac);sv('p-edad',datos.edad);sv('p-dir',datos.direccion);
     sv('p-tel',datos.telefono);sv('p-mail',datos.mail);sv('p-os',datos.obra_social);
     sv('p-plan',datos.plan);sv('p-afil',datos.nro_afiliado);
+    // Si ya tenía antecedentes generales cargados (viene de la nube / vista consolidada), los mostramos
+    const ag = datos.antecedentes_generales || {};
+    sv('p-motivo',ag.motivo_inicial);sv('p-antec-enf',ag.enfermedades);sv('p-antec-cir',ag.cirugias);
+    sv('p-meds-actuales',ag.medicacion_habitual);sv('p-trabajo',ag.actividad_laboral);sv('p-deporte',ag.actividad_deportiva);
   }
   document.getElementById('modal-pac-msg').style.display='none';
   abrirModal('modal-pac');
@@ -4126,9 +4158,16 @@ async function guardarPaciente(){
   const dni=g('p-dni'),ape=g('p-ape'),nom=g('p-nom');
   const msg=document.getElementById('modal-pac-msg');
   if(!dni||!ape||!nom){msg.textContent='DNI, apellido y nombre son obligatorios';msg.style.display='block';return;}
+  const antecedentesGenerales = {
+    motivo_inicial:g('p-motivo')||'', enfermedades:g('p-antec-enf')||'', cirugias:g('p-antec-cir')||'',
+    medicacion_habitual:g('p-meds-actuales')||'', actividad_laboral:g('p-trabajo')||'', actividad_deportiva:g('p-deporte')||''
+  };
+  const esPrimeraConsulta = !!document.getElementById('p-primera-consulta')?.checked;
+  const esDiscapacidad = !!document.getElementById('p-discapacidad')?.checked;
   const payload={dni,apellido:ape,nombre:nom,fecha_nac:g('p-fnac'),edad:g('p-edad'),
     direccion:g('p-dir'),telefono:g('p-tel'),mail:g('p-mail'),
     obra_social:g('p-os'),plan:g('p-plan'),nro_afiliado:g('p-afil'),
+    antecedentes_generales:antecedentesGenerales,
     updated_at:new Date().toISOString()};
   try{
     let id;
@@ -4143,7 +4182,14 @@ async function guardarPaciente(){
       Fecha_Nac:g('p-fnac')||'', Obra_Social:g('p-os')||'', N_Afiliado:g('p-afil')||'',
       Plan:g('p-plan')||'', Telefono:g('p-tel')||'', Email:g('p-mail')||'',
       Domicilio:g('p-dir')||'', Lugar_Atencion:currentCentroKey||'',
-      Diagnostico_Principal:'', Estado_Tratamiento:'Activo'
+      Diagnostico_Principal:'', Estado_Tratamiento:'Activo',
+      Antecedentes_Generales: antecedentesGenerales,
+      // "Primera consulta": el backend manda el RIMP ahora mismo si hay mail
+      // y todavía no se le había mandado — no repite el envío si ya se hizo antes.
+      Primera_Consulta: esPrimeraConsulta,
+      // Si está tildado, el RIMP que se manda es el completo (vivienda, trabajos,
+      // infancia, vacunas, COVID) — si no, se manda la versión breve.
+      Discapacidad: esDiscapacidad
     };
     // Si hay datos de RIMP para este mismo paciente, sumar localidad/trabajos/vivienda
     if(ridmData && String(ridmData.dni||'')===String(dni||'')){
@@ -4156,7 +4202,9 @@ async function guardarPaciente(){
       if(viv.agua || viv.excretas || viv.calefaccion) payloadCloud.Vivienda = viv;
     }
     try{
-      await fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payloadCloud),signal:AbortSignal.timeout(8000)});
+      const resp = await fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payloadCloud),signal:AbortSignal.timeout(8000)});
+      const data = await resp.json();
+      if(data && data.rimpEnviado) toast(`✉️ RIMP enviado a ${g('p-mail')} para que complete sus antecedentes`,'ok');
     }catch(_){
       colaAgregar('addPaciente', payloadCloud);
       toast('Paciente guardado en esta compu — en cola para subir a la nube','ok');
@@ -5468,7 +5516,8 @@ async function cargarListaPacientes(){
   tbody.innerHTML=pag.map(p=>{
     const cons=consultas.filter(c=>c.paciente_id===p.id);
     const ult=cons.length?cons.sort((a,b)=>(b.created_at||'').localeCompare(a.created_at||''))[0].fecha||'—':'—';
-    return `<tr><td><b>${p.apellido||''}, ${p.nombre||''}</b></td><td>${p.dni||'—'}</td><td>${p.obra_social||'—'}</td><td><span class="badge badge-azul">${cons.length}</span></td><td>${ult}</td>
+    const sinMail = !p.mail;
+    return `<tr class="${sinMail?'fila-sin-mail':''}"><td><b>${p.apellido||''}, ${p.nombre||''}</b>${sinMail?' <span class="badge badge-sin-mail" title="Falta cargar el mail — sin mail el sistema no le puede mandar recordatorios ni el link de autocompletado (RIMP)">✉️ sin mail</span>':''}</td><td>${p.dni||'—'}</td><td>${p.obra_social||'—'}</td><td><span class="badge badge-azul">${cons.length}</span></td><td>${ult}</td>
     <td style="display:flex;gap:4px;flex-wrap:wrap">
       <button class="btn-mini btn-mini-blue" onclick="selDesdeTabla(${p.id})">✓</button>
       <button class="btn-mini btn-mini-blue" onclick="verHistPac(${p.id},'${(p.apellido||'').replace(/'/g,"\\'")}')">📋</button>
@@ -5633,6 +5682,12 @@ async function mailReceta(){
     if(!data.success) throw new Error(data.error || 'Error del servidor');
     toast(`✅ Receta enviada por mail a ${pacienteActivo.mail}`,'ok');
     marcarBotonesQXComoEnviados_();
+
+    // Marcar en el botón de cada categoría (RX, IRM, TAC, etc.) que se
+    // envió un pedido más — cambia de color (rojo→amarillo→verde→azul)
+    // para no repetir el mismo tipo de estudio sin darse cuenta.
+    const clavesEnviadas = [...new Set(itemsReceta.filter(Boolean).map(it=>it.key))];
+    marcarEnviosCmdPorClaves_(clavesEnviadas);
 
     // Limpiar el cuerpo de la receta automáticamente, para cargar la
     // próxima indicación sin tener que borrar nada a mano
@@ -9739,6 +9794,90 @@ async function backupEstado() {
 }
 
 
+/* ══════════════════════════════════════════════════════════════════
+   CONTADOR DE ENVÍOS POR CATEGORÍA (RX, IRM, TAC, etc.) — agosto 2026
+   Cada vez que se manda la receta por mail (mailReceta), el botón de
+   cada categoría que tenía algún ítem en esa receta queda marcado con
+   un color según cuántas veces se envió ESE tipo para el paciente
+   activo: 1°=rojo, 2°=amarillo, 3°=verde, 4°(o más)=azul. Así, si se
+   piden radiografías de distintos sectores en visitas o momentos
+   distintos, el médico ve de un vistazo si ya mandó ese tipo de pedido
+   y no lo repite sin querer. Se guarda por DNI en este mismo navegador.
+   ══════════════════════════════════════════════════════════════════ */
+let enviosCmdCount = {};
+function enviosCmdClaveStorage(){ return 'envios_cmd_' + (pacienteActivo?.dni || '_sinpac'); }
+function guardarEnviosCmdLocal(){
+  try{ localStorage.setItem(enviosCmdClaveStorage(), JSON.stringify(enviosCmdCount)); }catch(_){}
+}
+function claseEnvioPorConteo_(n){
+  if(n>=4) return 'cmd-btn-env4';
+  if(n===3) return 'cmd-btn-env3';
+  if(n===2) return 'cmd-btn-env2';
+  return 'cmd-btn-env1';
+}
+function repintarBotonesCmdEnviados_(){
+  document.querySelectorAll('#cmd-zone .cmd-btn').forEach(b=>{
+    b.classList.remove('cmd-btn-env1','cmd-btn-env2','cmd-btn-env3','cmd-btn-env4');
+    b.removeAttribute('data-envios');
+  });
+  Object.keys(enviosCmdCount).forEach(key=>{
+    const n = enviosCmdCount[key];
+    if(!n) return;
+    const btn=document.getElementById('cmd-'+key);
+    if(btn){ btn.classList.add(claseEnvioPorConteo_(n)); btn.setAttribute('data-envios', n>=4?'4+':String(n)); }
+  });
+}
+function cargarEnviosCmdLocal(){
+  try{ enviosCmdCount = JSON.parse(localStorage.getItem(enviosCmdClaveStorage())||'{}'); }catch(_){ enviosCmdCount={}; }
+  repintarBotonesCmdEnviados_();
+}
+// Se llama justo después de mandar la receta por mail con éxito, con la
+// lista de claves (rx, irm, tac, etc.) que tenía la receta recién enviada.
+function marcarEnviosCmdPorClaves_(claves){
+  (claves||[]).forEach(key=>{
+    if(!key) return;
+    enviosCmdCount[key] = (enviosCmdCount[key]||0) + 1;
+  });
+  guardarEnviosCmdLocal();
+  repintarBotonesCmdEnviados_();
+}
+
+// ── Lo mismo, pero para los botones del panel OCM-Q (Optimizador
+//    Quirúrgico: Laboratorio, Interconsultas, Implantes, Internación,
+//    Honorarios Eq., Consent. Inf., Folleto Pre-Qx, Seguim. Qx). Antes
+//    esos botones solo se ponían en verde con un tilde fijo (sin contar
+//    cuántas veces); ahora siguen el mismo esquema 1°=rojo, 2°=amarillo,
+//    3°=verde, 4°(o más)=azul que el resto de OCM. ──
+let enviosCmdQXCount = {};
+function enviosCmdQXClaveStorage(){ return 'envios_cmdqx_' + (pacienteActivo?.dni || '_sinpac'); }
+function guardarEnviosCmdQXLocal(){
+  try{ localStorage.setItem(enviosCmdQXClaveStorage(), JSON.stringify(enviosCmdQXCount)); }catch(_){}
+}
+function repintarBotonesCmdQXEnviados_(){
+  document.querySelectorAll('#cmd-zone-qx .cmd-btn').forEach(b=>{
+    b.classList.remove('cmd-btn-env1','cmd-btn-env2','cmd-btn-env3','cmd-btn-env4','cmd-btn-enviado');
+    b.removeAttribute('data-envios');
+  });
+  Object.keys(enviosCmdQXCount).forEach(key=>{
+    const n = enviosCmdQXCount[key];
+    if(!n) return;
+    const btn=document.getElementById('cmdqx-'+key);
+    if(btn){ btn.classList.add(claseEnvioPorConteo_(n)); btn.setAttribute('data-envios', n>=4?'4+':String(n)); }
+  });
+}
+function cargarEnviosCmdQXLocal(){
+  try{ enviosCmdQXCount = JSON.parse(localStorage.getItem(enviosCmdQXClaveStorage())||'{}'); }catch(_){ enviosCmdQXCount={}; }
+  repintarBotonesCmdQXEnviados_();
+}
+function marcarEnviosCmdQXPorClaves_(claves){
+  (claves||[]).forEach(key=>{
+    if(!key) return;
+    enviosCmdQXCount[key] = (enviosCmdQXCount[key]||0) + 1;
+  });
+  guardarEnviosCmdQXLocal();
+  repintarBotonesCmdQXEnviados_();
+}
+
 /* ── Nueva receta: guarda actual en carrito y limpia el cuerpo ── */
 /* ══════════════════════════════════════════════════════════════════
    CARRITO "RECETAS DE ESTA CONSULTA" (IM) — varias IM acumuladas
@@ -10810,8 +10949,10 @@ async function cargarPacientePorDNI(dni){
       const c = (data.data||[]).find(c=>String(c.DNI||'')===String(dni));
       if(c){
         pac = {
-          dni:c.DNI||'', apellido:c.Apellido||'', nombre:c.Nombre||'',
-          obra_social:c.Obra_Social||'', plan:c.Plan||'', telefono:c.Telefono||'', mail:c.Email||''
+          dni:c.DNI||'', apellido:c.Apellido||'', nombre:c.Nombre||'', fecha_nac:c.Fecha_Nac||'',
+          obra_social:c.Obra_Social||'', plan:c.Plan||'', nro_afiliado:c.N_Afiliado||'',
+          telefono:c.Telefono||'', mail:c.Email||'', direccion:c.Domicilio||'',
+          localidad:c.Localidad||'', lugar_atencion:c.Lugar_Atencion||'', centro_derivador:c.Centro_Derivador||''
         };
       }
     }
@@ -10830,6 +10971,9 @@ function seleccionarPacienteQX(p){
   prefillPlanqfDatosPaciente();
   cargarHistorialQuirurgico();
   cargarLibroQX();
+  // Repintar los botones de categoría (Laboratorio, Interconsultas, etc.)
+  // con el color que corresponda para este paciente
+  cargarEnviosCmdQXLocal();
 }
 function renderPacBarSinPaciente(){
   const bar=document.getElementById('pacbar');
@@ -11207,20 +11351,16 @@ function agregarLabQXACarrito(){
   toast('✅ Agregado a la receta y anotado en el Libro Quirúrgico','ok');
 }
 
-// Marca en verde-tilde los botones de OCM-Q cuyos ítems acaban de salir por mail
-// en la receta central — así sabés de un vistazo qué ya mandaste y podés pasar
-// a la siguiente solapa sin dudar si ya la despachaste.
+// Marca los botones de OCM-Q cuyos ítems acaban de salir por mail desde la
+// receta central — mismo esquema de color por cantidad de envíos (1°=rojo,
+// 2°=amarillo, 3°=verde, 4°(o más)=azul) que usa el resto de OCM, así se ve
+// igual sin importar si el envío salió desde la receta central o desde el
+// propio panel OCM-Q. Antes esto solo dejaba un tilde verde fijo, sin contar
+// cuántas veces — corregido agosto 2026.
 const CLAVES_OCM_Q = new Set(['labqx','interq','honorq','internacq','implantes','consinf','folletopre','segqx']);
 function marcarBotonesQXComoEnviados_(){
-  const clavesEnviadas = new Set(itemsReceta.map(it=>it.key).filter(k=>CLAVES_OCM_Q.has(k)));
-  clavesEnviadas.forEach(k=>{
-    const btn=document.getElementById('cmdqx-'+k);
-    if(btn) btn.classList.add('cmd-btn-enviado');
-  });
-}
-function desmarcarBotonQXComoEnviado_(clave){
-  const btn=document.getElementById('cmdqx-'+clave);
-  if(btn) btn.classList.remove('cmd-btn-enviado');
+  const clavesEnviadas = [...new Set(itemsReceta.map(it=>it.key).filter(k=>CLAVES_OCM_Q.has(k)))];
+  marcarEnviosCmdQXPorClaves_(clavesEnviadas);
 }
 
 // agrega ítems acá, y de acá se genera UN solo documento combinado
@@ -11316,6 +11456,10 @@ async function mailRecetaQXCompleta(){
     const data=await resp.json();
     if(!data.success) throw new Error(data.error||'Error del servidor');
     toast(`✅ Receta quirúrgica enviada por mail a ${destinatario}`,'ok');
+    // Marca en el botón de cada categoría enviada (Laboratorio, Interconsultas,
+    // etc.) un envío más — mismo esquema de color que en la receta central.
+    const clavesEnviadasQX = [...new Set(itemsRecetaQX.map(it=>it.key).filter(k=>CLAVES_OCM_Q.has(k)))];
+    marcarEnviosCmdQXPorClaves_(clavesEnviadasQX);
   }catch(e){
     toast('❌ No se pudo enviar: '+(e&&e.message?e.message:e),'err');
   }
@@ -12700,6 +12844,29 @@ function enviarChecklistPorMail(tipo){
   else{ safePaso_('renderPacBarSinPaciente', renderPacBarSinPaciente); }
 })();
 
+</script>
+
+<!-- ══ TRIAL: bloqueo si venció el período de prueba (ver configurarTrial() en Codigo.gs) ══ -->
+<div id="trial-lock-overlay" style="display:none;position:fixed;inset:0;background:#0b1f3a;color:#fff;z-index:999999;align-items:center;justify-content:center;text-align:center;padding:24px;font-family:system-ui,-apple-system,sans-serif">
+  <div style="max-width:420px">
+    <div style="font-size:40px;margin-bottom:12px">🔒</div>
+    <div style="font-size:18px;font-weight:700;margin-bottom:8px">Período de prueba finalizado</div>
+    <div style="font-size:13px;opacity:.85">Para seguir usando el sistema, contactá al Dr. Luis Alberto Muratori.</div>
+  </div>
+</div>
+<style>body.trial-vencido>*:not(#trial-lock-overlay){display:none!important} body.trial-vencido{overflow:hidden!important}</style>
+<script>
+(function(){
+  try{
+    fetch(SHEETS_URL+'?action=check_trial',{signal:AbortSignal.timeout(6000)})
+      .then(function(r){return r.json();}).then(function(d){
+        if(d && d.vencido){
+          document.body.classList.add('trial-vencido');
+          var ov=document.getElementById('trial-lock-overlay'); if(ov) ov.style.display='flex';
+        }
+      }).catch(function(){});
+  }catch(e){}
+})();
 </script>
 </body>
 </html>

@@ -57,7 +57,7 @@
       <div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);padding:6px 10px 2px">Programas del consultorio</div>
       <a href="OCM_Muratori_v14_0_26.html" class="simm-nav-item">💊 OCM — Historia clínica</a>
       <a href="Lector_CUD.html" class="simm-nav-item">🪪 Lector CUD</a>
-      <a href="CAM_Beta_Herramientas_Clinicas_2.html" class="simm-nav-item">🩺 CAM — Herramientas Clínicas</a>
+      <a href="CAM_Herramientas_Clinicas.html" class="simm-nav-item">🩺 CAM — Herramientas Clínicas</a>
       <a href="Panel_Especialistas.html" class="simm-nav-item">🔐 Panel de Especialistas</a>
     </div>
   </div>
@@ -175,7 +175,7 @@ function marcarPagoConfirmado(){
   // Se guarda en el fondo — si la red falla, igual queda marcado en pantalla
   // para no trabar al médico; el próximo refresco desde el backend lo confirma.
   fetch(SHEETS_URL, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
-    body: JSON.stringify({action:'confirmarPagoMensaje', fila: MENSAJE_ACTUAL.fila})}).catch(()=>{});
+    body: JSON.stringify(Object.assign({action:'confirmarPagoMensaje', fila: MENSAJE_ACTUAL.fila}, APP_TOKEN?{token:APP_TOKEN}:{}))}).catch(()=>{});
 }
 
 async function generarMeet(duracionMin){
@@ -185,9 +185,9 @@ async function generarMeet(duracionMin){
   const ahora = new Date(Date.now() + 24*60*60*1000); // propone mañana a la misma hora, ajustable
   try{
     const resp = await fetch(SHEETS_URL, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body: JSON.stringify({action:'generarLinkMeet', fechaHoraISO:ahora.toISOString(), duracionMin,
+      body: JSON.stringify(Object.assign({action:'generarLinkMeet', fechaHoraISO:ahora.toISOString(), duracionMin,
         titulo:(duracionMin===5?'Turno breve':'Consulta virtual')+' — Dr. Muratori',
-        mailPaciente:destMail, descripcion:'Generado desde la Agenda de Mensajes'})});
+        mailPaciente:destMail, descripcion:'Generado desde la Agenda de Mensajes'}, APP_TOKEN?{token:APP_TOKEN}:{}))});
     const data = await resp.json();
     if(!data.success) throw new Error(data.error||'Error del servidor');
     cont.innerHTML = `<div class="meet-box">📹 Link generado: <a href="${data.link}" target="_blank">${data.link}</a><br>
@@ -210,8 +210,8 @@ async function aprobarYEnviar(){
   btn.disabled = true; btn.textContent = 'Enviando…';
   try{
     const resp = await fetch(SHEETS_URL, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body: JSON.stringify({action:'marcarRespondido', fila:MENSAJE_ACTUAL.fila, respuestaFinal,
-        destinatario:destMail, asunto:MENSAJE_ACTUAL.asunto})});
+      body: JSON.stringify(Object.assign({action:'marcarRespondido', fila:MENSAJE_ACTUAL.fila, respuestaFinal,
+        destinatario:destMail, asunto:MENSAJE_ACTUAL.asunto}, APP_TOKEN?{token:APP_TOKEN}:{}))});
     const data = await resp.json();
     if(!data.success) throw new Error(data.error||'Error del servidor');
     alert('✅ Respuesta enviada');
@@ -225,6 +225,29 @@ async function aprobarYEnviar(){
 
 cargarMensajes();
 setInterval(cargarMensajes, 60000); // se refresca sola cada 1 minuto
+</script>
+
+<!-- ══ TRIAL: bloqueo si venció el período de prueba (ver configurarTrial() en Codigo.gs) ══ -->
+<div id="trial-lock-overlay" style="display:none;position:fixed;inset:0;background:#0b1f3a;color:#fff;z-index:999999;align-items:center;justify-content:center;text-align:center;padding:24px;font-family:system-ui,-apple-system,sans-serif">
+  <div style="max-width:420px">
+    <div style="font-size:40px;margin-bottom:12px">🔒</div>
+    <div style="font-size:18px;font-weight:700;margin-bottom:8px">Período de prueba finalizado</div>
+    <div style="font-size:13px;opacity:.85">Para seguir usando el sistema, contactá al Dr. Luis Alberto Muratori.</div>
+  </div>
+</div>
+<style>body.trial-vencido>*:not(#trial-lock-overlay){display:none!important} body.trial-vencido{overflow:hidden!important}</style>
+<script>
+(function(){
+  try{
+    fetch(SHEETS_URL+'?action=check_trial',{signal:AbortSignal.timeout(6000)})
+      .then(function(r){return r.json();}).then(function(d){
+        if(d && d.vencido){
+          document.body.classList.add('trial-vencido');
+          var ov=document.getElementById('trial-lock-overlay'); if(ov) ov.style.display='flex';
+        }
+      }).catch(function(){});
+  }catch(e){}
+})();
 </script>
 </body>
 </html>
