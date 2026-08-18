@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>S.I.M-M — Sistema Médico Integral Muratori</title>
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+<meta name="theme-color" content="#0369a1">
+<style>
+  :root{--azul:#0369a1;--azul-osc:#0c4a6e;--verde:#16a34a;--ambar:#d97706;--rojo:#dc2626;--muted:#64748b;--border:#e2e8f0;--bg:#f4fbfd;--surface:#fff}
+  *{box-sizing:border-box}
+  body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);margin:0;color:#0f172a}
+  .topbar{background:linear-gradient(135deg,var(--azul),var(--azul-osc));color:#fff;padding:28px 20px;text-align:center}
+  .topbar h1{margin:0 0 4px;font-size:22px}
+  .topbar p{margin:0;font-size:13px;opacity:.9}
+  main{max-width:960px;margin:0 auto;padding:24px 20px 60px}
+  .grupo{margin-top:28px}
+  .grupo-titulo{font-size:13px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px;padding-left:2px}
+  .tarjetas{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+  a.tarjeta{display:block;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 18px;text-decoration:none;color:inherit;transition:box-shadow .15s,border-color .15s}
+  a.tarjeta:hover{box-shadow:0 4px 16px rgba(3,105,161,.12);border-color:var(--azul)}
+  .tarjeta .emoji{font-size:22px}
+  .tarjeta .nombre{font-weight:800;font-size:14px;margin-top:8px;color:var(--azul-osc)}
+  .tarjeta .desc{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.5}
+  .tarjeta.pendiente{background:#f8fafc;border-style:dashed;opacity:.85;cursor:default}
+  .tarjeta.pendiente .nombre{color:var(--muted)}
+  .tag-pendiente{display:inline-block;font-size:9.5px;font-weight:800;color:#b45309;background:#fffbeb;border:1px solid #fde68a;border-radius:5px;padding:1px 6px;margin-top:6px;text-transform:uppercase;letter-spacing:.03em}
+  .aviso{background:#fffbeb;border:1px solid #fde68a;color:#92400e;border-radius:10px;padding:12px 16px;font-size:12.5px;margin-top:28px;line-height:1.6}
+  .nota{background:#f0f9ff;border:1px solid #bae6fd;color:#0c4a6e;border-radius:10px;padding:12px 16px;font-size:12px;margin-top:10px;line-height:1.6}
+  footer{text-align:center;color:var(--muted);font-size:11.5px;padding:24px 20px 40px}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>🩺 S.I.M-M</h1>
+  <p>Sistema Médico Integral Muratori — Dr. Luis Alberto Muratori (M.N. 100.540 / M.P. 9943)</p>
+</div>
+
+<main>
+
+  <div class="grupo">
+    <div class="grupo-titulo">Consulta diaria</div>
+    <div class="tarjetas">
+      <a class="tarjeta" href="OCM_Muratori_v14_0_26.html">
+        <div class="emoji">🗂️</div>
+        <div class="nombre">OCM — Historia Clínica</div>
+        <div class="desc">Consultorio: pacientes, recetas, certificados, Catastro de Empresas, Dashboard RSG (seguimiento) y Plantillas — todo desde acá.</div>
+      </a>
+      <a class="tarjeta" href="CAM_Herramientas_Clinicas.html">
+        <div class="emoji">🧬</div>
+        <div class="nombre">CAM — Herramientas Clínicas</div>
+        <div class="desc">Goniometría, síndromes, interrogatorio, examen físico, podoscopía, escoliosis.</div>
+      </a>
+      <a class="tarjeta" href="Lector_Historias.html">
+        <div class="emoji">📋</div>
+        <div class="nombre">Lector de Fichas</div>
+        <div class="desc">Cargar filiación de un paciente pegando el texto de una ficha.</div>
+      </a>
+    </div>
+    <div class="nota">📈 El <b>Dashboard RSG</b> (seguimiento de evaluaciones de pacientes) y el <b>Seguimiento de Plantillas</b> no son páginas aparte — son botones dentro de OCM, arriba de la pantalla de consulta.</div>
+  </div>
+
+  <div class="grupo">
+    <div class="grupo-titulo">Cobros y Kinesiología</div>
+    <div class="tarjetas">
+      <a class="tarjeta" href="KSM_Kinesiologia.html">
+        <div class="emoji">🦵</div>
+        <div class="nombre">KSM — Kinesiología</div>
+        <div class="desc">Evoluciones, informes al médico, videollamada, cobro directo del kinesiólogo con peaje al sistema.</div>
+      </a>
+      <div class="tarjeta pendiente">
+        <div class="emoji">💳</div>
+        <div class="nombre">RCM — Cobros (Mercado Pago)</div>
+        <div class="desc">Consultas online por Mercado Pago. El backend ya confirma pagos reales contra la API de MP, pero falta definir/conectar el archivo o servicio que genera el link de pago (RCM).</div>
+        <span class="tag-pendiente">Pendiente de definir</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="grupo">
+    <div class="grupo-titulo">Mediciones GONIO</div>
+    <div class="tarjetas">
+      <a class="tarjeta" href="GONIO_Podoscopia_v1.html">
+        <div class="emoji">📐</div>
+        <div class="nombre">Podoscopía</div>
+      </a>
+      <a class="tarjeta" href="GONIO_ValgoVaro_v1.html">
+        <div class="emoji">📐</div>
+        <div class="nombre">Valgo / Varo (retropié)</div>
+      </a>
+      <a class="tarjeta" href="GONIO_CostaBartani_v1.html">
+        <div class="emoji">📐</div>
+        <div class="nombre">Costa-Bartani (lateral)</div>
+      </a>
+      <a class="tarjeta" href="GONIO_AnguloFrente_v1.html">
+        <div class="emoji">📐</div>
+        <div class="nombre">Ángulo Frente</div>
+      </a>
+    </div>
+    <div class="nota">📊 Estas 4 páginas son para <b>tomar</b> las mediciones. El "libro" que las une todas junto con la receta de plantillas — con el <b>gráfico de evolución</b> (Mejora / Estable / Empeora) — se genera desde OCM: <b>👟 Plantillas → Seguimiento de Plantillas → 📈 Informe de evolución (PDF)</b>.</div>
+  </div>
+
+  <div class="grupo">
+    <div class="grupo-titulo">Documentación y recomendaciones del paciente</div>
+    <div class="tarjetas">
+      <div class="tarjeta pendiente">
+        <div class="emoji">📄</div>
+        <div class="nombre">IMDCMYT / RMYT — Recomendaciones Médicas y Terapéuticas</div>
+        <div class="desc">No es una página para navegar suelta — se indica desde OCM (16 regiones del cuerpo) y genera un link personalizado por paciente, igual que el RIMP. Ya queda registrado automáticamente en el Dashboard RSG.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grupo">
+    <div class="grupo-titulo">Investigación y Análisis</div>
+    <div class="tarjetas">
+      <a class="tarjeta" href="Estadísticas_SMM.html">
+        <div class="emoji">📊</div>
+        <div class="nombre">Estadísticas SMM</div>
+        <div class="desc">Análisis estadístico del sistema.</div>
+      </a>
+      <a class="tarjeta" href="GONIO_SeguimientoCientifico_v1.html">
+        <div class="emoji">🔬</div>
+        <div class="nombre">Seguimiento Científico</div>
+        <div class="desc">Las 4 líneas de investigación: Retropié Valgo, Escoliosis, Hallux Valgus, Actitud en Flexión de Rodilla.</div>
+      </a>
+    </div>
+  </div>
+
+  <div class="grupo">
+    <div class="grupo-titulo">Contactos y Discapacidad</div>
+    <div class="tarjetas">
+      <a class="tarjeta" href="Lector_CUD.html">
+        <div class="emoji">📸</div>
+        <div class="nombre">Lector CUD</div>
+        <div class="desc">Foto del Certificado Único de Discapacidad → carga asistida por IA.</div>
+      </a>
+      <a class="tarjeta" href="CUD_Seguimiento_v1.html">
+        <div class="emoji">♿</div>
+        <div class="nombre">CUD — Seguimiento</div>
+        <div class="desc">Seguimiento de trámites y vencimientos del Certificado Único de Discapacidad.</div>
+      </a>
+      <a class="tarjeta" href="Asistente_Isa_Discapacidad.html">
+        <div class="emoji">🤖</div>
+        <div class="nombre">Asistente Isa (Discapacidad)</div>
+        <div class="desc">Asistente conversacional para trámites de discapacidad.</div>
+      </a>
+      <div class="tarjeta pendiente">
+        <div class="emoji">👪</div>
+        <div class="nombre">Agenda familiar (por parentesco)</div>
+        <div class="desc">Agrupar pacientes por vínculo familiar. Todavía no está construida — es una idea pendiente, no una página que exista hoy.</div>
+        <span class="tag-pendiente">Pendiente de construir</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="grupo">
+    <div class="grupo-titulo">Administración</div>
+    <div class="tarjetas">
+      <a class="tarjeta" href="Agenda_Mensajes.html">
+        <div class="emoji">✉️</div>
+        <div class="nombre">Agenda de Mensajes</div>
+        <div class="desc">La IA clasifica y arma borradores de respuesta a partir de los mails de consultas.sism@gmail.com — revisás, aprobás y se envían o agendan consultas.</div>
+      </a>
+      <a class="tarjeta" href="Panel_Especialistas.html">
+        <div class="emoji">🔐</div>
+        <div class="nombre">Panel de Especialistas</div>
+        <div class="desc">Autorizar kinesiólogos y colegas, y qué módulos ve cada uno.</div>
+      </a>
+      <a class="tarjeta" href="COL_Colegas_SIMM.html">
+        <div class="emoji">🤝</div>
+        <div class="nombre">Colegas (SIM-M)</div>
+        <div class="desc">Acceso para otros especialistas no kinesiólogos.</div>
+      </a>
+    </div>
+  </div>
+
+</main>
+
+<div class="aviso" style="max-width:960px;margin-left:auto;margin-right:auto">
+  ⚠️ Estos accesos son para uso interno del consultorio, los kinesiólogos y colegas autorizados. El formulario RIMP para pacientes (RIDM_Muratori_v1.html) no está listado acá a propósito — se envía siempre con un link personalizado desde el sistema, no se comparte suelto.
+</div>
+
+<footer>S.I.M-M — Sistema Médico Integral Muratori</footer>
+
+</body>
+</html>
