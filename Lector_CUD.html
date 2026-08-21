@@ -60,7 +60,19 @@
   <!-- Paso 1: foto -->
   <div class="card">
     <h2>📷 1. Foto del certificado</h2>
-    <input type="file" id="fotoInput" accept="image/*" capture="environment" onchange="onFotoElegida(event)">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+      <button class="btn-secundario" onclick="document.getElementById('fotoInput').click()">🖼 Archivo / cámara del celular</button>
+      <button class="btn-secundario" onclick="abrirWebcamCUD()">🎥 Cámara web (PC)</button>
+    </div>
+    <input type="file" id="fotoInput" accept="image/*" capture="environment" onchange="onFotoElegida(event)" style="display:none">
+    <div id="webcamCUDWrap" class="oculto">
+      <video id="webcamCUDVideo" autoplay playsinline style="width:100%;max-height:320px;border-radius:8px;background:#000;object-fit:contain"></video>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="btn-primary" style="flex:1" onclick="capturarFotoCUDWebcam()">📸 Capturar</button>
+        <button class="btn-secundario" onclick="cerrarWebcamCUD()">Cancelar</button>
+      </div>
+    </div>
+    <div id="webcamCUDError" style="color:#dc2626;font-size:12px;margin-top:6px"></div>
     <img id="fotoPreview" class="preview-foto oculto" alt="Vista previa">
     <div style="margin-top:10px">
       <button class="btn-primary" id="btnAnalizar" onclick="analizarFoto()" disabled>🔎 Analizar con IA</button>
@@ -153,31 +165,63 @@ function apiPost(payload){
 // Redimensiona/comprime la foto en el navegador antes de mandarla, para
 // no depender de subir varios MB por una conexión de consultorio que a
 // veces anda lenta — 1400px de ancho máximo alcanza de sobra para leer texto impreso.
+// Comparte esta misma lógica la foto elegida por archivo y la capturada por
+// cámara web.
+function _procesarImagenCUD(dataUrlOriginal){
+  const img = new Image();
+  img.onload = function(){
+    const maxAncho = 1400;
+    const escala = Math.min(1, maxAncho / img.width);
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(img.width * escala);
+    canvas.height = Math.round(img.height * escala);
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+    fotoMime = 'image/jpeg';
+    fotoBase64 = dataUrl.split(',')[1];
+    const preview = document.getElementById('fotoPreview');
+    preview.src = dataUrl;
+    preview.classList.remove('oculto');
+    document.getElementById('btnAnalizar').disabled = false;
+  };
+  img.src = dataUrlOriginal;
+}
+
 function onFotoElegida(ev){
   const file = ev.target.files && ev.target.files[0];
   if(!file) return;
   const reader = new FileReader();
-  reader.onload = function(e){
-    const img = new Image();
-    img.onload = function(){
-      const maxAncho = 1400;
-      const escala = Math.min(1, maxAncho / img.width);
-      const canvas = document.createElement('canvas');
-      canvas.width = Math.round(img.width * escala);
-      canvas.height = Math.round(img.height * escala);
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-      fotoMime = 'image/jpeg';
-      fotoBase64 = dataUrl.split(',')[1];
-      const preview = document.getElementById('fotoPreview');
-      preview.src = dataUrl;
-      preview.classList.remove('oculto');
-      document.getElementById('btnAnalizar').disabled = false;
-    };
-    img.src = e.target.result;
-  };
+  reader.onload = e => _procesarImagenCUD(e.target.result);
   reader.readAsDataURL(file);
+}
+
+/* ── Cámara web de la PC (además del archivo/cámara del celular) ── */
+let webcamCUDStream = null;
+async function abrirWebcamCUD(){
+  const err = document.getElementById('webcamCUDError');
+  err.textContent = '';
+  document.getElementById('webcamCUDWrap').classList.remove('oculto');
+  try{
+    webcamCUDStream = await navigator.mediaDevices.getUserMedia({video:{width:{ideal:1400}}});
+    document.getElementById('webcamCUDVideo').srcObject = webcamCUDStream;
+  }catch(e){
+    err.textContent = '⚠️ No se pudo acceder a la cámara (' + e.message + ')';
+    document.getElementById('webcamCUDWrap').classList.add('oculto');
+  }
+}
+function cerrarWebcamCUD(){
+  if(webcamCUDStream){ webcamCUDStream.getTracks().forEach(t=>t.stop()); webcamCUDStream=null; }
+  const wrap = document.getElementById('webcamCUDWrap');
+  if(wrap) wrap.classList.add('oculto');
+}
+function capturarFotoCUDWebcam(){
+  const video = document.getElementById('webcamCUDVideo');
+  const canvas = document.createElement('canvas');
+  canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+  canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+  _procesarImagenCUD(canvas.toDataURL('image/jpeg', 0.9));
+  cerrarWebcamCUD();
 }
 
 function analizarFoto(){
@@ -246,6 +290,7 @@ function guardarRegistro(){
 
 function limpiarTodo(){
   fotoBase64 = '';
+  cerrarWebcamCUD();
   document.getElementById('fotoInput').value = '';
   document.getElementById('fotoPreview').classList.add('oculto');
   document.getElementById('btnAnalizar').disabled = true;

@@ -64,15 +64,44 @@
 
   <div class="aviso">⚠️ La IA lee el texto que pegás y puede equivocarse (letra ambigua, datos mal tipeados en el original, códigos de acentos rotos). <b>Siempre revisá y corregí cada campo antes de guardar</b> — nada se guarda automáticamente sin que lo confirmes. No inventa fecha de nacimiento a partir de la edad: si no figura explícita, la deja vacía. Esta herramienta solo carga los <b>datos de filiación</b> del paciente — las consultas y evoluciones se siguen cargando desde OCM en cada atención.</div>
 
-  <!-- Paso 1: pegar texto -->
+  <!-- Paso 1: cargar la ficha (texto pegado o foto) -->
   <div class="card">
-    <h2>📋 1. Pegá el texto de la ficha</h2>
-    <p class="muted">Abrí el Word, seleccioná todo (Ctrl+A), copiá (Ctrl+C), y pegá acá (Ctrl+V).</p>
-    <textarea id="textoPegado" rows="8" placeholder="NOMBRE Y APELLIDO: ...&#10;DNI: ...&#10;DIRECCION: ...&#10;TEL: ...&#10;MAIL: ..."></textarea>
-    <div style="margin-top:10px">
-      <button class="btn-primary" id="btnAnalizar" onclick="analizarTexto()">🔎 Analizar con IA</button>
+    <h2>📋 1. Cargar la ficha</h2>
+    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+      <button class="btn-secundario" id="btn-modo-texto" style="background:#0369a1;color:#fff" onclick="cambiarModoEntrada('texto')">📋 Pegar texto</button>
+      <button class="btn-secundario" id="btn-modo-foto" onclick="cambiarModoEntrada('foto')">📷 Foto del documento</button>
     </div>
-    <div id="analizandoMsg" class="muted oculto" style="margin-top:8px">Analizando el texto con Gemini… puede tardar unos segundos.</div>
+
+    <div id="modo-texto-wrap">
+      <p class="muted">Abrí el Word, seleccioná todo (Ctrl+A), copiá (Ctrl+C), y pegá acá (Ctrl+V).</p>
+      <textarea id="textoPegado" rows="8" placeholder="NOMBRE Y APELLIDO: ...&#10;DNI: ...&#10;DIRECCION: ...&#10;TEL: ...&#10;MAIL: ..."></textarea>
+      <div style="margin-top:10px">
+        <button class="btn-primary" id="btnAnalizarTexto" onclick="analizarTexto()">🔎 Analizar con IA</button>
+      </div>
+    </div>
+
+    <div id="modo-foto-wrap" class="oculto">
+      <p class="muted">Sacale una foto a la ficha o historia vieja — con el celular, un archivo ya guardado, o la cámara web de la PC.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+        <button class="btn-secundario" onclick="document.getElementById('fotoHistInput').click()">🖼 Archivo / cámara del celular</button>
+        <button class="btn-secundario" onclick="abrirWebcamHistoria()">🎥 Cámara web (PC)</button>
+      </div>
+      <input type="file" id="fotoHistInput" accept="image/*" capture="environment" onchange="onFotoHistoriaElegida(event)" style="display:none">
+      <div id="webcamHistWrap" class="oculto" style="margin-top:6px">
+        <video id="webcamHistVideo" autoplay playsinline style="width:100%;max-height:320px;border-radius:8px;background:#000;object-fit:contain"></video>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button class="btn-primary" style="flex:1" onclick="capturarFotoHistoriaWebcam()">📸 Capturar</button>
+          <button class="btn-secundario" onclick="cerrarWebcamHistoria()">Cancelar</button>
+        </div>
+      </div>
+      <div id="webcamHistError" style="color:#dc2626;font-size:12px;margin-top:6px"></div>
+      <img id="fotoHistPreview" class="oculto" alt="Vista previa" style="width:100%;max-height:320px;object-fit:contain;border:1px solid var(--border);border-radius:8px;background:#f1f5f9;margin-top:10px">
+      <div style="margin-top:10px">
+        <button class="btn-primary" id="btnAnalizarFoto" onclick="analizarFotoHistoria()" disabled>🔎 Analizar con IA</button>
+      </div>
+    </div>
+
+    <div id="analizandoMsg" class="muted oculto" style="margin-top:8px">Analizando con Gemini… puede tardar unos segundos.</div>
   </div>
 
   <!-- Paso 2: revisión y guardado -->
@@ -179,14 +208,23 @@ function apiPost(payload){
   }).then(r=>r.json());
 }
 
+function cambiarModoEntrada(modo){
+  document.getElementById('modo-texto-wrap').classList.toggle('oculto', modo!=='texto');
+  document.getElementById('modo-foto-wrap').classList.toggle('oculto', modo!=='foto');
+  const bT = document.getElementById('btn-modo-texto'), bF = document.getElementById('btn-modo-foto');
+  bT.style.background = modo==='texto' ? '#0369a1' : '#f1f5f9'; bT.style.color = modo==='texto' ? '#fff' : '#334155';
+  bF.style.background = modo==='foto'  ? '#0369a1' : '#f1f5f9'; bF.style.color = modo==='foto'  ? '#fff' : '#334155';
+  if(modo!=='foto') cerrarWebcamHistoria();
+}
+
 function analizarTexto(){
   const texto = document.getElementById('textoPegado').value.trim();
   if(!texto){ toast('Pegá el texto de la ficha primero'); return; }
-  document.getElementById('btnAnalizar').disabled = true;
+  document.getElementById('btnAnalizarTexto').disabled = true;
   document.getElementById('analizandoMsg').classList.remove('oculto');
   apiPost({action:'analizar_texto_paciente', texto}).then(res=>{
     document.getElementById('analizandoMsg').classList.add('oculto');
-    document.getElementById('btnAnalizar').disabled = false;
+    document.getElementById('btnAnalizarTexto').disabled = false;
     if(!res || !res.success){
       toast('No se pudo analizar el texto: ' + (res && res.error ? res.error : 'error desconocido') + ' — podés cargar los datos a mano abajo.');
       mostrarFormulario({});
@@ -196,7 +234,90 @@ function analizarTexto(){
     toast('Listo — revisá cada campo antes de guardar');
   }).catch(()=>{
     document.getElementById('analizandoMsg').classList.add('oculto');
-    document.getElementById('btnAnalizar').disabled = false;
+    document.getElementById('btnAnalizarTexto').disabled = false;
+    toast('Error de conexión — revisá la URL configurada. Podés cargar los datos a mano abajo.');
+    mostrarFormulario({});
+  });
+}
+
+/* ── Modo foto: archivo/cámara del celular, o cámara web de la PC ──
+   Misma lógica de achicado a canvas que usa Lector_CUD.html, para no
+   mandar fotos gigantes a Gemini. */
+let fotoHistBase64 = '';
+let fotoHistMime   = 'image/jpeg';
+let webcamHistStream = null;
+
+function _procesarImagenHistoria(dataUrl){
+  const img = new Image();
+  img.onload = function(){
+    const maxAncho = 1400;
+    const escala = Math.min(1, maxAncho / img.width);
+    const canvas = document.createElement('canvas');
+    canvas.width  = Math.round(img.width  * escala);
+    canvas.height = Math.round(img.height * escala);
+    canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+    const outUrl = canvas.toDataURL('image/jpeg', 0.85);
+    fotoHistMime   = 'image/jpeg';
+    fotoHistBase64 = outUrl.split(',')[1];
+    const preview = document.getElementById('fotoHistPreview');
+    preview.src = outUrl;
+    preview.classList.remove('oculto');
+    document.getElementById('btnAnalizarFoto').disabled = false;
+  };
+  img.src = dataUrl;
+}
+
+function onFotoHistoriaElegida(ev){
+  const file = ev.target.files && ev.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => _procesarImagenHistoria(e.target.result);
+  reader.readAsDataURL(file);
+}
+
+async function abrirWebcamHistoria(){
+  const err = document.getElementById('webcamHistError');
+  err.textContent = '';
+  document.getElementById('webcamHistWrap').classList.remove('oculto');
+  try{
+    webcamHistStream = await navigator.mediaDevices.getUserMedia({video:{width:{ideal:1400}}});
+    document.getElementById('webcamHistVideo').srcObject = webcamHistStream;
+  }catch(e){
+    err.textContent = '⚠️ No se pudo acceder a la cámara (' + e.message + ')';
+    document.getElementById('webcamHistWrap').classList.add('oculto');
+  }
+}
+function cerrarWebcamHistoria(){
+  if(webcamHistStream){ webcamHistStream.getTracks().forEach(t=>t.stop()); webcamHistStream=null; }
+  const wrap = document.getElementById('webcamHistWrap');
+  if(wrap) wrap.classList.add('oculto');
+}
+function capturarFotoHistoriaWebcam(){
+  const video = document.getElementById('webcamHistVideo');
+  const canvas = document.createElement('canvas');
+  canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+  canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+  _procesarImagenHistoria(canvas.toDataURL('image/jpeg', 0.9));
+  cerrarWebcamHistoria();
+}
+
+function analizarFotoHistoria(){
+  if(!fotoHistBase64){ toast('Sacá o elegí una foto primero'); return; }
+  document.getElementById('btnAnalizarFoto').disabled = true;
+  document.getElementById('analizandoMsg').classList.remove('oculto');
+  apiPost({action:'analizar_foto_historia', foto_base64: fotoHistBase64, mime_type: fotoHistMime}).then(res=>{
+    document.getElementById('analizandoMsg').classList.add('oculto');
+    document.getElementById('btnAnalizarFoto').disabled = false;
+    if(!res || !res.success){
+      toast('No se pudo analizar la foto: ' + (res && res.error ? res.error : 'error desconocido') + ' — podés cargar los datos a mano abajo.');
+      mostrarFormulario({});
+      return;
+    }
+    mostrarFormulario(res.registro || {});
+    toast('Listo — revisá cada campo antes de guardar');
+  }).catch(()=>{
+    document.getElementById('analizandoMsg').classList.add('oculto');
+    document.getElementById('btnAnalizarFoto').disabled = false;
     toast('Error de conexión — revisá la URL configurada. Podés cargar los datos a mano abajo.');
     mostrarFormulario({});
   });
@@ -291,6 +412,12 @@ function guardarPaciente(){
 
 function limpiarTodo(){
   document.getElementById('textoPegado').value = '';
+  cerrarWebcamHistoria();
+  fotoHistBase64 = '';
+  const fotoInput = document.getElementById('fotoHistInput'); if(fotoInput) fotoInput.value = '';
+  const preview = document.getElementById('fotoHistPreview'); if(preview) preview.classList.add('oculto');
+  const btnFoto = document.getElementById('btnAnalizarFoto'); if(btnFoto) btnFoto.disabled = true;
+  cambiarModoEntrada('texto');
   document.getElementById('cardFormulario').classList.add('oculto');
   window.scrollTo({top:0, behavior:'smooth'});
 }
