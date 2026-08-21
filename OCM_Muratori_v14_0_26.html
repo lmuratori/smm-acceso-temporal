@@ -367,6 +367,16 @@ body{font-family:'Inter',system-ui,sans-serif;font-size:13px;background:var(--bg
   .app{display:block;height:auto;}
   .top-bar,.panel-izq,#cert-zone{display:none!important;}
   .bot-bar{display:none!important;}
+  /* El submenú de categoría (ej: la lista desplegada de Radiografías) vive en
+     un contenedor aparte del panel-izq — sin esto, si quedaba abierto al
+     imprimir, se imprimía ese menú en vez del cuerpo del recetario
+     (corregido agosto 2026). */
+  .submenu-col{display:none!important;}
+  /* El panel derecho de OCM-Q (Ficha Completa del Planning Quirúrgico) es
+     otra columna aparte que tampoco estaba contemplada acá — si quedaba
+     visible en pantalla, se sumaba entera a la impresión y convertía una
+     receta de 1 página en 5 (corregido agosto 2026). */
+  .panel-qx-hdr,.panel-qx{display:none!important;}
   .main{display:block;}
   .panel-rec{padding:0;background:white;}
   .panel-view:not(.active){display:none;}
@@ -445,6 +455,37 @@ body{font-family:'Inter',system-ui,sans-serif;font-size:13px;background:var(--bg
 .imd-btn-mp{background:#009EE3;color:#fff}
 .imd-btn-mp:hover{background:#0081c3}
 .imd-btn-sm{padding:6px 14px;font-size:11px;flex-direction:row!important;align-self:center;white-space:nowrap}
+/* F1 — Toggle Farmacia / Magistral (agosto 2026) */
+.imd-f1-toggle{display:flex;gap:8px;margin-bottom:16px}
+.imd-f1-toggle-btn{flex:1;padding:10px 14px;border:2px solid var(--border);border-radius:9px;background:#fff;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;color:var(--muted);transition:all .15s;text-align:center}
+.imd-f1-toggle-btn.active{border-color:var(--accent2);background:#eff6ff;color:var(--accent2)}
+.imd-f1-toggle-btn .imd-f1-toggle-sub{display:block;font-size:10px;font-weight:400;margin-top:2px;opacity:.8}
+.imd-vad-box{border:1px dashed var(--border2);border-radius:9px;padding:12px 14px;margin-top:16px;background:#fbfdff}
+.imd-vad-box h4{font-size:12px;font-weight:700;color:var(--accent);margin-bottom:4px}
+.imd-vad-box p{font-size:10.5px;color:var(--muted);line-height:1.5;margin-bottom:10px}
+.imd-vad-item{display:flex;align-items:center;gap:8px;border:1px solid var(--border);border-radius:7px;padding:7px 10px;margin-bottom:6px;font-size:11px;background:#fff;flex-wrap:wrap}
+.imd-vad-item b{color:var(--accent)}
+.imd-vad-item .imd-vad-meta{color:var(--muted);flex:1}
+.imd-vad-item button{border:none;background:none;cursor:pointer;font-size:11px;padding:2px 6px;border-radius:5px}
+.imd-vad-item .imd-vad-del{color:#dc2626}
+.imd-vad-empty{font-size:11px;color:var(--muted);font-style:italic;padding:6px 0}
+.imd-vad-form{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}
+.imd-vad-form .imd-inp-wide{grid-column:1/-1}
+.imd-anmat-link{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;color:#0369a1;text-decoration:none;font-weight:600}
+.imd-anmat-link:hover{text-decoration:underline}
+.imd-anmat-cert{font-size:10px;color:#0369a1;font-weight:600;margin-bottom:8px;min-height:12px}
+.imd-farm-card{border:1px solid var(--border);border-radius:9px;padding:12px 14px;margin-bottom:12px;background:#fafeff}
+.imd-farm-card h4{font-size:13px;font-weight:700;color:var(--accent);margin-bottom:6px}
+.imd-farm-card .imd-farm-row{font-size:11px;color:#374151;line-height:1.7}
+.imd-farm-card .imd-farm-row b{color:var(--muted);font-weight:600}
+.imd-farm-pendiente{color:#b45309;font-style:italic}
+.imd-farm-actions{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.imd-farm-actions a,.imd-farm-actions button{font-size:10.5px;font-weight:700;padding:5px 10px;border-radius:6px;text-decoration:none;border:none;cursor:pointer;font-family:inherit}
+.imd-farm-mail{background:#eff6ff;color:#2563eb}
+.imd-farm-wa{background:#dcfce7;color:#16a34a}
+.imd-farm-maps{background:#fef3c7;color:#b45309}
+.imd-farm-tmpl{background:#f1f5f9;color:var(--muted)}
+.imd-explic-box textarea{width:100%;min-height:110px;padding:10px;border:1px solid var(--border2);border-radius:8px;font-family:inherit;font-size:12px;line-height:1.6;resize:vertical;box-sizing:border-box}
 /* F2 — Ejercicios */
 .imd-ej-card{border:1px solid var(--border);border-left:4px solid var(--accent2);border-radius:8px;padding:12px 14px;margin-bottom:10px;background:#fafeff}
 .imd-ej-header{display:flex;align-items:center;gap:8px;margin-bottom:8px}
@@ -1499,6 +1540,7 @@ body{font-family:'Inter',system-ui,sans-serif;font-size:13px;background:var(--bg
       <button class="btn btn-ghost btn-sm" onclick="abrirRidmRapido()" title="Cargar datos de filiación en el momento (sin antecedentes)">⚡ Filiación</button>
       <button class="btn btn-ghost btn-sm" onclick="abrirRidmPendientes()" id="btn-ridm-pend">📥 RIDM</button>
       <button class="btn btn-ghost btn-sm" onclick="abrirConsultasOnline()" id="btn-consultas" style="position:relative">💬 Consultas<span id="badge-consultas" style="display:none;position:absolute;top:-4px;right:-4px;background:#dc2626;color:#fff;border-radius:50%;width:16px;height:16px;font-size:9px;font-weight:700;display:none;align-items:center;justify-content:center"></span></button>
+      <button class="btn btn-ghost btn-sm" onclick="window.location.href='Agenda_Mensajes.html'" id="btn-bandeja-ia" style="position:relative" title="Abrir la Agenda de Mensajes — mails clasificados y con borrador de respuesta por IA">📬 Agenda Mails<span id="badge-bandeja-ia" style="display:none;position:absolute;top:-4px;right:-4px;background:#dc2626;color:#fff;border-radius:50%;width:16px;height:16px;font-size:9px;font-weight:700;align-items:center;justify-content:center"></span></button>
       <button class="btn btn-ghost btn-sm" id="btn-ridm-local" onclick="importarRidmLocal()" style="display:none">📥 RIMP local</button>
       <button class="btn btn-ghost btn-sm" onclick="verHistorialModal()" id="btn-hist" disabled>📋 Historial</button>
       <button class="btn btn-ghost btn-sm" onclick="abrirRSP()" id="btn-segui" disabled>📊 Seguimiento</button>
@@ -1952,6 +1994,9 @@ body{font-family:'Inter',system-ui,sans-serif;font-size:13px;background:var(--bg
     </div>
     <div class="row-btns">
       <button class="btn btn-primary" onclick="enviarLibroATodoElEquipo()">📧 Enviar Libro completo a todo el Equipo Quirúrgico</button>
+    </div>
+    <div class="row-btns">
+      <button class="btn btn-primary" id="libro-btn-concluir" onclick="concluirYEnviarLibro()">✅ Concluir y Enviar Libro al Paciente</button>
     </div>
     <div id="libro-msg" class="msg"></div>
   </div>
@@ -2509,7 +2554,14 @@ function initDB(){
   // "bloqueada" esperando la primera y todo el resto del init() nunca corre.
   if(dbReadyPromise_) return dbReadyPromise_;
   dbReadyPromise_ = new Promise((res,rej)=>{
-    const req=indexedDB.open('OCMRecetario',4);
+    // La versión se subió de 4 a 12 (agosto 2026): algunas computadoras ya
+    // habían abierto una versión más nueva del sistema que dejó la base
+    // local en versión 6, y IndexedDB nunca permite volver a una versión
+    // más baja — eso rompía initDB() con VersionError y, en cascada, toda
+    // búsqueda de paciente (local Y en la nube, porque la búsqueda local
+    // fallaba antes de llegar a intentar la nube). Se deja margen sobre
+    // cualquier versión ya usada anteriormente en cualquier computadora.
+    const req=indexedDB.open('OCMRecetario',12);
     req.onupgradeneeded=e=>{
       const d=e.target.result;
       if(!d.objectStoreNames.contains('pacientes')){
@@ -5288,6 +5340,30 @@ async function actualizarBadgeConsultas(){
     }
   }catch(_){}
 }
+
+/* ══════════════════════════════════════════════════════════════════
+   AGENDA DE MAILS (IA) — el botón "📬 Agenda Mails" de la barra abre
+   Agenda_Mensajes.html (app hermana ya existente, con su propia bandeja,
+   confirmación de pago y generación de link de Meet). Acá solo se
+   mantiene el contador de pendientes sobre el botón, para no duplicar esa
+   lógica en dos archivos distintos. */
+async function actualizarBadgeBandejaIA(){
+  try{
+    const r = await fetch(SHEETS_URL+'?action=getMensajesPendientes'+tokenQS_(),{signal:AbortSignal.timeout(5000)});
+    const d = await r.json();
+    const n = (d.data||[]).length;
+    const badge = document.getElementById('badge-bandeja-ia');
+    const btn   = document.getElementById('btn-bandeja-ia');
+    if(badge && n>0){
+      badge.textContent=n; badge.style.display='flex';
+      if(btn) btn.style.color='#dc2626';
+    } else if(badge){
+      badge.style.display='none';
+      if(btn) btn.style.color='';
+    }
+  }catch(_){}
+}
+window.addEventListener('load', actualizarBadgeBandejaIA);
 
 /* ── RSP — Registro de Seguimiento de Paciente ── */
 function abrirRSP(){
@@ -8553,18 +8629,30 @@ const IMDCMYT_DB_V12 = {
    {i:'🔧',n:'Masaje plantar isométrico',d:'Con una pelota terapéutica bajo el pie. Aplique presión sostenida en puntos del arco plantar. Fascitis plantar.',s:'3 series',t:'30 s por punto',yt:'https://www.youtube.com/results?search_query=plantar+fascia+massage+ball+foot+exercise'}
   ]},
 
- '16-Rehabilitación global isométrica':{titulo:'🏋️ Rehabilitación Global Isométrica',cie10:'Z50.1',
+ '16-Rehabilitación global isométrica':{titulo:'🏋️ Calistenia Global',cie10:'Z50.1',
   params:[...IMD_BASE,
    {id:'tolerancia',  label:'🟠 Tolerancia al ejercicio', desc:'0 = muy baja · 10 = excelente'},
    {id:'progresion',  label:'🟣 Progresión percibida',    desc:'0 = sin progresión · 10 = excelente progresión'}],
   ejs:[
-   {i:'👤',n:'Retracción cervical + activación pelviana',d:'Chin tuck + contracción de suelo pélvico simultánea. Activa toda la cadena axial. Postura global.',s:'3 × 10 reps',t:'5 s + 5 s',yt:'https://www.youtube.com/results?search_query=chin+tuck+pelvic+floor+combined+exercise'},
-   {i:'🦋',n:'Retracción escapular + contracción abdominal',d:'Junte escápulas mientras activa el transverso. Cadena posterior + estabilizadores.',s:'3 × 10 reps',t:'5 s + 5 s',yt:'https://www.youtube.com/results?search_query=scapular+retraction+core+activation+exercise'},
-   {i:'🏔️',n:'Plancha isométrica',d:'En posición de plancha (codos o manos). Mantenga el cuerpo rígido, abdomen contraído. Cadena cinética completa.',s:'3 series',t:'20-60 s según capacidad',yt:'https://www.youtube.com/results?search_query=isometric+plank+exercise+core+global'},
-   {i:'🌉',n:'Puente glúteo con variante de brazos',d:'Puente glúteo + extensión de brazos hacia el techo. Integración de cadena anterior y posterior.',s:'3 × 10 reps',t:'5 s + 5 s',yt:'https://www.youtube.com/results?search_query=bridge+exercise+arm+extension+integrated'},
-   {i:'🏋️',n:'Wall sit + contracción escapular',d:'Mini-sentadilla isométrica en pared + junte de escápulas. Activación de MMII + columna torácica.',s:'3 series',t:'30 s',yt:'https://www.youtube.com/results?search_query=wall+sit+scapular+retraction+combined'},
-   {i:'🦵',n:'Puente unipodal + control de cadera',d:'Puente con una pierna. Controle el no hundimiento del lado libre. Glúteo medio + cadena posterior completa.',s:'3 × 10 reps',t:'5 s por lado',yt:'https://www.youtube.com/results?search_query=single+leg+bridge+hip+control+exercise'},
-   {i:'⚖️',n:'Equilibrio monopodal + activación cervical',d:'Balance en un pie + chin tuck simultáneo. Integración de control postural de cabeza a pie.',s:'3 × 10 reps',t:'5 s + 5 s',yt:'https://www.youtube.com/results?search_query=single+leg+balance+postural+control+global'}
+   {i:'🔥',n:'Entrada en calor y elongación (leer antes de empezar)',d:'Este es su programa de Calistenia Global: una rutina progresiva de ejercicios con el peso del propio cuerpo, pensada para trabajar todas las grandes cadenas musculares en orden, de arriba hacia abajo, sin necesidad de equipamiento. Antes de empezar: calentar articulaciones de muñeca, hombro, acromioclavicular, caderas, rodilla y tobillos, y elongar cada articulación e incluir columna en la flexibilización — todo sin carga. Luego iniciar con tonificación isométrica de arriba hacia abajo: cervical, hombros, pectorales, miembro superior, core, cadera, glúteo, muslo/pierna y estabilizadores de tobillo. Avance por los ejercicios en el orden numerado y respete la variante indicada para su edad o nivel cuando el ejercicio la tenga. Ante cualquier dolor (más allá del esfuerzo muscular normal), deténgase y consúltelo con el Dr. Muratori. Video complementario de calentamiento articular: https://www.youtube.com/watch?v=wBtOM89nsXg',s:'Rutina completa',t:'Antes de cada sesión',yt:'https://www.youtube.com/watch?v=2-6IS44jYwU'},
+   {i:'🏃',n:'1. Correr en el lugar',d:'Con balanceo de brazos y elevación de piernas. Activación cardiovascular para iniciar la rutina.',s:'Según indicación profesional',t:'Según indicación profesional',yt:'https://www.youtube.com/shorts/OjiCB_vLCHw'},
+   {i:'🦵',n:'2. Sentadillas',d:'Cuádriceps y posteriores. Variantes según edad y nivel: normal (10 a 30 años) · lenta (40 a 50 años) · isométrica inmóvil apoyada en la pared (más de 60 años) · profunda · sentadilla hindú. El profesional indica la variante correspondiente.',s:'Según variante indicada',t:'Según variante indicada',yt:'https://www.youtube.com/results?search_query=sentadillas+calistenia+progresion+por+edad'},
+   {i:'🧗',n:'3. Colgar de la barra',d:'Colgarse en sesiones después de los ejercicios. Variantes: levantar piernas a 90° · levantar piernas con rodillas flexionadas (knee raises) · colgado pasivo (dead hang) sin balancear — esta última variante recomendada para más de 60 años.',s:'3 series',t:'45 s colgado · descanso 1 min (dead hang: 1 min)',yt:'https://www.youtube.com/results?search_query=dead+hang+bar+hang+exercise+knee+raises'},
+   {i:'💪',n:'4. Flexiones de brazo',d:'7 niveles de dificultad progresiva, según % aproximado del peso corporal levantado: 1) inclinada/cerrada (40%) · 2) brazo pegado al cuerpo o normal con apoyo en rodilla (50%) · 3) brazo a 90°, normal (70%) · 4) de rodilla, declinada (75%) · 5) de piso, en vertical (95%) · 6) con pies elevados · 7) arquero / con desplazamiento lateral. Progresar de nivel según capacidad.',s:'Según nivel indicado',t:'Según nivel indicado',yt:'https://www.youtube.com/results?search_query=progresion+flexiones+de+brazo+calistenia'},
+   {i:'🏔️',n:'5. Plancha isométrica',d:'"La muralla del core" — trabaja cuádriceps, glúteos y pelvis. Variantes: apoyando la pelvis · apoyando las rodillas · apoyando las puntas de los pies.',s:'3 series',t:'60 s por variante',yt:'https://www.youtube.com/results?search_query=plancha+isometrica+core+variantes'},
+   {i:'🚶',n:'6. Zancadas',d:'Variantes: en el lugar con pierna posterior corta · en el lugar con pierna posterior extendida · desplazándose.',s:'Según indicación profesional',t:'Según indicación profesional',yt:'https://www.youtube.com/watch?v=KWOY-UDfHOk'},
+   {i:'🕳️',n:'7. Hollow hold (posición hueca)',d:'También llamado "rock" o posición hueca. Trabajo isométrico de core completo.',s:'Según indicación profesional',t:'Según indicación profesional',yt:'https://www.youtube.com/watch?v=-mGKZb327BA'},
+   {i:'🚣',n:'8. Remo australiano',d:'Ejercicio de tracción horizontal para espalda y brazos, con el propio peso corporal.',s:'Según indicación profesional',t:'Según indicación profesional',yt:'https://www.youtube.com/results?search_query=remo+australiano+ejercicio+calistenia'},
+   {i:'🔺',n:'9. Fondo de tríceps',d:'Variantes: centrado · tirado hacia adelante.',s:'Según indicación profesional',t:'Según indicación profesional',yt:'https://www.youtube.com/results?search_query=fondos+de+triceps+ejercicio'},
+   {i:'🪜',n:'10. Dominadas',d:'Variantes: abiertas · normales · cerradas.',s:'Según indicación profesional',t:'Según indicación profesional',yt:'https://www.youtube.com/results?search_query=dominadas+variantes+pull+up'},
+   {i:'🌀',n:'11. Russian twist',d:'Rotación de tronco, con o sin apoyo, para oblicuos y core.',s:'Según indicación profesional',t:'Según indicación profesional',yt:'https://www.youtube.com/results?search_query=APARATOS+PARA+REALIZAR+CALISTENIA'},
+   {i:'🥇',n:'12. Bloque de core en paralelas (avanzado)',d:'Ejercicio avanzado de core sostenido en barras paralelas.',s:'Según indicación profesional',t:'Según indicación profesional',yt:'https://www.youtube.com/results?search_query=core+block+paralelas+calistenia'},
+   {i:'🔙',n:'13. Pull-over humano (avanzado)',d:'Trabajo de dorsales con el propio peso corporal.',s:'Según indicación profesional',t:'Según indicación profesional',yt:'https://www.youtube.com/results?search_query=pull+over+calistenia+dorsales'},
+   {i:'🙆',n:'14. Flexión de hombros (avanzado)',d:'Trabajo de flexores de hombro.',s:'Según indicación profesional',t:'Según indicación profesional',yt:'https://www.youtube.com/results?search_query=flexion+de+hombros+ejercicio'},
+   {i:'🍑',n:'15. Elevación de glúteos e isquiotibiales (avanzado)',d:'Ejercicio de cadena posterior.',s:'Según indicación profesional',t:'Según indicación profesional',yt:'https://www.youtube.com/results?search_query=elevacion+de+gluteos+e+isquiotibiales'},
+   {i:'🚪',n:'16. Face pull en marco de puerta (avanzado)',d:'Door way face pull — trabajo de rotadores externos y deltoides posterior, usando el marco de una puerta como resistencia. Lleve el talón de la mano (la zona tenar e hipotenar de la palma) hacia la cara al finalizar la tracción.',s:'Según indicación profesional',t:'Según indicación profesional',yt:'https://www.youtube.com/results?search_query=face+pull+door+frame+calistenia'},
+   {i:'🤸',n:'17. L-sit (avanzado)',d:'Sostén isométrico avanzado de core y cadera en posición de "L".',s:'Según indicación profesional',t:'Según indicación profesional',yt:'https://www.youtube.com/results?search_query=l+sit+ejercicio+calistenia'},
+   {i:'🐸',n:'18. Rana (avanzado)',d:'Ejercicio de movilidad y fuerza de cadera en posición de rana.',s:'Según indicación profesional',t:'Según indicación profesional',yt:'https://www.youtube.com/watch?v=aYx2cxGqtK8'}
   ]}
 
 }; // fin IMDCMYT_DB_V12
@@ -8586,7 +8674,7 @@ const IMD_REGIONES = [
   {key:'13-Pierna',              n:'Pierna',                  ico:'🦵'},
   {key:'14-Tobillo',             n:'Tobillo',                 ico:'🦶'},
   {key:'15-Pie',                 n:'Pie',                     ico:'🦶'},
-  {key:'16-Rehabilitación global isométrica',n:'Rehab. Global Isométrica',ico:'🏋️'}
+  {key:'16-Rehabilitación global isométrica',n:'Calistenia Global',ico:'🏋️'}
 ];
 
 let imdRegionActual = '';
@@ -8629,7 +8717,9 @@ function initSecurity() {
 
   /* CAPA 3: Logging + denuncia */
   // ya existe en logSecEvt + denunciarCopiaSeg
-  console.clear();
+  // Algunos navegadores/visores no exponen console.clear — sin este chequeo
+  // tiraba "Uncaught TypeError: console.clear is not a function" en la consola.
+  if (typeof console.clear === 'function') console.clear();
   console.log('%c🔒 OCM Muratori — Sistema protegido', 'color:red;font-size:20px;font-weight:bold');
 }
 
@@ -8744,6 +8834,84 @@ async function enviarIMDpacienteMail() {
   } catch(_) {}
 }
 
+/* Botón "✅ Concluir y Enviar RMYT" del modal F1/F2/F3 — envía por mail al
+   paciente lo cargado en la región actualmente abierta (imdRegionActual):
+   ejercicios de F2 siempre, y la medicación de F1 (de farmacia o magistral,
+   según el modo elegido) si hay algo cargado. No depende del selector de
+   regiones (imdSeleccionadas) — trabaja sobre lo que el médico está viendo
+   en este momento, así el botón funciona sin importar cómo se abrió el modal. */
+async function concluirYEnviarRMYT() {
+  if (!imdRegionActual || !IMDCMYT_DB_V12[imdRegionActual]) { toast('⚠ No hay región RMYT abierta', 'err'); return; }
+  if (!pacienteActivo)          { toast('⚠ No hay paciente seleccionado', 'err'); return; }
+  if (!pacienteActivo.mail)     { toast('⚠ El paciente no tiene mail cargado', 'err'); return; }
+
+  const d   = IMDCMYT_DB_V12[imdRegionActual];
+  const pac = `${pacienteActivo.apellido||''}, ${pacienteActivo.nombre||''}`;
+
+  let cuerpo = `${pac}\n\nEl Dr. Muratori le envía su RMYT — Recomendaciones Médicas y Terapéuticas\n📍 ${d.titulo}\n`;
+
+  // F2 — Ejercicios
+  (d.ejs || []).forEach((e, i) => {
+    cuerpo += `\n${i + 1}. ${e.i} ${e.n}\n${e.d}\n📊 ${e.s} · ⏱ ${e.t}\n▶ Video: ${e.yt}\n`;
+  });
+
+  // F1 — Medicación (según el modo activo)
+  const meds = itemsReceta.filter(x => x && x.key === 'med').map(x => x.text);
+  if (imdF1Modo === 'magistral') {
+    const explic = document.getElementById('imd-magistral-explicacion')?.value.trim();
+    if (explic) cuerpo += `\n💊 PRESCRIPCIÓN MAGISTRAL\n${explic}\n`;
+  } else if (meds.length) {
+    cuerpo += `\n💊 MEDICACIÓN:\n`;
+    meds.forEach((m, i) => {
+      const pres = document.getElementById(`imd-pres${i}`)?.value || '';
+      const conc = document.getElementById(`imd-conc${i}`)?.value || '';
+      const via  = document.getElementById(`imd-via${i}`)?.value || '';
+      const f    = document.getElementById(`imd-f${i}`)?.value || '';
+      const dias = document.getElementById(`imd-dias${i}`)?.value || '';
+      const ind  = document.getElementById(`imd-i${i}`)?.value || '';
+      cuerpo += `• ${m}`;
+      if (pres || conc) cuerpo += ` — ${[pres, conc].filter(Boolean).join(' ')}`;
+      if (via) cuerpo += ` | ${via}`;
+      if (f) cuerpo += ` | ${f}`;
+      if (dias) cuerpo += ` | ${dias} días`;
+      if (ind) cuerpo += `\n  ⚠️ ${ind}`;
+      cuerpo += `\n`;
+    });
+  }
+
+  cuerpo += `\nRealice esto según lo indicado y complete su evaluación semanal para que el Dr. pueda ver su evolución.\n` +
+            `Ante dudas: escriba a ${DOCTOR_MAIL||'el consultorio'} o solicite teleconsulta.`;
+
+  const btn = document.getElementById('imd-btn-concluir');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Enviando…'; }
+  try {
+    await enviarDocumentoQXPorMail('RMYT — Recomendaciones Médicas y Terapéuticas', cuerpo, pacienteActivo.mail);
+    toast('✅ RMYT enviado al paciente', 'ok');
+  } catch(e) {
+    toast('❌ No se pudo enviar: ' + (e && e.message ? e.message : e), 'err');
+    return;
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '✅ Concluir y Enviar RMYT'; }
+  }
+
+  // Registrar en RSP para que aparezca en la ficha del paciente
+  try {
+    const dni = pacienteActivo?.dni || '';
+    if (dni) {
+      const imdLog = JSON.parse(localStorage.getItem('imdcymt_log') || '{}');
+      if (!imdLog[dni]) imdLog[dni] = [];
+      imdLog[dni].unshift({
+        fecha: new Date().toISOString(),
+        region: d.titulo,
+        ejercicios: (d.ejs || []).length,
+        resumen: `RMYT enviado al paciente por mail · Región: ${d.titulo}`
+      });
+      imdLog[dni] = imdLog[dni].slice(0, 50);
+      localStorage.setItem('imdcymt_log', JSON.stringify(imdLog));
+    }
+  } catch(_) {}
+}
+
 /* ──────────────────────────────────────────────────────────────────
    IMDCMYT — MODAL PRINCIPAL (F1 / F2 / F3)
    ────────────────────────────────────────────────────────────────── */
@@ -8763,7 +8931,11 @@ function abrirIMDCMYT(regionKey) {
   const f2t = document.getElementById('imd-f2-title');
   if (f2t) f2t.textContent = `🏋️ Ejercicios Isométricos — ${d.titulo}`;
 
+  imdF1SetModo('farmacia');
+  poblarPresentacionesDatalist();
+  poblarPrincipiosDatalist();
   cargarMedsIMD();
+  imdVademecumRender();
   cargarEjerciciosIMD(d.ejs);
   cargarParametrosIMD(d.params);
 
@@ -8781,28 +8953,314 @@ function imdTab(tab) {
   if (tab === 'f3') setTimeout(renderDashboardIMD, 120);
 }
 
-/* F1 */
+/* F1 — Toggle Receta de Farmacia / Prescripción Magistral (agosto 2026) */
+let imdF1Modo = 'farmacia';
+function imdF1SetModo(modo) {
+  imdF1Modo = modo;
+  const bF = document.getElementById('imd-f1-tog-farmacia');
+  const bM = document.getElementById('imd-f1-tog-magistral');
+  const pF = document.getElementById('imd-f1-farmacia');
+  const pM = document.getElementById('imd-f1-magistral');
+  if (bF) bF.classList.toggle('active', modo === 'farmacia');
+  if (bM) bM.classList.toggle('active', modo === 'magistral');
+  if (pF) pF.style.display = modo === 'farmacia' ? 'block' : 'none';
+  if (pM) pM.style.display = modo === 'magistral' ? 'block' : 'none';
+  if (modo === 'magistral') cargarFarmaciasMagistralesIMD();
+}
+
+/* F1 — Receta de Farmacia */
+/* Combina "Mi vademécum personal" (cargado por el Dr. Muratori) con el
+   Vademécum Nacional de Medicamentos oficial (ANMAT_VNM_V1, importado del
+   archivo del Ministerio de Salud). Ninguno de los dos se genera ni se
+   completa automáticamente: el personal lo escribe el médico y el ANMAT
+   viene tal cual del archivo oficial. */
+function imdVademecumCombinado() {
+  const personal = imdVademecumGet().map(e => ({ ...e, origen: 'personal' }));
+  const anmat = (typeof ANMAT_VNM_V1 !== 'undefined' ? ANMAT_VNM_V1 : []).map(e => ({
+    principio: e.principio, comercial: e.comercial, presentacion: e.presentacion,
+    concentracion: e.concentracion, via: '', frecuencia: '', dias: '', funcion: '',
+    origen: 'anmat', cert: e.cert, lab: e.lab
+  }));
+  return personal.concat(anmat);
+}
+function imdVademecumLabel(e) {
+  const partes = [e.principio];
+  if (e.comercial) partes.push('— ' + e.comercial);
+  if (e.concentracion) partes.push('(' + e.concentracion + ')');
+  partes.push(e.origen === 'anmat' ? '[ANMAT]' : '[Mi vademécum]');
+  return partes.join(' ');
+}
+function poblarPresentacionesDatalist() {
+  const dl = document.getElementById('imd-presentaciones-datalist');
+  if (!dl) return;
+  const base = ['Comprimidos','Cápsulas','Cápsulas blandas','Jarabe','Suspensión','Gotas','Inyectable','Crema / pomada','Parche','Otro'];
+  const anmatFormas = (typeof ANMAT_VNM_V1 !== 'undefined' ? ANMAT_VNM_V1 : []).map(e => e.presentacion);
+  const todas = Array.from(new Set(base.concat(anmatFormas))).sort();
+  dl.innerHTML = todas.map(p => `<option value="${p.replace(/"/g,'&quot;')}">`).join('');
+}
+function poblarPrincipiosDatalist() {
+  const dl = document.getElementById('imd-principios-datalist');
+  if (!dl) return;
+  const principios = Array.from(new Set((typeof ANMAT_VNM_V1 !== 'undefined' ? ANMAT_VNM_V1 : []).map(e => e.principio))).sort();
+  dl.innerHTML = principios.map(p => `<option value="${p.replace(/"/g,'&quot;')}">`).join('');
+}
+/* Al tipear en "Principio activo" del formulario "Agregar a mi vademécum", si el texto
+   coincide exactamente (sin importar mayúsculas) con un principio activo del Vademécum
+   Nacional de Medicamentos (ANMAT), se autocompletan nombre comercial, presentación y
+   concentración desde ese registro oficial — el médico puede editarlos antes de guardar. */
+function imdVadFormAutocompletarDesdeANMAT(valor) {
+  if (!valor) return;
+  const lista = (typeof ANMAT_VNM_V1 !== 'undefined' ? ANMAT_VNM_V1 : []);
+  const match = lista.find(e => e.principio.toLowerCase() === valor.trim().toLowerCase());
+  if (!match) return;
+  const set = (id, val) => { const el = document.getElementById(id); if (el && !el.value) el.value = val || ''; };
+  set('imd-vad-comercial', match.comercial);
+  set('imd-vad-presentacion', match.presentacion);
+  set('imd-vad-concentracion', match.concentracion);
+}
+
 function cargarMedsIMD() {
   const meds = itemsReceta.filter(x => x && x.key === 'med').map(x => x.text);
   const c    = document.getElementById('imd-meds-list');
   if (!c) return;
   if (!meds.length) {
-    c.innerHTML = '<div class="imd-empty-meds">⚠️ No hay medicamentos en el carrito.<br>Agregue con tecla <strong>T → Medicación</strong> y reabra IMDCMYT.</div>';
+    c.innerHTML = '<div class="imd-empty-meds">⚠️ No hay medicamentos en el carrito.<br>Agregue con tecla <strong>T → Medicación</strong> y reabra RMYT.</div>';
     return;
   }
-  c.innerHTML = meds.map((m, i) => `
+  const combinado = imdVademecumCombinado();
+  IMD_VAD_INDEX = {};
+  combinado.forEach(e => { IMD_VAD_INDEX[imdVademecumLabel(e)] = e; });
+  const datalistHtml = `<datalist id="imd-vademecum-datalist">${combinado.map(e => `<option value="${imdVademecumLabel(e).replace(/"/g,'&quot;')}">`).join('')}</datalist>`;
+  c.innerHTML = datalistHtml + meds.map((m, i) => `
     <div class="imd-med-card">
       <div class="imd-med-num">Rx ${i+1}</div>
       <div class="imd-med-body">
         <div class="imd-med-nombre">${m}</div>
+        <input class="imd-inp imd-inp-wide" style="margin-bottom:4px" id="imd-vadsel${i}" list="imd-vademecum-datalist"
+          placeholder="🔎 Buscar en mi vademécum + ANMAT (escriba el principio activo)…"
+          oninput="imdVademecumAplicarPorLabel(${i}, this.value)">
+        <div class="imd-anmat-cert" id="imd-cert${i}"></div>
         <div class="imd-med-fields">
-          <input class="imd-inp" id="imd-d${i}" placeholder="Dosis (ej: 1 comprimido)">
+          <input class="imd-inp" id="imd-pres${i}" list="imd-presentaciones-datalist" placeholder="Presentación (ej: Comprimido recubierto)">
+          <input class="imd-inp" id="imd-conc${i}" placeholder="Concentración (ej: 500 mg)">
+          <select class="imd-inp" id="imd-via${i}">
+            <option value="">Vía / forma de administración…</option>
+            <option>Oral</option><option>Sublingual</option><option>Tópica</option>
+            <option>Inyectable IM</option><option>Inyectable EV</option><option>Inyectable SC</option>
+            <option>Rectal</option><option>Inhalatoria</option><option>Otra</option>
+          </select>
           <input class="imd-inp" id="imd-f${i}" placeholder="Frecuencia (ej: cada 8 hs)">
-          <input class="imd-inp" id="imd-r${i}" placeholder="Duración (ej: 10 días)">
+          <input class="imd-inp" id="imd-dias${i}" placeholder="Días de tratamiento">
+          <input class="imd-inp" id="imd-func${i}" placeholder="Función (para qué se indica)">
           <input class="imd-inp imd-inp-wide" id="imd-i${i}" placeholder="Indicación especial (ej: con alimentos, no alcohol…)">
         </div>
       </div>
     </div>`).join('');
+}
+
+let IMD_VAD_INDEX = {};
+function imdVademecumAplicarPorLabel(cardIdx, label) {
+  const e = IMD_VAD_INDEX[label];
+  const certBox = document.getElementById(`imd-cert${cardIdx}`);
+  if (!e) { if (certBox) certBox.textContent = ''; return; }
+  const set = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
+  set(`imd-pres${cardIdx}`, e.presentacion);
+  set(`imd-conc${cardIdx}`, e.concentracion);
+  set(`imd-via${cardIdx}`,  e.via);
+  set(`imd-f${cardIdx}`,    e.frecuencia);
+  set(`imd-dias${cardIdx}`, e.dias);
+  set(`imd-func${cardIdx}`, e.funcion);
+  if (certBox) {
+    certBox.textContent = e.origen === 'anmat'
+      ? `🏛 ANMAT — Cert. Nº ${e.cert} · ${e.lab}`
+      : '👤 Cargado en su vademécum personal';
+  }
+}
+
+/* "Mi vademécum personal" — biblioteca cargada y verificada por el propio Dr.
+   Muratori. El sistema NUNCA sugiere ni completa principios activos, dosis o
+   presentaciones por su cuenta: cada entrada la escribe el médico, idealmente
+   contrastada contra el Vademécum Nacional de Medicamentos de ANMAT (link en
+   la interfaz). Esto evita cualquier riesgo de un dato farmacológico generado
+   automáticamente. */
+function imdVademecumGet() {
+  try { return JSON.parse(localStorage.getItem('imd_vademecum_personal_v1') || '[]'); } catch(_) { return []; }
+}
+function imdVademecumSet(arr) {
+  localStorage.setItem('imd_vademecum_personal_v1', JSON.stringify(arr));
+}
+function imdVademecumToggleForm() {
+  const f = document.getElementById('imd-vad-form');
+  if (!f) return;
+  f.style.display = (f.style.display === 'none' || !f.style.display) ? 'grid' : 'none';
+}
+function imdVademecumGuardar() {
+  const principio = document.getElementById('imd-vad-principio')?.value.trim();
+  if (!principio) { toast('Falta el principio activo', 'err'); return; }
+  const entry = {
+    principio,
+    comercial:     document.getElementById('imd-vad-comercial')?.value.trim() || '',
+    presentacion:  document.getElementById('imd-vad-presentacion')?.value || '',
+    concentracion: document.getElementById('imd-vad-concentracion')?.value.trim() || '',
+    via:           document.getElementById('imd-vad-via')?.value || '',
+    frecuencia:    document.getElementById('imd-vad-frecuencia')?.value.trim() || '',
+    dias:          document.getElementById('imd-vad-dias')?.value.trim() || '',
+    funcion:       document.getElementById('imd-vad-funcion')?.value.trim() || ''
+  };
+  const arr = imdVademecumGet();
+  arr.push(entry);
+  imdVademecumSet(arr);
+  ['imd-vad-principio','imd-vad-comercial','imd-vad-concentracion','imd-vad-frecuencia','imd-vad-dias','imd-vad-funcion'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  ['imd-vad-presentacion','imd-vad-via'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  const f = document.getElementById('imd-vad-form');
+  if (f) f.style.display = 'none';
+  toast('✅ Guardado en su vademécum', 'ok');
+  imdVademecumRender();
+  cargarMedsIMD();
+}
+function imdVademecumEliminar(i) {
+  const arr = imdVademecumGet();
+  arr.splice(i, 1);
+  imdVademecumSet(arr);
+  imdVademecumRender();
+  cargarMedsIMD();
+}
+function imdVademecumRender() {
+  const c = document.getElementById('imd-vad-list');
+  if (!c) return;
+  const arr = imdVademecumGet();
+  if (!arr.length) {
+    c.innerHTML = '<div class="imd-vad-empty">Todavía no cargó medicamentos en su vademécum personal.</div>';
+    return;
+  }
+  c.innerHTML = arr.map((e, i) => `
+    <div class="imd-vad-item">
+      <b>${e.principio}</b>
+      <span class="imd-vad-meta">${[e.presentacion, e.concentracion, e.via, e.frecuencia, e.dias ? e.dias + ' días' : ''].filter(Boolean).join(' · ')}</span>
+      <button class="imd-vad-del" onclick="imdVademecumEliminar(${i})" type="button">✕ Eliminar</button>
+    </div>`).join('');
+}
+
+/* Vademécum Nacional de Medicamentos (VNM) — Ministerio de Salud / ANMAT.
+   Fuente oficial: https://datos.salud.gob.ar/dataset/vademecun-nacional-de-medicamentos-vnm
+   Archivo cargado por el Dr. Muratori: vnm2018.xls (actualización de diciembre de 2018).
+   Son datos textuales tal cual figuran en el archivo oficial (principio activo, nombre
+   comercial, concentración, forma farmacéutica y N° de certificado ANMAT) — no se infiere
+   ni se completa ninguna dosis, frecuencia ni vía de administración: esos datos dependen
+   de cada paciente y los completa el Dr. Muratori al prescribir. Es una actualización
+   puntual (58 medicamentos), no el registro completo de ANMAT — se puede ampliar cargando
+   archivos de actualizaciones posteriores del mismo portal. */
+const ANMAT_VNM_V1 = [
+  {principio:"GEFITINIB",comercial:"Gefinova",concentracion:"250 MG",presentacion:"Comprimido recubierto",envase:"30 COMPRIMIDOS RECUBIERTOS",lab:"CELNOVA ARGENTINA S.A.",cert:58709},
+  {principio:"CAPECITABINA",comercial:"Capecinova",concentracion:"500 MG",presentacion:"Comprimido recubierto",envase:"120 COMPRIMIDOS RECUBIERTOS",lab:"CELNOVA ARGENTINA S.A.",cert:56583},
+  {principio:"LENALIDOMIDA",comercial:"Lenalinova",concentracion:"15 MG",presentacion:"Cápsula dura",envase:"21 CÁPSULAS DURAS",lab:"CELNOVA ARGENTINA S.A.",cert:57871},
+  {principio:"LENALIDOMIDA",comercial:"Lenalinova",concentracion:"5 MG",presentacion:"Cápsula dura",envase:"21 CÁPSULAS DURAS",lab:"CELNOVA ARGENTINA S.A.",cert:57871},
+  {principio:"FRACCION FLAVONOIDE PURIFICADA Y MICRONIZADA (DIOSMINA 90 %, FLAVONOIDES EXPRESADOS EN HESPERIDINA 10 %)",comercial:"Diosmin",concentracion:"1000 MG",presentacion:"Polvo granulado para suspensión oral",envase:"30 SOBRES por 5 G",lab:"CRAVERI S.A.I.C.",cert:54096},
+  {principio:"NITISINONA",comercial:"Orfadin",concentracion:"5 MG",presentacion:"Cápsula dura",envase:"60 CÁPSULAS DURAS",lab:"DAXLEY ARGENTINA S.A.",cert:58497},
+  {principio:"NITISINONA",comercial:"Orfadin",concentracion:"10 MG",presentacion:"Cápsula dura",envase:"60 CÁPSULAS DURAS",lab:"DAXLEY ARGENTINA S.A.",cert:58497},
+  {principio:"NITISINONA",comercial:"Orfadin",concentracion:"20 MG",presentacion:"Cápsula dura",envase:"60 CÁPSULAS DURAS",lab:"DAXLEY ARGENTINA S.A.",cert:58497},
+  {principio:"FRACCION FLAVONOIDE PURIFICADA Y MICRONIZADA (DIOSMINA 90 %, FLAVONOIDES EXPRESADOS EN HESPERIDINA 10 %)",comercial:"Dipemina",concentracion:"1000 MG",presentacion:"Polvo granulado para suspensión",envase:"30 SOBRES por 5 G",lab:"DR LAZAR Y CIA S.A.Q. E I.",cert:50942},
+  {principio:"BENZOCAINA - TIROTRICINA",comercial:"Bucasmol a",concentracion:"1 G/ 100ML - 0,0 5 G/ 100ML",presentacion:"Spray bucal",envase:"1 FRASCO por 45 ML",lab:"FECOFAR COOP.LTDA.",cert:58458},
+  {principio:"LORATADINA",comercial:"Alergitrat l",concentracion:"10 MG",presentacion:"Cápsula blanda",envase:"7 CÁPSULAS BLANDAS",lab:"FECOFAR COOP.LTDA.",cert:53267},
+  {principio:"TADALAFILO",comercial:"Equitone",concentracion:"5 MG",presentacion:"Comprimido recubierto",envase:"30 COMPRIMIDOS RECUBIERTOS",lab:"FECOFAR COOP.LTDA.",cert:58246},
+  {principio:"TADALAFILO",comercial:"Equitone",concentracion:"20 MG",presentacion:"Comprimido recubierto",envase:"2 COMPRIMIDOS RECUBIERTOS",lab:"FECOFAR COOP.LTDA.",cert:58246},
+  {principio:"MEMANTINA CLORHIDRATO - DONEPEZILO CLORHIDRATO",comercial:"Alzetix 7/10",concentracion:"7 MG -10 MG",presentacion:"Cápsula con microgranulos de liberación prolongada",envase:"30 CAPSULAS CON MICROGRANULOS DE LIBERACIÓN PROLONGADA",lab:"GADOR S.A.",cert:58094},
+  {principio:"MEMANTINA CLORHIDRATO - DONEPEZILO CLORHIDRATO",comercial:"Alzetix 21/10",concentracion:"21 MG - 10 MG",presentacion:"Cápsula con microgranulos de liberación prolongada",envase:"30 CAPSULAS CON MICROGRANULOS DE LIBERACIÓN PROLONGADA",lab:"GADOR S.A.",cert:58094},
+  {principio:"ERITROPOYETINA HUMANA RECOMBINANTE",comercial:"Hemastim p",concentracion:"2000 UI",presentacion:"Polvo liofilizado inyectable",envase:"1 FRASCO AMPOLLA por 2000 UI + 1 AMPOLLA CON SOLVENTE",lab:"GEMABIOTECH S.A.U.",cert:56196},
+  {principio:"ERITROPOYETINA HUMANA RECOMBINANTE",comercial:"Hemastim p",concentracion:"2000 UI",presentacion:"Polvo liofilizado inyectable",envase:"25 FRASCO AMPOLLA por 2000 UI + 25 AMPOLLA CON SOLVENTE (U.H.)",lab:"GEMABIOTECH S.A.U.",cert:56196},
+  {principio:"ERITROPOYETINA HUMANA RECOMBINANTE",comercial:"Hemastim p",concentracion:"10000 UI",presentacion:"Polvo liofilizado inyectable",envase:"1 FRASCO AMPOLLA por 10000 UI + 1 AMPOLLA CON SOLVENTE",lab:"GEMABIOTECH S.A.U.",cert:56196},
+  {principio:"CLORHIDRATO DE MORFINA",comercial:"Morfina gemepe",concentracion:"10 MG/ML",presentacion:"Solución inyectable",envase:"100 AMPOLLAS por 1 ML (U.H.)",lab:"GEMEPE S.A.",cert:55048},
+  {principio:"BICALUTAMIDA",comercial:"Dimalan",concentracion:"50 MG",presentacion:"Comprimido",envase:"28 COMPRIMIDOS",lab:"GOBBI NOVAG S.A.",cert:49267},
+  {principio:"IBUPROFENO",comercial:"Ibumejoral niños 2%",concentracion:"2 G/ 100 ML",presentacion:"Suspensión oral",envase:"1 FRASCO por 90 ML",lab:"GRAMON MILLET S.A.",cert:56279},
+  {principio:"PARACETAMOL",comercial:"Mejoral para niños",concentracion:"80 MG",presentacion:"Comprimido masticable",envase:"20 COMPRIMIDOS MASTICABLES",lab:"GRAMON MILLET S.A.",cert:48695},
+  {principio:"MIGLUSTAT",comercial:"Zavesca",concentracion:"100 MG",presentacion:"Cápsula dura",envase:"90 CÁPSULAS DURAS",lab:"JANSSEN CILAG FARMACEUTICA S.A.",cert:56224},
+  {principio:"MISOPROSTOL",comercial:"Misop 200",concentracion:"200 MCG",presentacion:"Comprimido ranurado vaginal",envase:"12 COMPRIMIDOS",lab:"LABORATORIO DOMINGUEZ S.A.",cert:55117},
+  {principio:"TRAMADOL CLORHIDRATO",comercial:"Tramal long",concentracion:"100 MG",presentacion:"Comprimido de liberación prolongada",envase:"10 COMPRIMIDOS DE LIBERACIÓN PROLONGADA",lab:"LABORATORIO VANNIER S.A.",cert:38958},
+  {principio:"MEBENDAZOL",comercial:"Mebendazol duncan",concentracion:"2 G/ 100 ML",presentacion:"Suspensión oral",envase:"100 FRASCOS por 30 ML (U.H.)",lab:"LABORATORIOS DUNCAN S.A.",cert:39348},
+  {principio:"CALCIO GLUCONATO",comercial:"Calcio gluconato al 10%",concentracion:"10%",presentacion:"Inyectable",envase:"100 AMPOLLAS por 10 ML (U.H.)",lab:"LABORATORIOS DUNCAN S.A.",cert:36683},
+  {principio:"CLONAZEPAM",comercial:"Clonazepam duncan",concentracion:"0,5 MG",presentacion:"Comprimido",envase:"30 COMPRIMIDOS",lab:"LABORATORIOS DUNCAN S.A.",cert:48327},
+  {principio:"CLONAZEPAM",comercial:"Clonazepam duncan",concentracion:"2 MG",presentacion:"Comprimido",envase:"30 COMPRIMIDOS",lab:"LABORATORIOS DUNCAN S.A.",cert:48327},
+  {principio:"GENTAMICINA - HIDROCORTISONA ACETATO - KETOCONAZOL",comercial:"Gentacler",concentracion:"0,1 G% - 1 G% - 2 G%",presentacion:"Crema",envase:"1 POMO por 20 G",lab:"LABORATORIOS MONSERRAT Y ECLAIR S.A.",cert:49567},
+  {principio:"METFORMINA",comercial:"Glumet",concentracion:"850 MG",presentacion:"Comprimido recubierto",envase:"30 COMPRIMIDOS RECUBIERTOS",lab:"LAFEDAR S.A.",cert:53816},
+  {principio:"METFORMINA",comercial:"Glumet",concentracion:"850 MG",presentacion:"Comprimido recubierto",envase:"60 COMPRIMIDOS RECUBIERTOS",lab:"LAFEDAR S.A.",cert:53816},
+  {principio:"METFORMINA",comercial:"Glumet",concentracion:"850 MG",presentacion:"Comprimido recubierto",envase:"1000 COMPRIMIDOS RECUBIERTOS (U.H.)",lab:"LAFEDAR S.A.",cert:53816},
+  {principio:"METFORMINA",comercial:"Glumet",concentracion:"1000 MG",presentacion:"Comprimido recubierto",envase:"30 COMPRIMIDOS RECUBIERTOS",lab:"LAFEDAR S.A.",cert:53816},
+  {principio:"METFORMINA",comercial:"Glumet",concentracion:"1000 MG",presentacion:"Comprimido recubierto",envase:"60 COMPRIMIDOS RECUBIERTOS",lab:"LAFEDAR S.A.",cert:53816},
+  {principio:"METFORMINA",comercial:"Glumet",concentracion:"1000 MG",presentacion:"Comprimido recubierto",envase:"100 COMPRIMIDOS RECUBIERTOS",lab:"LAFEDAR S.A.",cert:53816},
+  {principio:"COLISTIMETATO SODICO",comercial:"Colistyn",concentracion:"160 MG / 4 ML",presentacion:"Solución para inhalar",envase:"30 FRASCOS por 4 ML (U.H.)",lab:"LAFEDAR S.A.",cert:56650},
+  {principio:"TOBRAMICINA - DEXAMETASONA",comercial:"Toflam",concentracion:"300 MG/ 100 ML - 100 MG/ 100 ML",presentacion:"Suspensión oftálmica estéril",envase:"1 FRASCO por 5 ML",lab:"LAFEDAR S.A.",cert:54773},
+  {principio:"TOBRAMICINA - DEXAMETASONA",comercial:"Toflam",concentracion:"300 MG/ 100 ML - 100 MG/ 100 ML",presentacion:"Suspensión oftálmica estéril",envase:"25 FRASCOS por 5 ML (U.H.)",lab:"LAFEDAR S.A.",cert:54773},
+  {principio:"PROPIONATO DE FLUTICASONA - FUMARATO DE FORMOTEROL DIHIDRATADO",comercial:"Flutiform",concentracion:"125 MCG / PULSACION - 5 MCG / PULSACION",presentacion:"Suspensión para inhalar en aerosol",envase:"1 FRASCO por 120 DOSIS",lab:"MUNDIPHARMA PHARMACEUTICALS ARGENTINA S.R.L.",cert:57408},
+  {principio:"PROPIONATO DE FLUTICASONA - FUMARATO DE FORMOTEROL DIHIDRATADO",comercial:"Flutiform",concentracion:"250 MCG / PULSACION - 10 MCG / PULSACION",presentacion:"Suspensión para inhalar en aerosol",envase:"1 FRASCO por 120 DOSIS",lab:"MUNDIPHARMA PHARMACEUTICALS ARGENTINA S.R.L.",cert:57408},
+  {principio:"BRIMONIDINA - BRINZOLAMIDA",comercial:"Simbrinza",concentracion:"1,3 MG/ML – 10 MG/ML",presentacion:"Suspensión oftálmica estéril",envase:"1 FRASCO por 5 ML",lab:"NOVARTIS ARGENTINA S.A.",cert:57846},
+  {principio:"ELTROMBOPAG",comercial:"Revolade",concentracion:"50 MG",presentacion:"Comprimido recubierto",envase:"28 COMPRIMIDOS RECUBIERTOS",lab:"NOVARTIS ARGENTINA S.A.",cert:56102},
+  {principio:"BOSENTAN",comercial:"Bosentac",concentracion:"62,5 MG",presentacion:"Comprimido recubierto",envase:"60 COMPRIMIDOS RECUBIERTOS",lab:"ORIENTAL FARMACEUTICA I.C. E I.S.A.",cert:56883},
+  {principio:"BOSENTAN",comercial:"Bosentac",concentracion:"125 MG",presentacion:"Comprimido recubierto",envase:"60 COMPRIMIDOS RECUBIERTOS",lab:"ORIENTAL FARMACEUTICA I.C. E I.S.A.",cert:56883},
+  {principio:"HIDROXIZINA CLORHIDRATO",comercial:"Panaler",concentracion:"10 MG",presentacion:"Comprimido recubierto",envase:"20 COMPRIMIDOS RECUBIERTOS",lab:"PANALAB S.A. ARGENTINA",cert:57992},
+  {principio:"HIDROXIZINA CLORHIDRATO",comercial:"Panaler",concentracion:"25 MG",presentacion:"Comprimido recubierto",envase:"20 COMPRIMIDOS RECUBIERTOS",lab:"PANALAB S.A. ARGENTINA",cert:57992},
+  {principio:"HIDROXIZINA CLORHIDRATO",comercial:"Panaler",concentracion:"50 MG",presentacion:"Comprimido recubierto",envase:"20 COMPRIMIDOS RECUBIERTOS",lab:"PANALAB S.A. ARGENTINA",cert:57992},
+  {principio:"ACIDO FOLICO",comercial:"Folinemic",concentracion:"1 MG",presentacion:"Comprimido",envase:"30 COMPRIMIDOS",lab:"PHARMADORF S.A.",cert:52855},
+  {principio:"DONEPEZILO CLORHIDRATO",comercial:"Lupracil",concentracion:"5 MG",presentacion:"Comprimido recubierto",envase:"30 COMPRIMIDOS RECUBIERTOS",lab:"ROSPAW S.R.L.",cert:58147},
+  {principio:"DONEPEZILO CLORHIDRATO",comercial:"Lupracil",concentracion:"5 MG",presentacion:"Comprimido recubierto",envase:"60 COMPRIMIDOS RECUBIERTOS",lab:"ROSPAW S.R.L.",cert:58147},
+  {principio:"DONEPEZILO CLORHIDRATO",comercial:"Lupracil",concentracion:"10 MG",presentacion:"Comprimido recubierto",envase:"30 COMPRIMIDOS RECUBIERTOS",lab:"ROSPAW S.R.L.",cert:58147},
+  {principio:"DONEPEZILO CLORHIDRATO",comercial:"Lupracil",concentracion:"10 MG",presentacion:"Comprimido recubierto",envase:"60 COMPRIMIDOS RECUBIERTOS",lab:"ROSPAW S.R.L.",cert:58147},
+  {principio:"POLIETILENGLICOL 3350",comercial:"Tanesa",concentracion:"17 G",presentacion:"Polvo para suspensión oral",envase:"14 SOBRES por 17 G",lab:"ROSSMORE PHARMA S.A.",cert:57093},
+  {principio:"POLIETILENGLICOL 3350",comercial:"Tanesa",concentracion:"17 G",presentacion:"Polvo para suspensión oral",envase:"28 SOBRES por 17 G",lab:"ROSSMORE PHARMA S.A.",cert:57093},
+  {principio:"KETOROLACO TROMETAMINA",comercial:"Ketorolac trb pharma",concentracion:"20 MG",presentacion:"Comprimido",envase:"510 COMPRIMIDOS (U.H.)",lab:"TRB PHARMA S.A.",cert:49380},
+  {principio:"IBRUTINIB",comercial:"Vilanor",concentracion:"140 MG",presentacion:"Cápsula dura",envase:"90 CÁPSULAS DURAS",lab:"TUTEUR S.A.C.I.F.I.A",cert:58095},
+  {principio:"IBRUTINIB",comercial:"Vilanor",concentracion:"140 MG",presentacion:"Cápsula dura",envase:"120 CÁPSULAS DURAS",lab:"TUTEUR S.A.C.I.F.I.A",cert:58095},
+];
+
+/* F1 — Prescripción Magistral. Solo se listan datos que el Dr. Muratori
+   informó él mismo; los campos de contacto que aún no fueron confirmados
+   quedan marcados como "a completar" en vez de inventarse. */
+const FARMACIAS_MAGISTRALES_V1 = [
+  {
+    nombre: 'Farmacia Sevilla',
+    direccion: '', mail: '', whatsapp: '',
+    instruccionEjemplo: '1 cápsula cada 8 o 12 hs después de una comida y, si el dolor disminuye más de un 80% ya realizando la rutina de ejercicios prescripta, reducir la dosis a 1 cápsula nocturna hasta la desaparición del síntoma.'
+  },
+  {
+    nombre: 'Farmacia San Jorge',
+    direccion: '', mail: '', whatsapp: '',
+    instruccionEjemplo: '1 cápsula por día de protección gástrica, a tomar antes o después del desayuno según tenga recetada Levotiroxina (la cual se debe tomar solo en ayunas). [Instrucción incompleta — falta que el Dr. Muratori confirme el resto del texto.]'
+  },
+  {
+    nombre: '',
+    direccion: '', mail: '', whatsapp: '',
+    instruccionEjemplo: ''
+  }
+];
+function cargarFarmaciasMagistralesIMD() {
+  const c = document.getElementById('imd-farm-list');
+  if (!c) return;
+  c.innerHTML = FARMACIAS_MAGISTRALES_V1.map((f, i) => {
+    const nombre   = f.nombre || `Farmacia magistral #${i+1} — pendiente de datos`;
+    const dir      = f.direccion || '<span class="imd-farm-pendiente">Dirección a completar</span>';
+    const mail     = f.mail || '<span class="imd-farm-pendiente">Mail a completar</span>';
+    const wa       = f.whatsapp || '<span class="imd-farm-pendiente">WhatsApp a completar</span>';
+    const mapsHref = f.direccion ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(f.direccion)}` : '';
+    return `
+    <div class="imd-farm-card">
+      <h4>⚗️ ${nombre}</h4>
+      <div class="imd-farm-row">📍 <b>Dirección:</b> ${dir}</div>
+      <div class="imd-farm-row">✉️ <b>Mail:</b> ${mail}</div>
+      <div class="imd-farm-row">📱 <b>WhatsApp:</b> ${wa}</div>
+      <div class="imd-farm-actions">
+        ${f.mail ? `<a class="imd-farm-mail" href="mailto:${f.mail}">✉️ Mail</a>` : ''}
+        ${f.whatsapp ? `<a class="imd-farm-wa" href="https://wa.me/${f.whatsapp}" target="_blank">📱 WhatsApp</a>` : ''}
+        ${mapsHref ? `<a class="imd-farm-maps" href="${mapsHref}" target="_blank">🗺 Cómo llegar</a>` : ''}
+        ${f.instruccionEjemplo ? `<button class="imd-farm-tmpl" onclick="imdMagistralInsertarEjemplo(${i})" type="button">📋 Insertar ejemplo de dosificación</button>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+function imdMagistralInsertarEjemplo(i) {
+  const f = FARMACIAS_MAGISTRALES_V1[i];
+  if (!f) return;
+  const ta = document.getElementById('imd-magistral-explicacion');
+  if (!ta) return;
+  ta.value = (ta.value ? ta.value + '\n\n' : '') + `[${f.nombre || 'Farmacia magistral'}] ${f.instruccionEjemplo}`;
 }
 
 /* F2 */
@@ -8907,14 +9365,19 @@ function whatsappFarmaciaIMD() {
   const fecha = new Date().toLocaleDateString('es-AR');
   let det = '';
   meds.forEach((m, i) => {
-    const d = document.getElementById(`imd-d${i}`)?.value || '';
-    const f = document.getElementById(`imd-f${i}`)?.value || '';
-    const r = document.getElementById(`imd-r${i}`)?.value || '';
-    const ind = document.getElementById(`imd-i${i}`)?.value || '';
+    const pres = document.getElementById(`imd-pres${i}`)?.value || '';
+    const conc = document.getElementById(`imd-conc${i}`)?.value || '';
+    const via  = document.getElementById(`imd-via${i}`)?.value || '';
+    const f    = document.getElementById(`imd-f${i}`)?.value || '';
+    const dias = document.getElementById(`imd-dias${i}`)?.value || '';
+    const func = document.getElementById(`imd-func${i}`)?.value || '';
+    const ind  = document.getElementById(`imd-i${i}`)?.value || '';
     det += `\n• *${m}*`;
-    if (d) det += ` — ${d}`;
+    if (pres || conc) det += ` — ${[pres, conc].filter(Boolean).join(' ')}`;
+    if (via) det += ` | ${via}`;
     if (f) det += ` | ${f}`;
-    if (r) det += ` | ${r}`;
+    if (dias) det += ` | ${dias} días`;
+    if (func) det += `\n  🎯 ${func}`;
     if (ind) det += `\n  ⚠️ ${ind}`;
   });
   const msg = `🏥 *RECETA MÉDICA DIGITAL*\n👨‍⚕️ *Dr. Luis Alberto Muratori* | M.P. 9943 | M.N. 100.540\n📅 ${fecha}\n👤 *Paciente:* ${pac}\n\n💊 *MEDICAMENTOS:*${det}\n\n_Por favor confirme disponibilidad y precio. Gracias._`;
@@ -10496,12 +10959,61 @@ function renderHistItemHTML(c){
         <h3>💊 Prescripción de Medicamentos</h3>
         <p class="imd-sec-desc">Medicamentos del recetario (tecla T). Complete dosis y frecuencia — luego envíe a farmacia por WhatsApp.</p>
       </div>
-      <div id="imd-meds-list"></div>
-      <div class="imd-f1-actions">
-        <button class="imd-btn imd-btn-wa" onclick="whatsappFarmaciaIMD()">
-          📲 Enviar receta a Farmacia por WhatsApp
-          <span class="imd-btn-sub">📞 +54 9 2634 779960</span>
+      <div class="imd-f1-toggle">
+        <button class="imd-f1-toggle-btn active" id="imd-f1-tog-farmacia" onclick="imdF1SetModo('farmacia')" type="button">
+          🏥 Receta de Farmacia
+          <span class="imd-f1-toggle-sub">Medicamento comercial de venta en farmacia</span>
         </button>
+        <button class="imd-f1-toggle-btn" id="imd-f1-tog-magistral" onclick="imdF1SetModo('magistral')" type="button">
+          ⚗️ Prescripción Magistral
+          <span class="imd-f1-toggle-sub">Fórmula preparada por farmacia magistral</span>
+        </button>
+      </div>
+
+      <!-- Sub-panel: Receta de Farmacia -->
+      <div id="imd-f1-farmacia">
+        <datalist id="imd-presentaciones-datalist"></datalist>
+        <div id="imd-meds-list"></div>
+        <div class="imd-vad-box">
+          <h4>📚 Mi vademécum personal + ANMAT</h4>
+          <p>El buscador de arriba en cada medicamento ya incluye el <strong>Vademécum Nacional de Medicamentos oficial (ANMAT)</strong> — 58 medicamentos de la actualización de diciembre 2018 cargados desde el archivo oficial del Ministerio de Salud — más lo que usted mismo vaya agregando abajo a su propio vademécum. Escriba el principio activo en el buscador de cada Rx y elija una opción para autocompletar presentación y concentración.
+            Para ampliar la base oficial con actualizaciones más recientes, descargue el archivo correspondiente en el
+            <a class="imd-anmat-link" href="https://www.argentina.gob.ar/anmat/regulados/medicamentos/consulta" target="_blank">🔎 Vademécum Nacional de Medicamentos (ANMAT) ↗</a> y envíeselo al sistema para importarlo.</p>
+          <div id="imd-vad-list"></div>
+          <button class="imd-btn imd-btn-sm" style="background:#f1f5f9;color:var(--accent2);margin-top:6px" onclick="imdVademecumToggleForm()" id="imd-vad-form-toggle" type="button">➕ Agregar medicamento a mi vademécum</button>
+          <div class="imd-vad-form" id="imd-vad-form" style="display:none">
+            <datalist id="imd-principios-datalist"></datalist>
+            <input class="imd-inp" id="imd-vad-principio" list="imd-principios-datalist" placeholder="Principio activo * (escriba para ver opciones de ANMAT)" oninput="imdVadFormAutocompletarDesdeANMAT(this.value)">
+            <input class="imd-inp" id="imd-vad-comercial" placeholder="Nombre comercial (opcional)">
+            <input class="imd-inp" id="imd-vad-presentacion" list="imd-presentaciones-datalist" placeholder="Presentación (ej: Comprimido recubierto)">
+            <input class="imd-inp" id="imd-vad-concentracion" placeholder="Concentración (ej: 500 mg)">
+            <select class="imd-inp" id="imd-vad-via">
+              <option value="">Vía / forma de administración…</option>
+              <option>Oral</option><option>Sublingual</option><option>Tópica</option>
+              <option>Inyectable IM</option><option>Inyectable EV</option><option>Inyectable SC</option>
+              <option>Rectal</option><option>Inhalatoria</option><option>Otra</option>
+            </select>
+            <input class="imd-inp" id="imd-vad-frecuencia" placeholder="Frecuencia habitual (ej: cada 8 hs)">
+            <input class="imd-inp" id="imd-vad-dias" placeholder="Días de tratamiento habituales">
+            <input class="imd-inp imd-inp-wide" id="imd-vad-funcion" placeholder="Función / para qué se indica habitualmente">
+            <button class="imd-btn imd-btn-save imd-inp-wide" style="margin-top:0" onclick="imdVademecumGuardar()" type="button">✅ Guardar en mi vademécum</button>
+          </div>
+        </div>
+        <div class="imd-f1-actions">
+          <button class="imd-btn imd-btn-wa" onclick="whatsappFarmaciaIMD()">
+            📲 Enviar receta a Farmacia por WhatsApp
+            <span class="imd-btn-sub">📞 +54 9 2634 779960</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Sub-panel: Prescripción Magistral -->
+      <div id="imd-f1-magistral" style="display:none">
+        <div id="imd-farm-list"></div>
+        <div class="imd-explic-box">
+          <h4 style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:6px">📝 Explicación de la prescripción magistral</h4>
+          <textarea id="imd-magistral-explicacion" placeholder="Escriba aquí la explicación / forma de toma para el paciente…"></textarea>
+        </div>
       </div>
     </div>
     <!-- F2 -->
@@ -10553,7 +11065,10 @@ function renderHistItemHTML(c){
     </div>
     <div class="modal-footer">
       <span style="font-size:10px;color:var(--muted)">RMYT v12 · Dr. Luis A. Muratori · M.P. 9943 · M.N. 100.540</span>
-      <button class="btn btn-ghost" onclick="cerrarModal('modal-imdcmyt')">Cerrar</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-primary" id="imd-btn-concluir" onclick="concluirYEnviarRMYT()">✅ Concluir y Enviar RMYT</button>
+        <button class="btn btn-ghost" onclick="cerrarModal('modal-imdcmyt')">Cerrar</button>
+      </div>
     </div>
   </div>
 </div>
@@ -11317,6 +11832,30 @@ async function enviarLibroATodoElEquipo(){
   }
   msg.textContent='';
   toast(`✅ Libro Quirúrgico enviado a ${libroEquipo.length} integrante(s) del equipo`,'ok');
+}
+
+/* Botón "✅ Concluir y Enviar Libro al Paciente" — mismo pedido que el de RMYT:
+   un solo botón que guarda y manda el Libro Quirúrgico COMPLETO (todas las
+   solapas, no solo la que está abierta) directo al paciente, sin tener que
+   pasar solapa por solapa con "📧 Mail esta solapa" ni depender de que el
+   equipo quirúrgico esté cargado (a diferencia de "Enviar… a todo el Equipo"). */
+async function concluirYEnviarLibro(){
+  if(!pacienteActivo||!pacienteActivo.dni){ toast('⚠️ Elegí un paciente primero','err'); return; }
+  const mail = mailDestinoPaciente();
+  if(!mail){ toast('⚠️ No se cargó un mail de destino','err'); return; }
+  guardarLibroQX();
+  const texto  = textoLibroCompleto();
+  const titulo = 'Libro Quirúrgico — ' + (pacienteActivo ? `${pacienteActivo.apellido||''}, ${pacienteActivo.nombre||''}`.replace(/^,\s*/,'') : '');
+  const btn = document.getElementById('libro-btn-concluir');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Enviando…'; }
+  try{
+    await enviarDocumentoQXPorMail(titulo, texto, mail);
+    toast('✅ Libro Quirúrgico enviado al paciente','ok');
+  }catch(e){
+    toast('❌ No se pudo enviar: '+(e&&e.message?e.message:e),'err');
+  }finally{
+    if (btn) { btn.disabled = false; btn.textContent = '✅ Concluir y Enviar Libro al Paciente'; }
+  }
 }
 
 // ══════════════════════════════════════════════════════════════════
