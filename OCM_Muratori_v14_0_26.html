@@ -2084,7 +2084,7 @@ body{font-family:'Inter',system-ui,sans-serif;font-size:13px;background:var(--bg
   <div class="acc-sep"></div>
   <!-- GRUPO 2: DOCUMENTOS -->
   <button class="acc-btn acc-cert" id="btn-cert-toggle" title="Certificados (Z)" onclick="toggleCertZone()">📋 Certificados</button>
-  <button class="acc-btn" title="Plantillas" onclick="selectCmd('plant')">👟 Plantillas</button>
+  <button class="acc-btn" id="btn-plantillas" title="Seguimiento de Plantillas: estados, pagos, lote de la fábrica y estadísticas" onclick="abrirModal_plantillas()">👟 Seguim. Plantillas</button>
   <button class="acc-btn" title="RCTA Digital" onclick="window.open('https://app.rcta.me/p/luis-alberto-muratori','_blank')">🔗 RCTA</button>
   <div class="acc-sep"></div>
   <!-- GRUPO 3: RECETA -->
@@ -2561,7 +2561,7 @@ function initDB(){
     // búsqueda de paciente (local Y en la nube, porque la búsqueda local
     // fallaba antes de llegar a intentar la nube). Se deja margen sobre
     // cualquier versión ya usada anteriormente en cualquier computadora.
-    const req=indexedDB.open('OCMRecetario',12);
+    const req=indexedDB.open('OCMRecetario',13);
     req.onupgradeneeded=e=>{
       const d=e.target.result;
       if(!d.objectStoreNames.contains('pacientes')){
@@ -2587,6 +2587,15 @@ function initDB(){
       if(!d.objectStoreNames.contains('catastro_empresas')){
         const em=d.createObjectStore('catastro_empresas',{keyPath:'id',autoIncrement:true});
         em.createIndex('localidad','localidad',{unique:false});
+      }
+      // Seguimiento evolutivo profesional (peso/altura/pie, desgaste de calzado,
+      // hiperapoyos y graduación de cuña/realce) — se carga desde CAM (Retiro de
+      // plantilla — control) y se usa para graficar la evolución del paciente
+      // a lo largo del tiempo, independiente de si la plantilla se encargó a la fábrica.
+      if(!d.objectStoreNames.contains('controles_evolutivos')){
+        const cv=d.createObjectStore('controles_evolutivos',{keyPath:'id',autoIncrement:true});
+        cv.createIndex('paciente_id','paciente_id',{unique:false});
+        cv.createIndex('fecha','fecha',{unique:false});
       }
     };
     req.onsuccess=e=>{db=e.target.result;res(db);};
@@ -3274,7 +3283,8 @@ function renderPlantForm(cont){
     largo:'', arco:'Pie normal (arco adecuado)', retropie:'Retropié neutro',
     cuna_mm:'3', realce_mm:'2', oliva:'Sin oliva',
     dismetria:'Sin dismetría', tal_mm:'3',
-    viscoel:false, viscoel_mm:'3', viscoel_descarga:false
+    viscoel:false, viscoel_mm:'3', viscoel_descarga:false,
+    encargarFabrica:false  // ¿este pedido puntual se encarga a la fábrica del Dr.? (no todos los pacientes la hacen con él)
   };
 
   function genTextoPlant(){
@@ -3516,6 +3526,23 @@ function renderPlantForm(cont){
   prevDiv.appendChild(prevLbl); prevDiv.appendChild(prevTxt); prevDiv.appendChild(prevNote);
   wrap.appendChild(prevDiv);
 
+  // ── Checkbox: ¿esta plantilla puntual se encarga a la fábrica del Dr., o el paciente la resuelve por su cuenta/en otro lado? ──
+  // Sin marcar por defecto: solo algunos pacientes le encargan la plantilla a él, así que este pedido
+  // NO se suma al Dashboard/Seguimiento de Plantillas salvo que se tilde explícitamente acá. El texto
+  // de la indicación se agrega al Rp/ igual, esté tildado o no — eso es la prescripción clínica, algo
+  // aparte del seguimiento del encargo a la fábrica.
+  const fabChkWrap = document.createElement('label');
+  fabChkWrap.style.cssText='display:flex;align-items:center;gap:7px;padding:8px 10px;background:#fffbeb;border:1px solid #fde68a;border-radius:7px;font-size:10.5px;font-weight:700;color:#92400e;cursor:pointer;margin-top:2px';
+  const fabChk = document.createElement('input');
+  fabChk.type='checkbox';
+  fabChk.checked = PS.encargarFabrica;
+  fabChk.style.cssText='width:15px;height:15px;flex-shrink:0;cursor:pointer';
+  fabChk.onchange = ()=>{ PS.encargarFabrica = fabChk.checked; };
+  const fabChkTxt = document.createElement('span');
+  fabChkTxt.textContent='📦 Encargar esta plantilla a mi fábrica (la suma al seguimiento de pedidos del Dashboard)';
+  fabChkWrap.appendChild(fabChk); fabChkWrap.appendChild(fabChkTxt);
+  wrap.appendChild(fabChkWrap);
+
   // ── Botón Agregar al Rp ──
   let textoFinalizado = '';   // texto REAL del pedido, capturado al finalizar — usado por los conectores de mail/impresión
   const btnDiv = document.createElement('div');
@@ -3534,11 +3561,11 @@ function renderPlantForm(cont){
     textoFinalizado = txt;
     // Guardar contador secuencial (separado del texto compuesto NNN-MM-AAAA-DNI)
     try{localStorage.setItem('plant_serie_contador', String(PS._serieNum||0));}catch(_){}
-    // Guardar en el seguimiento de plantillas — con el texto COMPLETO ya redactado
-    // y los valores estructurados (cuña/realce/suplemento/lateralidad) para el
-    // informe de evolución y el Dashboard.
-    if(pacienteActivo) guardarPlantillaDB(txt, {...PS});
-    toast('✅ Plantilla agregada al Rp','ok');
+    // Guardar en el seguimiento de plantillas — SOLO si se tildó "Encargar a mi fábrica".
+    // Si no se tildó, el texto ya quedó en el Rp/ igual (arriba), pero no entra al
+    // Dashboard/Seguimiento de Plantillas ni a la lista de pedidos a la fábrica.
+    if(pacienteActivo && PS.encargarFabrica) guardarPlantillaDB(txt, {...PS});
+    toast(PS.encargarFabrica ? '✅ Plantilla agregada al Rp y registrada en el seguimiento de pedidos' : '✅ Plantilla agregada al Rp (no se registró como pedido a la fábrica)','ok');
     connDiv.style.display='flex';
   };
   const btnClear = document.createElement('button');
@@ -6644,6 +6671,15 @@ async function renderListaPlant(){
     return;
   }
 
+  // Botón "✉ Mail" que muestra si ese aviso puntual ya se mandó antes (fecha), para
+  // detectar reenvíos de un vistazo sin tener que hacer clic — evita que el paciente
+  // reciba dos avisos del mismo estado y lo confunda con un pedido nuevo.
+  function btnMailPlant(p, estado, label){
+    const enviado = p.mails_enviados && p.mails_enviados[estado];
+    const marca = enviado ? ` <span style="font-size:8.5px;font-weight:400;opacity:.85">(✓ ${new Date(enviado).toLocaleDateString('es-AR')})</span>` : '';
+    return `<button class="pl-btn" style="color:#1e4fa3;border-color:#93c5fd;background:#eff6ff" onclick="mailEstPlant(${p.id},'${estado}')">✉ ${label}${marca}</button>`;
+  }
+
   cont.innerHTML = todas.map(p=>{
     const st = PL_EST[p.estado]||{label:p.estado,emoji:'?',cls:''};
     const items = (() => { try{ return JSON.parse(p.items||'[]'); }catch{ return []; } })();
@@ -6661,22 +6697,22 @@ async function renderListaPlant(){
       acciones = `
         ${!pago1OK?`<button class="pl-btn" style="color:#166534;border-color:#86efac;background:#f0fdf4" onclick="registrarPagoPlant(${p.id},1)">💰 Registrar 50% inicial</button>`:''}
         <button class="pl-btn" style="color:#92400e;border-color:#fcd34d;background:#fffbeb" onclick="cambiarEstPlant(${p.id},'camino')">🟡 En camino</button>
-        ${tienemail?`<button class="pl-btn" style="color:#1e4fa3;border-color:#93c5fd;background:#eff6ff" onclick="mailEstPlant(${p.id},'camino')">✉ Mail</button>`:''}
+        ${tienemail?btnMailPlant(p,'camino','Mail'):''}
         <button class="pl-btn" style="color:#991b1b;border-color:#fca5a5;background:#fef2f2" onclick="cambiarEstPlant(${p.id},'cancelada')">❌</button>`;
     } else if(p.estado==='camino'){
       acciones = `
         ${!pago2OK?`<button class="pl-btn" style="color:#166534;border-color:#86efac;background:#f0fdf4" onclick="registrarPagoPlant(${p.id},2)">💰 Registrar 50% al despacho</button>`:''}
         <button class="pl-btn" style="color:#065f46;border-color:#6ee7b7;background:#f0fdf4" onclick="cambiarEstPlant(${p.id},'lista')">🟢 Lista</button>
-        ${tienemail?`<button class="pl-btn" style="color:#1e4fa3;border-color:#93c5fd;background:#eff6ff" onclick="mailEstPlant(${p.id},'lista')">✉ Mail</button>`:''}
+        ${tienemail?btnMailPlant(p,'lista','Mail'):''}
         <button class="pl-btn" style="color:#991b1b;border-color:#fca5a5;background:#fef2f2" onclick="cambiarEstPlant(${p.id},'cancelada')">❌</button>`;
     } else if(p.estado==='lista'){
       acciones = (pago1OK && pago2OK) ? `
         <button class="pl-btn" style="color:#166534;border-color:#86efac;background:#d1fae5" onclick="cambiarEstPlant(${p.id},'retirada')">✅ Retirada</button>
-        ${tienemail?`<button class="pl-btn" style="color:#1e4fa3;border-color:#93c5fd;background:#eff6ff" onclick="mailEstPlant(${p.id},'recordar')">✉ Mail</button>`:''}`
+        ${tienemail?btnMailPlant(p,'recordar','Mail'):''}`
         : `<span style="font-size:10px;color:#dc2626;font-weight:700">⚠ Falta confirmar el pago completo antes de retirar</span>
-        ${tienemail?`<button class="pl-btn" style="color:#1e4fa3;border-color:#93c5fd;background:#eff6ff" onclick="mailEstPlant(${p.id},'recordar')">✉ Mail</button>`:''}`;
+        ${tienemail?btnMailPlant(p,'recordar','Mail'):''}`;
     } else if(p.estado==='retirada'){
-      acciones = `${tienemail?`<button class="pl-btn" style="color:#1e4fa3;border-color:#93c5fd;background:#eff6ff" onclick="mailEstPlant(${p.id},'retirada')">✉ Confirmar por mail</button>`:''}<span style="font-size:10px;color:var(--muted)">✅ Finalizada</span>`;
+      acciones = `${tienemail?btnMailPlant(p,'retirada','Confirmar por mail'):''}<span style="font-size:10px;color:var(--muted)">✅ Finalizada</span>`;
     } else {
       acciones = `<span style="font-size:10px;color:var(--muted)">Estado final</span>`;
     }
@@ -6839,10 +6875,26 @@ async function mailEstPlant(id, estado){
   const todas = await dbGetAll('plantillas');
   const p = todas.find(x=>x.id===id); if(!p||!p.pac_mail) return;
   const nom = (p.pac_nombre||'').split(',')[0].trim()||'paciente';
+  // ── Aviso de reenvío: si ya se le avisó este mismo estado antes, confirmar antes de mandar
+  // de nuevo — para que el paciente no interprete un segundo aviso como un pedido nuevo. ──
+  const yaEnviado = p.mails_enviados && p.mails_enviados[estado];
+  if(yaEnviado){
+    const fechaPrev = new Date(yaEnviado).toLocaleString('es-AR');
+    if(!confirm(`⚠️ Ya le avisaste a este paciente por mail el estado "${PL_EST[estado]?.label||estado}" el ${fechaPrev}.\n\nSi le mandás otro aviso igual, podría interpretarlo como un pedido nuevo.\n\n¿Confirmás que querés enviarlo de nuevo de todas formas?`)) return;
+  }
   // Cambiar estado y avisar
   if(estado!=='recordar'){ await cambiarEstPlant(id, estado); }
   const extra = (estado==='lista' || estado==='recordar') ? textoComprobanteRetiroPlantilla(p) : '';
   enviarMailPlantilla(p.pac_mail, nom, estado, extra);
+  // Registrar que ya se avisó este estado, con fecha, para detectar reenvíos la próxima vez
+  const todasAct = await dbGetAll('plantillas');
+  const pAct = todasAct.find(x=>x.id===id);
+  if(pAct){
+    pAct.mails_enviados = pAct.mails_enviados || {};
+    pAct.mails_enviados[estado] = new Date().toISOString();
+    await dbPut('plantillas', pAct);
+    renderListaPlant();
+  }
 }
 
 
