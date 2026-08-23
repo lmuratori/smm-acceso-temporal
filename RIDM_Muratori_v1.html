@@ -771,6 +771,21 @@ function selEscala(id, val) {
   });
 }
 
+// ── Volver a OCM: esta pestaña se abre siempre con window.open() desde el
+// botón "⚡ Filiación" de OCM (modo=rapido), así que window.opener apunta a
+// esa pestaña de OCM. Le devolvemos el foco y cerramos esta — si el navegador
+// no permite cerrarla (por políticas de seguridad, o si el médico entró acá
+// por otro medio y no hay opener), se deja un aviso para cerrar a mano. ──
+function volverAOCM_(){
+  try{ if (window.opener && !window.opener.closed) window.opener.focus(); }catch(_){}
+  try{ window.close(); }catch(_){}
+  setTimeout(()=>{
+    if (window.closed) return;
+    const st = document.getElementById('ridm-envio-status');
+    if (st) st.innerHTML = '✅ Enviado. El navegador no permite cerrar esta pestaña sola — cerrala manualmente y volvé a OCM.';
+  }, 400);
+}
+
 function enviarRIDM() {
   const apellido = document.getElementById('f-apellido')?.value.trim() || P_APEL;
   const nombre   = document.getElementById('f-nombre')?.value.trim()   || P_NOM;
@@ -846,13 +861,17 @@ function enviarRIDM() {
     localStorage.setItem(keyLocal, JSON.stringify(merged));
   } catch(_) {}
 
-  // ── Enviar al backend (Google Sheets) — si falla, el localStorage es el respaldo ──
+  // ── Enviar al backend (Google Sheets) — si falla, el localStorage es el respaldo.
+  // Guardamos la promesa (con tope de 5s) para poder CONFIRMAR el envío antes de
+  // cerrar la pestaña sola en modo rápido — no queremos cerrar "a ciegas" si el
+  // envío en realidad falló. ──
   const envioBackend = (MODO === 'clinico' || MODO === 'clinico_breve') ? 'ridm_antecedentes' : 'ridm_submit';
-  fetch(RIDM_BACKEND_URL, {
+  const envioPromise = fetch(RIDM_BACKEND_URL, {
     method: 'POST',
     headers: {'Content-Type':'text/plain;charset=utf-8'},
-    body: JSON.stringify({ action: envioBackend, dni, apellido, nombre, tel, mail: datos.mail, datos })
-  }).catch(()=>{});
+    body: JSON.stringify({ action: envioBackend, dni, apellido, nombre, tel, mail: datos.mail, datos }),
+    signal: AbortSignal.timeout(5000)
+  }).then(resp=>resp.json()).catch(()=>null);
 
   // ── Pantalla de confirmación ──
   const r = document.getElementById('confirm-resumen');
@@ -867,7 +886,23 @@ function enviarRIDM() {
         <a href="${linkP2}" target="_blank" style="word-break:break-all;color:#2563eb">${linkP2}</a><br><br>
         <button onclick="navigator.clipboard.writeText('${linkP2}').then(()=>alert('¡Link copiado!'))" style="background:#2563eb;color:#fff;border:none;padding:8px 16px;border-radius:7px;font-size:12px;cursor:pointer;font-family:inherit">📋 Copiar link</button>
         &nbsp;
-        <button onclick="window.open('https://wa.me/${tel.replace(/\\D/g,'')}?text='+encodeURIComponent('Estimado/a ${nombre}, por favor complete sus antecedentes médicos antes de su próxima consulta con el Dr. Muratori: ${linkP2}'),'_blank')" style="background:#25D366;color:#fff;border:none;padding:8px 16px;border-radius:7px;font-size:12px;cursor:pointer;font-family:inherit">📲 Enviar por WhatsApp</button>`;
+        <button onclick="window.open('https://wa.me/${tel.replace(/\\D/g,'')}?text='+encodeURIComponent('Estimado/a ${nombre}, por favor complete sus antecedentes médicos antes de su próxima consulta con el Dr. Muratori: ${linkP2}'),'_blank')" style="background:#25D366;color:#fff;border:none;padding:8px 16px;border-radius:7px;font-size:12px;cursor:pointer;font-family:inherit">📲 Enviar por WhatsApp</button>
+        <div id="ridm-envio-status" style="margin-top:14px;font-size:11.5px;color:#64748b">⏳ Confirmando envío…</div>
+        <div class="row-btns" style="margin-top:8px">
+          <button onclick="volverAOCM_()" style="background:#0369a1;color:#fff;border:none;padding:8px 16px;border-radius:7px;font-size:12px;cursor:pointer;font-family:inherit">↩ Volver a OCM ahora</button>
+        </div>`;
+      // Si se confirma el envío (hasta 5s de espera), se cierra esta pestaña sola
+      // y vuelve el foco a OCM. Si no se puede confirmar, NO se cierra sola —
+      // se avisa para que el médico reintente o vuelva manualmente con el botón.
+      envioPromise.then(resultado=>{
+        const st = document.getElementById('ridm-envio-status');
+        if (resultado && resultado.success) {
+          if (st) st.textContent = '✅ Enviado y confirmado — volviendo a OCM…';
+          setTimeout(volverAOCM_, 1500);
+        } else {
+          if (st) st.innerHTML = '⚠️ No se pudo confirmar el envío al servidor (puede que haya llegado igual). Los datos quedaron guardados en este dispositivo — revisá la conexión y volvé con el botón de arriba.';
+        }
+      });
     } else {
       r.innerHTML = `
         <strong>👤 ${apellido}, ${nombre}</strong> · DNI: ${dni || '—'}<br>
