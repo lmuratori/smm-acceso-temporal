@@ -178,7 +178,8 @@
         <option value="estudios">Renovación de estudios (vencidos por tiempo)</option>
         <option value="curacion">Curación</option>
         <option value="retiroyeso">Retiro de yeso</option>
-        <option value="retiroplantilla">Retiro de plantilla — control</option>
+        <option value="controlplantilla">Plantilla — control (sin recambio)</option>
+        <option value="recambioplantilla">Plantilla — recambio (par nuevo)</option>
       </select>
     </div>
 
@@ -214,13 +215,43 @@
       <div class="fg2"><label>Redacción breve</label><textarea id="abrev-yeso-texto" rows="2" placeholder="Ej: se retira yeso, buena consolidación clínica…"></textarea></div>
     </div>
 
-    <!-- 6. RETIRO DE PLANTILLA -->
-    <div class="abrev-sub" id="abrev-retiroplantilla" style="display:none;margin-top:12px">
+    <!-- 6. PLANTILLA — CONTROL o RECAMBIO (mismo formulario para las dos: se
+         diferencian por el tipo elegido arriba, ver mostrarAbreviada()) -->
+    <div class="abrev-sub" id="abrev-plantillacontrol" style="display:none;margin-top:12px">
       <div class="form-grid">
         <div class="fg1"><label>¿Son las correctas?</label><select id="abrev-plr-correctas"><option>Sí</option><option>No</option></select></div>
         <div class="fg1"><label>¿Se adaptan bien al pie?</label><select id="abrev-plr-adaptan"><option>Sí, correctamente</option><option>Parcialmente — requiere ajuste</option><option>No se adaptan</option></select></div>
       </div>
       <div class="fg2" style="margin-top:8px"><label>Indicaciones de cuidado e higiene</label><textarea id="abrev-plr-cuidado" rows="2" placeholder="Ej: lavado diario con agua y jabón neutro, secado completo antes de calzar…"></textarea></div>
+
+      <div class="panel-desc" style="margin-top:12px;background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;border-radius:8px;padding:8px 10px">📈 Seguimiento evolutivo: estos datos quedan guardados en la historia clínica y alimentan el seguimiento profesional del paciente (independiente de si esta plantilla se encarga a la fábrica o no — esto se registra siempre).</div>
+      <div class="form-grid" style="margin-top:8px">
+        <div class="fg1"><label>Peso (kg)</label><input id="abrev-plr-peso" type="number" step="0.1"></div>
+        <div class="fg1"><label>Altura (cm)</label><input id="abrev-plr-altura" type="number" step="0.5"></div>
+        <div class="fg1"><label>Longitud del pie derecho (cm)</label><input id="abrev-plr-longpie-der" type="number" step="0.1"></div>
+        <div class="fg1"><label>Longitud del pie izquierdo (cm)</label><input id="abrev-plr-longpie-izq" type="number" step="0.1"></div>
+        <div class="fg1"><label>Retropié clínico (bipedestación)</label><select id="abrev-plr-retropie-tipo"><option>Neutro</option><option>Varo</option><option>Valgo</option></select></div>
+        <div class="fg1"><label>Grados de desviación (°)</label><input id="abrev-plr-retropie-grados" type="number" step="0.5"></div>
+        <div class="fg1"><label>Estudio de la marcha</label><select id="abrev-plr-marcha"><option>No realizado</option><option>Neutro</option><option>Tendencia pronador</option><option>Tendencia supinador</option></select></div>
+      </div>
+
+      <div class="sm-grp-lbl" style="margin-top:14px">Hiperapoyo plantar</div>
+      <div id="plr-hiper-lista"></div>
+      <button type="button" class="btn-ghost" onclick="agregarHiperapoyo()">+ Agregar hiperapoyo</button>
+
+      <div class="sm-grp-lbl" style="margin-top:14px">Desgaste del calzado</div>
+      <div id="plr-desgaste-lista"></div>
+      <button type="button" class="btn-ghost" onclick="agregarDesgasteCalzado()">+ Agregar zona de desgaste</button>
+
+      <div class="sm-grp-lbl" style="margin-top:14px">Detalle de la plantilla actual</div>
+      <div class="form-grid">
+        <div class="fg1"><label>Cuña interna actual (mm)</label><input id="abrev-plr-cuna-int" type="number" step="0.5"></div>
+        <div class="fg1"><label>Cuña externa actual (mm)</label><input id="abrev-plr-cuna-ext" type="number" step="0.5"></div>
+        <div class="fg1"><label>Realce anterior interno actual (mm)</label><input id="abrev-plr-realce-ant-int" type="number" step="0.5"></div>
+        <div class="fg1"><label>Realce anterior externo actual (mm)</label><input id="abrev-plr-realce-ant-ext" type="number" step="0.5"></div>
+        <div class="fg1"><label>Suplemento pie izquierdo</label><input id="abrev-plr-suplemento-izq" type="text" placeholder="Ej: metatarsiana, talonera…"></div>
+        <div class="fg1"><label>Suplemento pie derecho</label><input id="abrev-plr-suplemento-der" type="text" placeholder="Ej: metatarsiana, talonera…"></div>
+      </div>
     </div>
 
     <div class="row-btns" style="margin-top:14px">
@@ -228,7 +259,7 @@
     </div>
     <div id="abrev-preview" class="preview-box">El registro de la consulta abreviada va a aparecer acá…</div>
     <div class="row-btns">
-      <button class="btn btn-ghost" onclick="guardarTextoEnHistorialBeta('abrev-preview','Consulta abreviada')">💾 Guardar en el historial</button>
+      <button class="btn btn-ghost" onclick="guardarAbreviadaEnHistorial()">💾 Guardar en el historial</button>
     </div>
   </div>
 
@@ -933,6 +964,64 @@ function compilarEstudios(){
   toast('✅ Estudios armados','ok');
 }
 
+// ── RETIRO DE PLANTILLA — CONTROL: hiperapoyo y desgaste de calzado se
+// cargan como listas (puede haber más de una zona/lado por control), igual
+// que Palpación/Percusión más arriba. ──
+let plrHiperCount = 0;
+function agregarHiperapoyo(){
+  const i = plrHiperCount++;
+  const cont = document.getElementById('plr-hiper-lista');
+  const fila = document.createElement('div');
+  fila.id = 'plr-hiper-fila-'+i;
+  fila.style.cssText = 'display:flex;gap:6px;align-items:center;margin-bottom:6px;background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:6px 8px;flex-wrap:wrap';
+  fila.innerHTML = `
+    <select id="plr-hiper-lado-${i}" style="flex:1;min-width:110px"><option>Derecho</option><option>Izquierdo</option><option>Bilateral</option></select>
+    <select id="plr-hiper-ubic-${i}" style="flex:2;min-width:190px">
+      <option value="Bajo 1º metatarsiano">Bajo 1º metatarsiano</option>
+      <option value="Bajo 5º metatarsiano">Bajo 5º metatarsiano</option>
+      <option value="Central">Central</option>
+      <option value="Posterior interno">Posterior interno (talón)</option>
+      <option value="Posterior externo">Posterior externo (talón)</option>
+    </select>
+    <span style="cursor:pointer;color:var(--muted)" onclick="document.getElementById('plr-hiper-fila-${i}').remove()">✕</span>`;
+  cont.appendChild(fila);
+}
+function datosHiperapoyo_(){
+  const items = [];
+  document.querySelectorAll('#plr-hiper-lista [id^="plr-hiper-fila-"]').forEach(fila=>{
+    const i = fila.id.replace('plr-hiper-fila-','');
+    items.push({ lado: document.getElementById('plr-hiper-lado-'+i).value, ubicacion: document.getElementById('plr-hiper-ubic-'+i).value });
+  });
+  return items;
+}
+let plrDesgCount = 0;
+function agregarDesgasteCalzado(){
+  const i = plrDesgCount++;
+  const cont = document.getElementById('plr-desgaste-lista');
+  const fila = document.createElement('div');
+  fila.id = 'plr-desg-fila-'+i;
+  fila.style.cssText = 'display:flex;gap:6px;align-items:center;margin-bottom:6px;background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:6px 8px;flex-wrap:wrap';
+  fila.innerHTML = `
+    <select id="plr-desg-lado-${i}" style="flex:1;min-width:110px"><option>Derecho</option><option>Izquierdo</option><option>Bilateral</option></select>
+    <select id="plr-desg-zona-${i}" style="flex:1;min-width:150px">
+      <option value="Anterior externo">Anterior externo</option>
+      <option value="Anterior interno">Anterior interno</option>
+      <option value="Posterior interno">Posterior interno</option>
+      <option value="Posterior externo">Posterior externo</option>
+    </select>
+    <select id="plr-desg-grado-${i}" style="flex:1;min-width:120px"><option>Leve</option><option>Moderado</option><option>Marcado</option></select>
+    <span style="cursor:pointer;color:var(--muted)" onclick="document.getElementById('plr-desg-fila-${i}').remove()">✕</span>`;
+  cont.appendChild(fila);
+}
+function datosDesgasteCalzado_(){
+  const items = [];
+  document.querySelectorAll('#plr-desgaste-lista [id^="plr-desg-fila-"]').forEach(fila=>{
+    const i = fila.id.replace('plr-desg-fila-','');
+    items.push({ lado: document.getElementById('plr-desg-lado-'+i).value, zona: document.getElementById('plr-desg-zona-'+i).value, grado: document.getElementById('plr-desg-grado-'+i).value });
+  });
+  return items;
+}
+
 // ══════════════════════════════════════════════════════════════════
 // CONSULTAS ABREVIADAS — se saltean el interrogatorio/examen físico
 // completo, pero quedan registradas igual, con la etiqueta "ABREVIADA"
@@ -941,7 +1030,12 @@ function compilarEstudios(){
 function mostrarAbreviada(){
   const tipo = document.getElementById('abrev-tipo').value;
   document.querySelectorAll('.abrev-sub').forEach(s=>s.style.display='none');
-  if(tipo) document.getElementById('abrev-'+tipo).style.display='block';
+  if(!tipo) return;
+  // Control y Recambio de plantilla comparten el mismo formulario —
+  // solo cambia la etiqueta y el texto que se compila (ver compilarAbreviada()).
+  const divId = (tipo==='controlplantilla'||tipo==='recambioplantilla') ? 'abrev-plantillacontrol' : 'abrev-'+tipo;
+  const div = document.getElementById(divId);
+  if(div) div.style.display='block';
 }
 function compilarAbreviada(){
   const tipo = document.getElementById('abrev-tipo').value;
@@ -953,7 +1047,8 @@ function compilarAbreviada(){
     estudios:'Renovación de estudios',
     curacion:'Curación',
     retiroyeso:'Retiro de yeso',
-    retiroplantilla:'Retiro de plantilla — control'
+    controlplantilla:'Plantilla — control (sin recambio)',
+    recambioplantilla:'Plantilla — recambio (par nuevo)'
   };
   let cuerpo = '';
   if(tipo==='plantillas'){
@@ -966,8 +1061,26 @@ function compilarAbreviada(){
     cuerpo = `Características de la herida: ${g('abrev-cur-herida')||'—'}\n(Próximo control se coordina en OCM)`;
   } else if(tipo==='retiroyeso'){
     cuerpo = g('abrev-yeso-texto') || '—';
-  } else if(tipo==='retiroplantilla'){
-    cuerpo = `¿Son las correctas?: ${g('abrev-plr-correctas')}\n¿Se adaptan bien al pie?: ${g('abrev-plr-adaptan')}\nIndicaciones de cuidado e higiene: ${g('abrev-plr-cuidado')||'—'}`;
+  } else if(tipo==='controlplantilla'||tipo==='recambioplantilla'){
+    const partesEvol = [];
+    if(tipo==='recambioplantilla') partesEvol.push('🔁 RECAMBIO: se dispensó un par nuevo de plantillas en esta consulta.');
+    if(g('abrev-plr-peso')) partesEvol.push(`Peso: ${g('abrev-plr-peso')} kg`);
+    if(g('abrev-plr-altura')) partesEvol.push(`Altura: ${g('abrev-plr-altura')} cm`);
+    if(g('abrev-plr-longpie-der')) partesEvol.push(`Long. pie derecho: ${g('abrev-plr-longpie-der')} cm`);
+    if(g('abrev-plr-longpie-izq')) partesEvol.push(`Long. pie izquierdo: ${g('abrev-plr-longpie-izq')} cm`);
+    partesEvol.push(`Retropié clínico: ${g('abrev-plr-retropie-tipo')}${g('abrev-plr-retropie-grados')?' ('+g('abrev-plr-retropie-grados')+'°)':''}`);
+    if(g('abrev-plr-marcha')!=='No realizado') partesEvol.push(`Estudio de la marcha: ${g('abrev-plr-marcha')}`);
+    const hiper = datosHiperapoyo_();
+    partesEvol.push(`Hiperapoyo plantar: ${hiper.length?hiper.map(h=>`${h.ubicacion} (${h.lado})`).join('; '):'No'}`);
+    const desg = datosDesgasteCalzado_();
+    partesEvol.push(`Desgaste del calzado: ${desg.length?desg.map(d=>`${d.zona} (${d.lado}) — ${d.grado}`).join('; '):'Uniforme / sin datos'}`);
+    if(g('abrev-plr-cuna-int')) partesEvol.push(`Cuña interna actual: ${g('abrev-plr-cuna-int')} mm`);
+    if(g('abrev-plr-cuna-ext')) partesEvol.push(`Cuña externa actual: ${g('abrev-plr-cuna-ext')} mm`);
+    if(g('abrev-plr-realce-ant-int')) partesEvol.push(`Realce anterior interno actual: ${g('abrev-plr-realce-ant-int')} mm`);
+    if(g('abrev-plr-realce-ant-ext')) partesEvol.push(`Realce anterior externo actual: ${g('abrev-plr-realce-ant-ext')} mm`);
+    if(g('abrev-plr-suplemento-izq')) partesEvol.push(`Suplemento pie izquierdo: ${g('abrev-plr-suplemento-izq')}`);
+    if(g('abrev-plr-suplemento-der')) partesEvol.push(`Suplemento pie derecho: ${g('abrev-plr-suplemento-der')}`);
+    cuerpo = `¿Son las correctas?: ${g('abrev-plr-correctas')}\n¿Se adaptan bien al pie?: ${g('abrev-plr-adaptan')}\nIndicaciones de cuidado e higiene: ${g('abrev-plr-cuidado')||'—'}\n\n📈 Seguimiento evolutivo:\n${partesEvol.join('\n')}`;
   }
   const fecha = new Date().toLocaleDateString('es-AR');
   const texto = `⚡ CONSULTA ABREVIADA — ${etiquetas[tipo]} — ${fecha}\n\n${cuerpo}`;
@@ -1052,7 +1165,7 @@ function toast(msg,tipo){
 let db;
 function initDB(){
   return new Promise((res,rej)=>{
-    const req=indexedDB.open('OCMRecetario',3);
+    const req=indexedDB.open('OCMRecetario',13);
     req.onupgradeneeded=e=>{
       const d=e.target.result;
       if(!d.objectStoreNames.contains('pacientes')){
@@ -1074,6 +1187,14 @@ function initDB(){
         const ce=d.createObjectStore('certificados',{keyPath:'id',autoIncrement:true});
         ce.createIndex('paciente_id','paciente_id',{unique:false});
         ce.createIndex('created_at','created_at',{unique:false});
+      }
+      // Seguimiento evolutivo profesional (peso/altura/pie, desgaste de calzado,
+      // hiperapoyos y graduación de cuña/realce) — se carga acá desde "Retiro de
+      // plantilla — control" y sirve para graficar la evolución del paciente en OCM.
+      if(!d.objectStoreNames.contains('controles_evolutivos')){
+        const cv=d.createObjectStore('controles_evolutivos',{keyPath:'id',autoIncrement:true});
+        cv.createIndex('paciente_id','paciente_id',{unique:false});
+        cv.createIndex('fecha','fecha',{unique:false});
       }
     };
     req.onsuccess=e=>{db=e.target.result;res(db);};
@@ -1194,6 +1315,57 @@ function guardarEnHistorialBeta(textareaId,titulo){
 function guardarTextoEnHistorialBeta(previewId,titulo){
   const el=document.getElementById(previewId);
   guardarEnHistorialBetaTexto(el?el.textContent:'', titulo);
+}
+
+// ── Al guardar una "Consulta abreviada" de tipo "Retiro de plantilla — control",
+// además de la nota de texto en la historia clínica, se registra un punto de
+// datos estructurado en 'controles_evolutivos'. Esto es lo que después permite
+// graficar la evolución del paciente (peso, altura, pie, cuña, etc.) en el
+// Dashboard de OCM, sin depender de tener que releer el texto libre. Se guarda
+// siempre para este tipo de consulta, independientemente de si esa plantilla
+// se encarga a la fábrica o no — el seguimiento profesional aplica a todos. ──
+async function guardarControlEvolutivoDB(tipoConsulta){
+  if(!pacienteActivo||!pacienteActivo.id) return;
+  const g = id => { const el=document.getElementById(id); return el?el.value.trim():''; };
+  const num = id => { const v=g(id); return v===''?null:parseFloat(v); };
+  const d = new Date();
+  const registro = {
+    paciente_id: pacienteActivo.id,
+    pac_dni: pacienteActivo.dni||'',
+    pac_nombre: `${pacienteActivo.apellido||''}, ${pacienteActivo.nombre||''}`,
+    // 'control' = chequeo de una plantilla ya entregada, sin cambiarla;
+    // 'recambio' = se dispensó un par nuevo en esta misma consulta —
+    // esta marca es la que después permite ubicar, dentro de la serie
+    // histórica del paciente, en qué controles hubo realmente un cambio
+    // de plantilla (para la cadencia anual que se controla junto al recambio).
+    tipo_consulta: tipoConsulta==='recambioplantilla' ? 'recambio' : 'control',
+    fecha: `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`,
+    peso_kg: num('abrev-plr-peso'),
+    altura_cm: num('abrev-plr-altura'),
+    long_pie_der_cm: num('abrev-plr-longpie-der'),
+    long_pie_izq_cm: num('abrev-plr-longpie-izq'),
+    retropie_tipo: g('abrev-plr-retropie-tipo'),
+    retropie_grados: num('abrev-plr-retropie-grados'),
+    estudio_marcha: g('abrev-plr-marcha'),
+    hiperapoyo: datosHiperapoyo_(),
+    desgaste_calzado: datosDesgasteCalzado_(),
+    cuna_interna_mm: num('abrev-plr-cuna-int'),
+    cuna_externa_mm: num('abrev-plr-cuna-ext'),
+    realce_ant_interno_mm: num('abrev-plr-realce-ant-int'),
+    realce_ant_externo_mm: num('abrev-plr-realce-ant-ext'),
+    suplemento_izq: g('abrev-plr-suplemento-izq'),
+    suplemento_der: g('abrev-plr-suplemento-der'),
+    created_at: d.toISOString()
+  };
+  try{
+    await dbAdd('controles_evolutivos', registro);
+    toast('📈 Datos de seguimiento evolutivo guardados','ok');
+  }catch(e){ toast('❌ No se pudo guardar el control evolutivo: '+(e&&e.message?e.message:e),'err'); }
+}
+function guardarAbreviadaEnHistorial(){
+  guardarTextoEnHistorialBeta('abrev-preview','Consulta abreviada');
+  const tipo = document.getElementById('abrev-tipo')?document.getElementById('abrev-tipo').value:'';
+  if(tipo==='controlplantilla'||tipo==='recambioplantilla') guardarControlEvolutivoDB(tipo);
 }
 async function cargarHistorialBeta(){
   const cont=document.getElementById('historial-lista');
