@@ -2732,6 +2732,19 @@ document.addEventListener('DOMContentLoaded',async()=>{
   safePaso_('renderOSConvenioChips', renderOSConvenioChips);
   safePaso_('setCentro', ()=>setTimeout(()=>{setCentro(currentCentroKey);},50));
   safePaso_('setInterval-updateFecha', ()=>setInterval(updateFecha,60000));
+  // ── BUGFIX: chequearRidmPendientesBadge() y chequearRidmLocal() antes solo
+  // corrían UNA vez, al cargar OCM. Si el médico ya tenía OCM abierto y cargaba
+  // una "⚡ Filiación" en una pestaña nueva (el flujo real de sala de espera),
+  // el badge de "📥 RIDM" nunca se actualizaba solo — había que recargar toda
+  // la página para que aparezca. Esto se veía como "no carga los datos".
+  // Ahora se re-chequea cada 40s Y apenas la pestaña de OCM vuelve a estar
+  // visible (typical: el médico cambia de la pestaña de Filiación a OCM). ──
+  safePaso_('pollingRidmPendientes', ()=>{
+    setInterval(()=>{ chequearRidmPendientesBadge(); chequearRidmLocal(); }, 40000);
+    document.addEventListener('visibilitychange', ()=>{
+      if(document.visibilityState==='visible'){ chequearRidmPendientesBadge(); chequearRidmLocal(); }
+    });
+  });
   /* Nuevos módulos */
   safePaso_('initVoz', initVoz);
   safePaso_('initTeclado', initTeclado);
@@ -4014,12 +4027,30 @@ function buscarPaciente(q){
   searchTimeout=setTimeout(async()=>{
     const local = await buscarPacientesDB(q);
     const dnisLocal = new Set(local.map(p=>String(p.dni||'')));
+    const ql = q.toLowerCase();
+    // ── PEDIDO: un paciente recién cargado con "⚡ Filiación rápida" tiene que
+    // aparecer EN ESTA MISMA búsqueda, al toque — no puede depender de que el
+    // médico primero abra el modal "📥 RIDM" ni de esperar ningún chequeo
+    // periódico, porque lo está buscando para hacerle una receta/orden ya
+    // mismo. Por eso 'nube' (pacientes ya guardados) y 'pendientesRidm'
+    // (filiaciones sin importar todavía) se piden en paralelo acá. ──
+    const [nubeResult, pendResult] = await Promise.allSettled([
+      fetch(SHEETS_URL+'?action=search&query='+encodeURIComponent(q)+tokenQS_(), {signal:AbortSignal.timeout(6000)}).then(r=>r.json()),
+      fetch(SHEETS_URL+'?action=get_pendientes'+tokenQS_(), {signal:AbortSignal.timeout(6000)}).then(r=>r.json())
+    ]);
     let nube = [];
-    try{
-      const resp = await fetch(SHEETS_URL+'?action=search&query='+encodeURIComponent(q)+tokenQS_(), {signal:AbortSignal.timeout(6000)});
-      const data = await resp.json();
-      nube = (data.data||[]).filter(c=>!dnisLocal.has(String(c.DNI||'')));
-    }catch(_){ /* sin conexión: se muestran solo los resultados locales, no rompe nada */ }
+    if(nubeResult.status==='fulfilled'){
+      nube = (nubeResult.value.data||[]).filter(c=>!dnisLocal.has(String(c.DNI||'')));
+    } // si falló (sin conexión): se muestran solo los resultados locales, no rompe nada
+    let pendientesRidm = [];
+    if(pendResult.status==='fulfilled'){
+      ridmPendientesCache = pendResult.value.pendientes||[];
+      pendientesRidm = ridmPendientesCache.filter(r=>
+        String(r.dni||'').includes(q) ||
+        String(r.apellido||'').toLowerCase().includes(ql) ||
+        String(r.nombre||'').toLowerCase().includes(ql)
+      ).filter(r=>!dnisLocal.has(String(r.dni||'')));
+    }
     const combinados = [
       ...local.map(p=>({...p,_nube:false})),
       ...nube.map(c=>({
@@ -4027,13 +4058,19 @@ function buscarPaciente(q){
         obra_social:c.Obra_Social||'', plan:c.Plan||'', nro_afiliado:c.N_Afiliado||'',
         telefono:c.Telefono||'', mail:c.Email||'', direccion:c.Domicilio||'',
         localidad:c.Localidad||'', lugar_atencion:c.Lugar_Atencion||'', centro_derivador:c.Centro_Derivador||'', _nube:true
+      })),
+      ...pendientesRidm.map(r=>({
+        dni:r.dni||'', apellido:r.apellido||'', nombre:r.nombre||'', telefono:r.telefono||'', mail:r.email||'',
+        _pendienteRidm:true, _row:r._row
       }))
     ];
     if(!combinados.length){res.style.display='none';return;}
     res.innerHTML='';
     combinados.forEach(p=>{
       const div=document.createElement('div');div.className='search-item';
-      div.innerHTML=`<div class="s-nom">${p.apellido||''}, ${p.nombre||''}${p._nube?' <span style="font-size:9px;background:#e0f2fe;color:#0369a1;border-radius:8px;padding:1px 6px;margin-left:4px">☁ EN LA NUBE</span>':''}</div><div class="s-det">DNI: ${p.dni||'—'} · ${p.obra_social||'Sin obra social'}</div>`;
+      const badge = p._nube ? ' <span style="font-size:9px;background:#e0f2fe;color:#0369a1;border-radius:8px;padding:1px 6px;margin-left:4px">☁ EN LA NUBE</span>'
+                  : p._pendienteRidm ? ' <span style="font-size:9px;background:#fef3c7;color:#92400e;border-radius:8px;padding:1px 6px;margin-left:4px">🆕 FILIACIÓN RECIÉN CARGADA</span>' : '';
+      div.innerHTML=`<div class="s-nom">${p.apellido||''}, ${p.nombre||''}${badge}</div><div class="s-det">DNI: ${p.dni||'—'} · ${p.obra_social||(p._pendienteRidm?'Filiación rápida — completar el resto luego':'Sin obra social')}</div>`;
       div.onclick=async()=>{
         let pac=p;
         if(p._nube){
@@ -4041,6 +4078,12 @@ function buscarPaciente(q){
           const id=await dbAdd('pacientes',{...datos,created_at:new Date().toISOString()});
           pac={...datos,id};
           toast('☁ Paciente traído de la nube a esta computadora','ok');
+        } else if(p._pendienteRidm){
+          const {_pendienteRidm,_row,...datos}=p;
+          const id=await dbAdd('pacientes',{...datos,created_at:new Date().toISOString()});
+          pac={...datos,id};
+          fetch(SHEETS_URL+'?action=marcar_procesado&row='+_row).catch(()=>{});
+          toast('🆕 Paciente cargado desde Filiación rápida — completá el resto de la ficha cuando puedas','ok');
         }
         seleccionarPaciente(pac);res.style.display='none';document.getElementById('buscar-pac').value='';
       };
