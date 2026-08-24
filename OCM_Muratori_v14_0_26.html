@@ -4044,7 +4044,7 @@ function buscarPaciente(q){
     } // si falló (sin conexión): se muestran solo los resultados locales, no rompe nada
     let pendientesRidm = [];
     if(pendResult.status==='fulfilled'){
-      ridmPendientesCache = pendResult.value.pendientes||[];
+      ridmPendientesCache = _dedupePendientesPorDni(pendResult.value.pendientes||[]);
       pendientesRidm = ridmPendientesCache.filter(r=>
         String(r.dni||'').includes(q) ||
         String(r.apellido||'').toLowerCase().includes(ql) ||
@@ -4061,7 +4061,7 @@ function buscarPaciente(q){
       })),
       ...pendientesRidm.map(r=>({
         dni:r.dni||'', apellido:r.apellido||'', nombre:r.nombre||'', telefono:r.telefono||'', mail:r.email||'',
-        _pendienteRidm:true, _row:r._row
+        _pendienteRidm:true, _row:r._row, _rowsDup:r._rowsDup||[r._row]
       }))
     ];
     if(!combinados.length){res.style.display='none';return;}
@@ -4079,10 +4079,14 @@ function buscarPaciente(q){
           pac={...datos,id};
           toast('☁ Paciente traído de la nube a esta computadora','ok');
         } else if(p._pendienteRidm){
-          const {_pendienteRidm,_row,...datos}=p;
+          const {_pendienteRidm,_row,_rowsDup,...datos}=p;
           const id=await dbAdd('pacientes',{...datos,created_at:new Date().toISOString()});
           pac={...datos,id};
-          fetch(SHEETS_URL+'?action=marcar_procesado&row='+_row).catch(()=>{});
+          // Marca TODAS las filas duplicadas de este DNI como procesadas (no solo
+          // la que se ve acá) — así los reintentos previos no quedan colgados.
+          (_rowsDup&&_rowsDup.length?_rowsDup:[_row]).forEach(rw=>{
+            fetch(SHEETS_URL+'?action=marcar_procesado&row='+rw).catch(()=>{});
+          });
           toast('🆕 Paciente cargado desde Filiación rápida — completá el resto de la ficha cuando puedas','ok');
         }
         seleccionarPaciente(pac);res.style.display='none';document.getElementById('buscar-pac').value='';
@@ -4340,13 +4344,37 @@ async function guardarPaciente(){
 // ══════════════════════════════════════════════════════════════════
 // RIDM PENDIENTES — puente real entre el formulario que llena el paciente y OCM
 // ══════════════════════════════════════════════════════════════════
+// BUGFIX: si el mismo paciente mandó Filiación rápida varias veces (reintentos
+// por conexión, doble clic, etc.) el sheet RIDM_Pendientes queda con una fila
+// por cada intento. Sin este dedup, cada intento aparecía como una entrada
+// separada en la búsqueda y en el modal "📥 RIDM" — y si se llegaba a importar
+// más de una por error, se creaban pacientes duplicados en OCM (misma persona,
+// varias fichas). Acá nos quedamos con el intento más reciente por DNI para
+// mostrar, pero guardamos TODAS las filas de ese DNI en _rowsDup para marcarlas
+// TODAS como procesadas juntas apenas se importa una — así un solo clic
+// "limpia" todos los reintentos duplicados de una.
+function _dedupePendientesPorDni(pendientes){
+  const porDni = new Map();
+  (pendientes||[]).forEach(r=>{
+    const dni = String(r.dni||'').trim();
+    const key = dni || ('_sindni_'+r._row);
+    if(!porDni.has(key)) porDni.set(key, []);
+    porDni.get(key).push(r);
+  });
+  const out=[];
+  porDni.forEach(grupo=>{
+    const masReciente = grupo[grupo.length-1]; // vienen en orden de carga: el último es el más reciente
+    out.push({...masReciente, _rowsDup: grupo.map(g=>g._row)});
+  });
+  return out;
+}
 let ridmPendientesCache = [];
 
 async function chequearRidmPendientesBadge(){
   try{
     const resp = await fetch(SHEETS_URL+'?action=get_pendientes'+tokenQS_(), { signal: AbortSignal.timeout(8000) });
     const data = await resp.json();
-    const n = (data.pendientes||[]).length;
+    const n = _dedupePendientesPorDni(data.pendientes||[]).length; // contá pacientes únicos, no intentos duplicados
     const btn = document.getElementById('btn-ridm-pend');
     if(btn) btn.textContent = n>0 ? `📥 RIDM (${n})` : '📥 RIDM';
   }catch(_){ /* sin conexión o script aún no desplegado: no romper nada */ }
@@ -5526,7 +5554,7 @@ async function cargarRidmPendientes(){
   try{
     const resp = await fetch(SHEETS_URL+'?action=get_pendientes'+tokenQS_(), { signal: AbortSignal.timeout(10000) });
     const data = await resp.json();
-    ridmPendientesCache = data.pendientes||[];
+    ridmPendientesCache = _dedupePendientesPorDni(data.pendientes||[]);
     if(!ridmPendientesCache.length){
       cont.innerHTML = '<p style="color:var(--muted);font-size:12px">No hay formularios pendientes de importar.</p>';
       return;
@@ -5535,7 +5563,7 @@ async function cargarRidmPendientes(){
       <div style="display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc">
         <div style="flex:1">
           <strong>${r.apellido||''}, ${r.nombre||''}</strong> · DNI ${r.dni||'—'}<br>
-          <span style="font-size:11px;color:var(--muted)">📞 ${r.telefono||'—'} · 📧 ${r.email||'—'} · ${new Date(r.timestamp).toLocaleString('es-AR')}</span>
+          <span style="font-size:11px;color:var(--muted)">📞 ${r.telefono||'—'} · 📧 ${r.email||'—'} · ${new Date(r.timestamp).toLocaleString('es-AR')}${r._rowsDup&&r._rowsDup.length>1?` · <span style="color:#b45309">⚠ se cargó ${r._rowsDup.length} veces, se unifica en 1 al importar</span>`:''}</span>
         </div>
         <button class="btn btn-primary btn-sm" onclick="importarRidm(${i})">⬇ Importar</button>
       </div>`).join('');
@@ -5563,8 +5591,11 @@ function importarRidm(i){
   if(antecEl) antecEl.value = datos.enfermedades||'';
   const medEl = document.getElementById('p-meds-actuales');
   if(medEl) medEl.value = datos.medicacion||'';
-  // Marcar como procesado en el backend para que no vuelva a aparecer
-  fetch(SHEETS_URL+'?action=marcar_procesado&row='+r._row).catch(()=>{});
+  // Marcar como procesadas TODAS las filas duplicadas de este DNI (no solo la
+  // que se ve en la lista) para que los reintentos previos no queden colgados.
+  (r._rowsDup&&r._rowsDup.length?r._rowsDup:[r._row]).forEach(rw=>{
+    fetch(SHEETS_URL+'?action=marcar_procesado&row='+rw).catch(()=>{});
+  });
   cerrarModal('modal-ridm');
   toast('📥 Datos del RIDM cargados — revisá y guardá el paciente','ok');
 }
