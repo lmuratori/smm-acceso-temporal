@@ -878,12 +878,14 @@ function enviarRIDM() {
   if (r) {
     if (MODO === 'rapido') {
       const linkP2 = generarLinkParte2(apellido, nombre, dni, tel);
+      const tieneMail = !!(datos.mail && datos.mail.trim());
       r.innerHTML = `
         <strong>👤 ${apellido}, ${nombre}</strong> · DNI: ${dni || '—'} · 📞 ${tel}<br>
         🏥 ${datos.os || '—'} · Plan: ${datos.plan || '—'}<br>
         📅 Registrado: ${datos.fecha_envio}<br><br>
-        <strong>Próximo paso:</strong> enviá este link al paciente para que complete sus antecedentes médicos en casa:<br>
+        <strong>Próximo paso:</strong> ${tieneMail ? 'le mandamos por mail el link para que complete sus antecedentes médicos en casa.' : 'no cargaste un mail para este paciente, así que no se le puede mandar el link automático — copialo o mandaselo por WhatsApp:'}<br>
         <a href="${linkP2}" target="_blank" style="word-break:break-all;color:#2563eb">${linkP2}</a><br><br>
+        <div style="font-size:10.5px;color:var(--muted);margin-bottom:4px">Por si hace falta reenviarlo a mano:</div>
         <button onclick="navigator.clipboard.writeText('${linkP2}').then(()=>alert('¡Link copiado!'))" style="background:#2563eb;color:#fff;border:none;padding:8px 16px;border-radius:7px;font-size:12px;cursor:pointer;font-family:inherit">📋 Copiar link</button>
         &nbsp;
         <button onclick="window.open('https://wa.me/${tel.replace(/\\D/g,'')}?text='+encodeURIComponent('Estimado/a ${nombre}, por favor complete sus antecedentes médicos antes de su próxima consulta con el Dr. Muratori: ${linkP2}'),'_blank')" style="background:#25D366;color:#fff;border:none;padding:8px 16px;border-radius:7px;font-size:12px;cursor:pointer;font-family:inherit">📲 Enviar por WhatsApp</button>
@@ -897,7 +899,8 @@ function enviarRIDM() {
       envioPromise.then(resultado=>{
         const st = document.getElementById('ridm-envio-status');
         if (resultado && resultado.success) {
-          if (st) st.textContent = '✅ Enviado y confirmado — volviendo a OCM…';
+          const mailMsg = resultado.mail_enviado ? ' · 📧 mail enviado al paciente' : (tieneMail ? ' · ⚠️ no se confirmó el envío del mail (revisalo)' : '');
+          if (st) st.textContent = '✅ Enviado y confirmado' + mailMsg + ' — volviendo a OCM…';
           setTimeout(volverAOCM_, 1500);
         } else {
           if (st) st.innerHTML = '⚠️ No se pudo confirmar el envío al servidor (puede que haya llegado igual). Los datos quedaron guardados en este dispositivo — revisá la conexión y volvé con el botón de arriba.';
