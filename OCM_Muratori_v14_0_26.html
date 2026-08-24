@@ -1306,6 +1306,14 @@ body{font-family:'Inter',system-ui,sans-serif;font-size:13px;background:var(--bg
           <div class="fg1"><label>Fecha de emisión</label><input id="ld4-emision" type="date"></div>
           <div class="fg1"><label>Fecha de vencimiento</label><input id="ld4-vencimiento" type="date"></div>
           <div class="fg1"><label>Vigencia</label><select id="ld4-vigencia"><option>Vigente</option><option>Vencido</option><option>En trámite de renovación</option></select></div>
+          <div class="fg1"><label>Gravedad (para el color en 📇 Agenda de Pacientes)</label>
+            <select id="ld4-gravedad">
+              <option value="">Sin especificar</option>
+              <option value="1">1 — Leve</option>
+              <option value="2">2 — Moderada</option>
+              <option value="3">3 — Grave</option>
+            </select>
+          </div>
         </div>
         <div class="sm-grp-lbl" style="margin-top:12px">Códigos CIF registrados en el certificado</div>
         <div id="ld4-codigos-lista"></div>
@@ -1537,6 +1545,7 @@ body{font-family:'Inter',system-ui,sans-serif;font-size:13px;background:var(--bg
         <div id="buscar-results" class="search-dropdown" style="display:none"></div>
       </div>
       <button class="btn btn-ghost btn-sm" onclick="abrirModalNuevoPaciente()">+ Paciente</button>
+      <button class="btn btn-ghost btn-sm" onclick="abrirAgendaPacientes()" title="Todos los pacientes cargados en este equipo, en orden alfabético y coloreados por discapacidad/circuito quirúrgico — entrás directo a la historia clínica de cada uno">📇 Agenda</button>
       <button class="btn btn-ghost btn-sm" onclick="abrirRidmRapido()" title="Cargar datos de filiación en el momento (sin antecedentes)">⚡ Filiación</button>
       <button class="btn btn-ghost btn-sm" onclick="abrirRidmPendientes()" id="btn-ridm-pend">📥 RIDM</button>
       <button class="btn btn-ghost btn-sm" onclick="abrirConsultasOnline()" id="btn-consultas" style="position:relative">💬 Consultas<span id="badge-consultas" style="display:none;position:absolute;top:-4px;right:-4px;background:#dc2626;color:#fff;border-radius:50%;width:16px;height:16px;font-size:9px;font-weight:700;display:none;align-items:center;justify-content:center"></span></button>
@@ -3012,7 +3021,18 @@ const CMD_DEFS=[
   {k:'genrmyt',icon:'📄',lbl:'Generar RMYT',sec:'RECOMENDACIONES'},
   {k:'librmyt',icon:'📔',lbl:'Libro RMYT',sec:'RECOMENDACIONES'},
   {k:'librodiscap',icon:'📘',lbl:'Libro Discapacidad',sec:'RECOMENDACIONES'},
-  {k:'catastro',icon:'🏭',lbl:'Catastro Empresas',sec:'RECOMENDACIONES'}
+  {k:'catastro',icon:'🏭',lbl:'Catastro Empresas',sec:'RECOMENDACIONES'},
+  // PEDIDO: acceso directo (un solo clic) desde este menú a cada categoría
+  // de 📇 Agenda de Pacientes, sin tener que abrirla primero en "Todos" y
+  // después buscar la pestaña.
+  {k:'ag_todos',icon:'📇',lbl:'Agenda Pacientes',sec:'AGENDA'},
+  {k:'ag_discap',icon:'🔵',lbl:'Discapacidad',sec:'AGENDA'},
+  {k:'ag_tratam',icon:'🩺',lbl:'En tratamiento',sec:'AGENDA'},
+  {k:'ag_decidido',icon:'✅',lbl:'Decidido s/prequir.',sec:'AGENDA'},
+  {k:'ag_observado',icon:'👁',lbl:'Observado',sec:'AGENDA'},
+  {k:'ag_planif',icon:'📋',lbl:'Planificación Qx',sec:'AGENDA'},
+  {k:'ag_program',icon:'📅',lbl:'Programación Qx',sec:'AGENDA'},
+  {k:'ag_seguim',icon:'🩹',lbl:'Seguimiento postop',sec:'AGENDA'}
 ];
 function buildCmdZone(){
   const zone=document.getElementById('cmd-zone');
@@ -3053,6 +3073,15 @@ function selectCmd(key){
   if(key==='librmyt'){ abrirLibroRmyt(); return; }
   if(key==='librodiscap'){ abrirLibroDiscapacidad(); return; }
   if(key==='catastro'){ abrirCatastroEmpresas(); return; }
+  // 📇 Agenda de Pacientes — acceso directo por categoría desde este menú.
+  if(key==='ag_todos'){ abrirAgendaPacientes('todos'); return; }
+  if(key==='ag_discap'){ abrirAgendaPacientes('discapacidad'); return; }
+  if(key==='ag_tratam'){ abrirAgendaPacientes('tratamiento'); return; }
+  if(key==='ag_decidido'){ abrirAgendaPacientes('decidido'); return; }
+  if(key==='ag_observado'){ abrirAgendaPacientes('observado'); return; }
+  if(key==='ag_planif'){ abrirAgendaPacientes('planificacion'); return; }
+  if(key==='ag_program'){ abrirAgendaPacientes('programacion'); return; }
+  if(key==='ag_seguim'){ abrirAgendaPacientes('seguimiento'); return; }
   document.querySelectorAll('#cmd-zone .cmd-btn').forEach(b=>b.classList.remove('active'));
   const btn=document.getElementById('cmd-'+key);if(btn)btn.classList.add('active');
   // Modo compacto: cmd-zone se reduce, submenu crece
@@ -4264,7 +4293,7 @@ function abrirModalNuevoPaciente(datos){
   const chkPrimera=document.getElementById('p-primera-consulta');
   if(chkPrimera) chkPrimera.checked = !pacEditId; // paciente nuevo: tildado por default; al editar uno existente, no
   const chkDiscapacidad=document.getElementById('p-discapacidad');
-  if(chkDiscapacidad) chkDiscapacidad.checked = false;
+  if(chkDiscapacidad) chkDiscapacidad.checked = !!(datos && datos.discapacidad);
   if(datos){
     const sv=(id,v)=>{const el=document.getElementById(id);if(el)el.value=v||'';};
     sv('p-dni',datos.dni);sv('p-ape',datos.apellido);sv('p-nom',datos.nombre);
@@ -4294,6 +4323,10 @@ async function guardarPaciente(){
     direccion:g('p-dir'),telefono:g('p-tel'),mail:g('p-mail'),
     obra_social:g('p-os'),plan:g('p-plan'),nro_afiliado:g('p-afil'),
     antecedentes_generales:antecedentesGenerales,
+    // BUGFIX: antes "discapacidad" solo se mandaba a la nube (payloadCloud) y
+    // nunca quedaba en el registro local — por eso 📇 Agenda de Pacientes no
+    // podía detectarlo sin que además existiera el Libro de Discapacidad.
+    discapacidad:esDiscapacidad,
     updated_at:new Date().toISOString()};
   try{
     let id;
@@ -4369,6 +4402,145 @@ function _dedupePendientesPorDni(pendientes){
   return out;
 }
 let ridmPendientesCache = [];
+
+// ══════════════════════════════════════════════════════════════════
+// 📇 AGENDA DE PACIENTES — índice alfabético de todos los pacientes
+// guardados en este equipo, coloreado para ubicar de un vistazo casos de
+// discapacidad (azul, más intenso = más grave) y del circuito quirúrgico
+// (verde = otras etapas, amarillo = planificación/seguimiento), con
+// acceso directo a la historia clínica de cada paciente con un clic.
+// ══════════════════════════════════════════════════════════════════
+let agendaPacientesCache = [];
+// PEDIDO: pestañas para filtrar por categoría, más acceso directo desde el
+// menú de comandos (CMD_DEFS/selectCmd) — un clic en el menú abre la Agenda
+// ya filtrada en esa categoría, sin pasar primero por "Todos".
+const AGENDA_TABS_CFG = [
+  {k:'todos',         lbl:'Todos'},
+  {k:'discapacidad',  lbl:'🔵 Discapacidad'},
+  {k:'tratamiento',   lbl:'🩺 En tratamiento'},
+  {k:'decidido',      lbl:'✅ Decidido — sin prequirúrgico'},
+  {k:'observado',     lbl:'👁 Observado'},
+  {k:'planificacion', lbl:'📋 Planificación'},
+  {k:'programacion',  lbl:'📅 Programación'},
+  {k:'seguimiento',   lbl:'🩹 Seguimiento postop'}
+];
+let agendaPacTabActual = 'todos';
+async function abrirAgendaPacientes(tab){
+  abrirModal('modal-agenda-pacientes');
+  agendaPacTabActual = tab || 'todos';
+  const inp=document.getElementById('agenda-pac-filtro'); if(inp) inp.value='';
+  renderAgendaPacTabs();
+  await cargarAgendaPacientes();
+}
+function renderAgendaPacTabs(){
+  const cont = document.getElementById('agenda-pac-tabs');
+  if(!cont) return;
+  cont.innerHTML = AGENDA_TABS_CFG.map(t=>{
+    const activo = agendaPacTabActual===t.k;
+    return `<button onclick="seleccionarAgendaPacTab('${t.k}')" style="font-size:11px;padding:5px 10px;border-radius:14px;border:1px solid var(--border2);cursor:pointer;font-family:inherit;font-weight:${activo?'700':'500'};background:${activo?'var(--navy)':'#f8fafc'};color:${activo?'#fff':'var(--muted)'}">${t.lbl}</button>`;
+  }).join('');
+}
+function seleccionarAgendaPacTab(k){
+  agendaPacTabActual = k;
+  renderAgendaPacTabs();
+  const inp=document.getElementById('agenda-pac-filtro');
+  renderAgendaPacientes(inp?inp.value:'');
+}
+async function cargarAgendaPacientes(){
+  const cont = document.getElementById('agenda-pac-list');
+  cont.innerHTML = '<div style="text-align:center;color:var(--muted);padding:30px;font-size:13px">Cargando...</div>';
+  try{
+    const pacientes = await dbGetAll('pacientes');
+    agendaPacientesCache = pacientes
+      .map(p=>{
+        const cat = _categoriaAgendaPaciente(p);
+        return {...p, _categoria:cat.tipo, _color:_colorAgendaPacienteDeCategoria_(cat)};
+      })
+      .sort((a,b)=> (String(a.apellido||'')+' '+String(a.nombre||'')).localeCompare(String(b.apellido||'')+' '+String(b.nombre||''), 'es'));
+    renderAgendaPacientes(document.getElementById('agenda-pac-filtro')?.value||'');
+  }catch(e){
+    cont.innerHTML = '<div style="text-align:center;color:#dc2626;padding:30px;font-size:13px">No se pudo leer la lista de pacientes de este equipo.</div>';
+  }
+}
+// Gravedad (1/2/3) cargada en la página 4 del Libro de Discapacidad de
+// este paciente, EN ESTE NAVEGADOR. Devuelve null si no hay libro.
+function _gravedadDiscapacidadLocal_(dni){
+  if(!dni) return null;
+  try{
+    const raw = localStorage.getItem('libroDiscapacidad_'+dni);
+    if(!raw) return null;
+    const d = JSON.parse(raw);
+    const g = parseInt(d?.pag4?.gravedad, 10);
+    return (g>=1 && g<=3) ? g : 0; // 0 = tiene libro pero sin gravedad especificada todavía
+  }catch(_){ return null; }
+}
+// Etapa del Libro Quirúrgico de este paciente, EN ESTE NAVEGADOR. Null si no hay libro.
+function _estadoQxLocal_(dni){
+  if(!dni) return null;
+  try{
+    const raw = localStorage.getItem('libroQX_'+dni);
+    if(!raw) return null;
+    const d = JSON.parse(raw);
+    return d?.estadoPlanning || 'observado';
+  }catch(_){ return null; }
+}
+// Categoría única de este paciente para 📇 Agenda de Pacientes — misma fuente
+// de verdad que usan tanto las pestañas (filtro) como el color de fondo.
+function _categoriaAgendaPaciente(p){
+  const esDiscapacitado = !!p.discapacidad || !!p.Discapacidad;
+  const gravedad = _gravedadDiscapacidadLocal_(p.dni);
+  if(esDiscapacitado || gravedad!==null) return {tipo:'discapacidad', gravedad:gravedad||0};
+  const estadoQx = _estadoQxLocal_(p.dni);
+  if(estadoQx) return {tipo:estadoQx};
+  return {tipo:'otros'};
+}
+function _colorAgendaPacienteDeCategoria_(cat){
+  if(cat.tipo==='discapacidad'){
+    const tonos     = {0:'#60a5fa', 1:'#93c5fd', 2:'#3b82f6', 3:'#1e40af'};
+    const etiquetas = {0:'Discapacidad (sin gravedad especificada)', 1:'Discapacidad — leve', 2:'Discapacidad — moderada', 3:'Discapacidad — grave'};
+    return {bg:tonos[cat.gravedad], texto:'#fff', label:etiquetas[cat.gravedad]};
+  }
+  if(cat.tipo==='planificacion' || cat.tipo==='seguimiento'){
+    return {bg:'#fde047', texto:'#713f12', label:'Circuito quirúrgico — '+(cat.tipo==='planificacion'?'planificación':'seguimiento')};
+  }
+  if(cat.tipo==='tratamiento' || cat.tipo==='decidido' || cat.tipo==='observado' || cat.tipo==='programacion'){
+    const etiquetasQx = {tratamiento:'en tratamiento, sin decisión Qx', decidido:'decidido, sin prequirúrgico', observado:'observado', programacion:'programación'};
+    return {bg:'#4ade80', texto:'#14532d', label:'Circuito quirúrgico — '+(etiquetasQx[cat.tipo]||cat.tipo)};
+  }
+  return {bg:'#5eead4', texto:'#134e4a', label:''};
+}
+function renderAgendaPacientes(filtro){
+  const cont = document.getElementById('agenda-pac-list');
+  const q = String(filtro||'').trim().toLowerCase();
+  let lista = agendaPacTabActual==='todos' ? agendaPacientesCache : agendaPacientesCache.filter(p=>p._categoria===agendaPacTabActual);
+  if(q){
+    lista = lista.filter(p=>
+      String(p.apellido||'').toLowerCase().includes(q) ||
+      String(p.nombre||'').toLowerCase().includes(q) ||
+      String(p.dni||'').includes(q)
+    );
+  }
+  if(!lista.length){
+    cont.innerHTML = '<div style="text-align:center;color:var(--muted);padding:30px;font-size:13px">Sin pacientes que coincidan en esta categoría.</div>';
+    return;
+  }
+  cont.innerHTML = lista.map(p=>`
+    <div onclick="irAHistorialDesdeAgenda(${p.id})" style="cursor:pointer;display:flex;align-items:center;gap:10px;padding:9px 12px;margin-bottom:6px;border-radius:8px;background:${p._color.bg};color:${p._color.texto}">
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:13px">${p.apellido||''}, ${p.nombre||''}</div>
+        <div style="font-size:11px;opacity:.85">DNI ${p.dni||'—'}${p._color.label?' · '+p._color.label:''}</div>
+      </div>
+      <span style="font-size:16px">›</span>
+    </div>`).join('');
+}
+function irAHistorialDesdeAgenda(id){
+  const pac = agendaPacientesCache.find(p=>p.id===id);
+  if(!pac) return;
+  const {_color, _categoria, ...pacLimpio} = pac;
+  seleccionarPaciente(pacLimpio);
+  cerrarModal('modal-agenda-pacientes');
+  verHistorialModal();
+}
 
 async function chequearRidmPendientesBadge(){
   try{
@@ -4564,6 +4736,7 @@ async function migrarDatosLocalesANube(){
         codigos_cif: (libro.pag4?.codigos||[]).join(', '),
         emision: libro.pag4?.emision || '',
         vencimiento: libro.pag4?.vencimiento || '',
+        gravedad: libro.pag4?.gravedad || '',
         tipo: 'CUD'
       });
       if(r && r.success) okLibros++; else errLibros++;
@@ -4761,7 +4934,7 @@ function recolectarLibroDiscapacidad(){
     pag1:{nombre:g('ld1-nombre'),dni:g('ld1-dni'),fnac:g('ld1-fnac'),domicilio:g('ld1-domicilio'),localidad:g('ld1-localidad'),afluente:g('ld1-afluente'),tel:g('ld1-tel'),mail:g('ld1-mail'),os:g('ld1-os')},
     pag2:{titular:g('ld2-titular'),vinculo:g('ld2-vinculo'),familia:ldFamilia},
     pag3:{diagnostico:g('ld3-diagnostico'),estudios:ldEstudios},
-    pag4:{numero:g('ld4-numero'),emision:g('ld4-emision'),vencimiento:g('ld4-vencimiento'),vigencia:g('ld4-vigencia'),codigos:ldCodigos,foto:ldFotoCudB64,informeIa:g('ld4-informe-ia')},
+    pag4:{numero:g('ld4-numero'),emision:g('ld4-emision'),vencimiento:g('ld4-vencimiento'),vigencia:g('ld4-vigencia'),gravedad:g('ld4-gravedad'),codigos:ldCodigos,foto:ldFotoCudB64,informeIa:g('ld4-informe-ia')},
     pag5:{fechaLimite:g('ld5-fecha-limite'),pendientes:ldPendientes},
     pag6:{servicios:ldServicios},
     pag7:{tiene:g('ld7-tiene'),acompanante:g('ld7-acompanante'),prestador:g('ld7-prestador'),vigencia:g('ld7-vigencia'),obs:g('ld7-obs')},
@@ -4789,6 +4962,7 @@ function guardarLibroDiscapacidad(){
         codigos_cif: (libro.pag4?.codigos||[]).join(', '),
         emision: libro.pag4?.emision || '',
         vencimiento: libro.pag4?.vencimiento || '',
+        gravedad: libro.pag4?.gravedad || '',
         tipo: 'CUD'
       });
     }
@@ -4800,7 +4974,7 @@ function cargarLibroDiscapacidad(){
   document.getElementById('ld4-foto-preview').innerHTML='📷';
   document.getElementById('ld10-preview').textContent='La vista global va a aparecer acá…';
   ['ld1-nombre','ld1-dni','ld1-fnac','ld1-domicilio','ld1-localidad','ld1-afluente','ld1-tel','ld1-mail','ld1-os',
-   'ld2-titular','ld2-vinculo','ld3-diagnostico','ld4-numero','ld4-emision','ld4-vencimiento','ld4-informe-ia',
+   'ld2-titular','ld2-vinculo','ld3-diagnostico','ld4-numero','ld4-emision','ld4-vencimiento','ld4-gravedad','ld4-informe-ia',
    'ld5-fecha-limite','ld7-prestador','ld7-vigencia','ld7-obs'
   ].forEach(id=>{const el=document.getElementById(id); if(el) el.value='';});
 
@@ -4813,7 +4987,7 @@ function cargarLibroDiscapacidad(){
         if(d.pag1){ set('ld1-nombre',d.pag1.nombre); set('ld1-dni',d.pag1.dni); set('ld1-fnac',d.pag1.fnac); set('ld1-domicilio',d.pag1.domicilio); set('ld1-localidad',d.pag1.localidad); set('ld1-afluente',d.pag1.afluente); set('ld1-tel',d.pag1.tel); set('ld1-mail',d.pag1.mail); set('ld1-os',d.pag1.os); }
         if(d.pag2){ set('ld2-titular',d.pag2.titular); set('ld2-vinculo',d.pag2.vinculo); ldFamilia=d.pag2.familia||[]; }
         if(d.pag3){ set('ld3-diagnostico',d.pag3.diagnostico); ldEstudios=d.pag3.estudios||[]; }
-        if(d.pag4){ set('ld4-numero',d.pag4.numero); set('ld4-emision',d.pag4.emision); set('ld4-vencimiento',d.pag4.vencimiento); set('ld4-vigencia',d.pag4.vigencia); ldCodigos=d.pag4.codigos||[]; set('ld4-informe-ia',d.pag4.informeIa);
+        if(d.pag4){ set('ld4-numero',d.pag4.numero); set('ld4-emision',d.pag4.emision); set('ld4-vencimiento',d.pag4.vencimiento); set('ld4-vigencia',d.pag4.vigencia); set('ld4-gravedad',d.pag4.gravedad); ldCodigos=d.pag4.codigos||[]; set('ld4-informe-ia',d.pag4.informeIa);
           ldFotoCudB64=d.pag4.foto||'';
           if(ldFotoCudB64) document.getElementById('ld4-foto-preview').innerHTML=`<img src="${ldFotoCudB64}" style="width:100%;height:100%;object-fit:cover" alt="Certificado CUD">`;
         }
@@ -9743,7 +9917,7 @@ async function ejecutarCorrelacionLD(){
 
 async function rsgRenderCapitulos(){
   // Libro Quirúrgico: recorre las claves libroQX_* de localStorage
-  const estadosQx = {observado:0, planificacion:0, programacion:0, seguimiento:0};
+  const estadosQx = {tratamiento:0, decidido:0, observado:0, planificacion:0, programacion:0, seguimiento:0};
   let totalQx = 0;
   Object.keys(localStorage).filter(k=>k.startsWith('libroQX_')).forEach(k=>{
     try{
@@ -9799,7 +9973,7 @@ async function rsgRenderCapitulos(){
   };
   const contPlanning = document.getElementById('rsg-cap-planning');
   if(contPlanning) contPlanning.innerHTML = totalQx
-    ? barrasEstado(estadosQx, {observado:'👁 Observado', planificacion:'📋 Planificación', programacion:'📅 Programación', seguimiento:'🩺 Seguimiento'})
+    ? barrasEstado(estadosQx, {tratamiento:'🩺 En tratamiento', decidido:'✅ Decidido', observado:'👁 Observado', planificacion:'📋 Planificación', programacion:'📅 Programación', seguimiento:'🩺 Seguimiento'})
     : '<span style="font-size:11px;color:var(--muted)">Sin pacientes en Planning Qx todavía.</span>';
 
   const contPlant = document.getElementById('rsg-cap-plantillas');
@@ -10993,6 +11167,38 @@ function renderHistItemHTML(c){
 </div>
 
 <!-- ══════════════════════════════════════════════════════════════════
+     MODAL 📇 AGENDA DE PACIENTES — índice alfabético de todos los
+     pacientes cargados en este equipo, con color de fondo según:
+     azul (discapacidad, más intenso = más grave) > verde (circuito
+     quirúrgico) / amarillo (en planificación o seguimiento quirúrgico)
+     > turquesa (el resto). Un clic lleva directo a la historia clínica.
+     ══════════════════════════════════════════════════════════════════ -->
+<div id="modal-agenda-pacientes" class="modal-overlay">
+  <div class="modal-box" style="max-width:680px;max-height:88vh;overflow-y:auto">
+    <div class="modal-header">
+      <span>📇 Agenda de Pacientes</span>
+      <button onclick="cerrarModal('modal-agenda-pacientes')">✕</button>
+    </div>
+    <div id="agenda-pac-tabs" style="display:flex;gap:6px;flex-wrap:wrap;padding:10px 14px 0"></div>
+    <div style="padding:10px 14px 0">
+      <input id="agenda-pac-filtro" type="text" placeholder="Filtrar por apellido o DNI…" oninput="renderAgendaPacientes(this.value)"
+        style="width:100%;padding:8px 10px;border:1px solid var(--border2);border-radius:6px;font-size:13px;font-family:inherit;box-sizing:border-box">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin:10px 0;font-size:10.5px;color:var(--muted)">
+        <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#1e40af;vertical-align:-1px"></span> Discapacidad grave</span>
+        <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#60a5fa;vertical-align:-1px"></span> Discapacidad moderada/leve</span>
+        <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#fde047;vertical-align:-1px"></span> Qx en planificación/seguimiento</span>
+        <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#4ade80;vertical-align:-1px"></span> Qx (otras etapas)</span>
+        <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#5eead4;vertical-align:-1px"></span> Resto de pacientes</span>
+      </div>
+      <div style="font-size:10.5px;color:var(--muted);margin-bottom:8px">📌 Muestra los pacientes guardados en este equipo. El color de discapacidad/quirúrgico refleja lo cargado en el Libro de Discapacidad y el Libro Quirúrgico DESDE ESTE MISMO NAVEGADOR.</div>
+    </div>
+    <div id="agenda-pac-list" style="padding:0 14px 14px">
+      <div style="text-align:center;color:var(--muted);padding:30px;font-size:13px">Cargando...</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════
      MODAL CONFIGURACIÓN DE TARIFAS
      ══════════════════════════════════════════════════════════════════ -->
 <div id="modal-tarifas" class="modal-overlay">
@@ -11688,6 +11894,13 @@ let libroChecklist=[]; // {item, estado, resumen, fecha, imprimible}
 // → seguimiento (posoperatorio).
 let libroEstadoPlanning='observado';
 const ESTADOS_PLANNING_QX = [
+  // PEDIDO: dos etapas nuevas ANTES de "observado", para cubrir a los
+  // pacientes que todavía no llegaron a pedirse el prequirúrgico:
+  // "tratamiento" = en tratamiento médico/kinésico, sin que se haya
+  // decidido conducta quirúrgica todavía; "decidido" = ya se decidió
+  // operar, pero aún no se pidió el prequirúrgico.
+  {v:'tratamiento',   l:'🩺 En tratamiento (sin decisión Qx)', color:'#0f766e', bg:'#f0fdfa'},
+  {v:'decidido',      l:'✅ Decidido — sin prequirúrgico',     color:'#7c3aed', bg:'#faf5ff'},
   {v:'observado',     l:'👁 Observado',      color:'#64748b', bg:'#f1f5f9'},
   {v:'planificacion', l:'📋 Planificación',  color:'#b45309', bg:'#fffbeb'},
   {v:'programacion',  l:'📅 Programación',   color:'#0369a1', bg:'#f0f9ff'},
