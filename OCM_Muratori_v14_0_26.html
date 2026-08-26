@@ -1297,8 +1297,7 @@ body{font-family:'Inter',system-ui,sans-serif;font-size:13px;background:var(--bg
         <div class="sm-grp-lbl" style="margin-top:0">Foto del certificado</div>
         <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px">
           <div id="ld4-foto-preview" style="width:110px;height:70px;border:1.5px dashed var(--border2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:22px;overflow:hidden;background:#f8fafc">📷</div>
-          <input type="file" accept="image/*" id="ld4-foto-input" style="display:none" onchange="subirFotoCudLD(this)">
-          <button type="button" class="btn-ghost" onclick="document.getElementById('ld4-foto-input').click()">📷 Cargar foto del certificado</button>
+          <button type="button" class="btn-ghost" onclick="abrirCapturaDocDiscap('cud', null)">📷 Cargar foto (con lectura automática por IA)</button>
         </div>
 
         <div class="form-grid">
@@ -1320,7 +1319,7 @@ body{font-family:'Inter',system-ui,sans-serif;font-size:13px;background:var(--bg
         <button type="button" class="btn-ghost" onclick="agregarCodigoLD()">+ Agregar código</button>
 
         <div class="sm-grp-lbl" style="margin-top:16px">📄 Informe de interpretación (Lector CUD / IA)</div>
-        <div class="panel-desc" style="margin-top:-4px">El análisis que hace el Lector CUD de la foto de arriba se vuelca acá — se puede pegar directo el informe que genera esa herramienta.</div>
+        <div class="panel-desc" style="margin-top:-4px">Al usar "🔎 Analizar con IA" sobre la foto de arriba, este resumen se completa solo — igual se puede editar o completar a mano.</div>
         <textarea id="ld4-informe-ia" rows="6" placeholder="Pegar acá el informe de interpretación generado por el Lector CUD…" style="width:100%;border:1px solid var(--border2);border-radius:6px;padding:8px 10px;font-size:12px;font-family:inherit;resize:vertical"></textarea>
       </div>
 
@@ -1386,6 +1385,40 @@ body{font-family:'Inter',system-ui,sans-serif;font-size:13px;background:var(--bg
     <div class="modal-footer" style="justify-content:space-between">
       <button class="btn btn-ghost btn-sm" onclick="guardarLibroDiscapacidad()">💾 Guardar</button>
       <button class="btn btn-ghost" onclick="cerrarModal('modal-libro-discapacidad')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Captura de documento de discapacidad (foto + lectura automática por IA) —
+     compartido por el CUD (pág.4), los estudios que avalan el certificado (pág.3) y los
+     informes mensuales de prestadores (pág.8) del Libro de Discapacidad. -->
+<div id="modal-doc-discap" class="modal-overlay">
+  <div class="modal-box" style="width:480px;max-width:95vw">
+    <div class="modal-header" style="background:linear-gradient(135deg,#0369a1,#0c4a6e)">
+      <span id="docdiscap-titulo">📷 Adjuntar foto</span>
+      <button onclick="cerrarCapturaDocDiscap()">✕</button>
+    </div>
+    <div class="modal-body" style="padding:16px">
+      <div class="panel-desc" style="margin-top:0">La IA lee la foto y completa los datos automáticamente — siempre revisá y corregí antes de guardar el Libro.</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+        <button type="button" class="btn-ghost" onclick="document.getElementById('docdiscap-file').click()">🖼 Archivo / cámara del celular</button>
+        <button type="button" class="btn-ghost" onclick="abrirWebcamDocDiscap()">🎥 Cámara web (PC)</button>
+      </div>
+      <input type="file" id="docdiscap-file" accept="image/*" capture="environment" style="display:none" onchange="docDiscapFotoElegida(event)">
+      <div id="docdiscap-webcam-wrap" style="display:none">
+        <video id="docdiscap-webcam-video" autoplay playsinline style="width:100%;max-height:260px;border-radius:8px;background:#000;object-fit:contain"></video>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button type="button" class="btn btn-primary" style="flex:1" onclick="capturarFotoDocDiscapWebcam()">📸 Capturar</button>
+          <button type="button" class="btn-ghost" onclick="cerrarWebcamDocDiscap()">Cancelar</button>
+        </div>
+      </div>
+      <div id="docdiscap-webcam-error" style="color:#dc2626;font-size:12px;margin-top:6px"></div>
+      <img id="docdiscap-preview" style="display:none;width:100%;max-height:240px;object-fit:contain;border:1px solid var(--border2);border-radius:8px;margin-top:10px;background:#f1f5f9" alt="Vista previa">
+      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+        <button type="button" class="btn btn-primary" id="docdiscap-btn-analizar" onclick="analizarDocDiscap()" disabled>🔎 Analizar con IA</button>
+        <button type="button" class="btn-ghost" id="docdiscap-btn-sinia" onclick="guardarDocDiscapSinIA()" disabled>Guardar la foto sin analizar</button>
+      </div>
+      <div id="docdiscap-analizando" style="display:none;font-size:12px;color:var(--muted);margin-top:8px">Analizando la foto con IA… puede tardar unos segundos.</div>
     </div>
   </div>
 </div>
@@ -4599,6 +4632,186 @@ function subirFotoCudLD(input){
   reader.readAsDataURL(file);
 }
 
+// ══════════════════════════════════════════════════════════════════
+// CAPTURA DE DOCUMENTOS DE DISCAPACIDAD — foto (archivo o cámara web) +
+// lectura automática por IA, compartida por 3 puntos del Libro de
+// Discapacidad: la foto del CUD (pág.4, usa analizar_foto_cud — el mismo
+// lector específico de 15 campos que usa Lector_CUD.html), los estudios
+// que avalan el certificado (pág.3) y los informes mensuales de
+// prestadores (pág.8) — estos dos últimos usan analizar_foto_documento_discap,
+// el lector genérico (tipo de documento / fecha / institución / resumen).
+// docFotoTarget.tipo indica a cuál de los 3 se está cargando la foto, y
+// docFotoTarget.idx la fila del array (null para el CUD, que no es una lista).
+// ══════════════════════════════════════════════════════════════════
+let docFotoB64='', docFotoMime='image/jpeg', docWebcamStream=null, docFotoTarget=null;
+function abrirCapturaDocDiscap(tipo, idx){
+  docFotoTarget = {tipo, idx:(idx===undefined?null:idx)};
+  docFotoB64=''; docFotoMime='image/jpeg';
+  const prev = document.getElementById('docdiscap-preview');
+  prev.style.display='none'; prev.src='';
+  document.getElementById('docdiscap-btn-analizar').disabled=true;
+  document.getElementById('docdiscap-btn-sinia').disabled=true;
+  document.getElementById('docdiscap-file').value='';
+  document.getElementById('docdiscap-webcam-error').textContent='';
+  const titulos = {cud:'📷 Foto del certificado CUD', estudio:'📷 Foto del estudio / informe', prestador:'📷 Foto del informe del prestador'};
+  document.getElementById('docdiscap-titulo').textContent = titulos[tipo] || '📷 Adjuntar foto';
+  abrirModal('modal-doc-discap');
+}
+function cerrarCapturaDocDiscap(){
+  cerrarWebcamDocDiscap();
+  cerrarModal('modal-doc-discap');
+}
+// Redimensiona/comprime la foto en el navegador antes de mandarla (máx. 1400px
+// de ancho, JPEG calidad .85) — mismo criterio que usa Lector_CUD.html.
+function _procesarImagenDocDiscap(dataUrlOriginal){
+  const img = new Image();
+  img.onload = function(){
+    const maxAncho = 1400;
+    const escala = Math.min(1, maxAncho / img.width);
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(img.width * escala);
+    canvas.height = Math.round(img.height * escala);
+    canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+    docFotoMime = 'image/jpeg';
+    docFotoB64 = dataUrl.split(',')[1];
+    const prev = document.getElementById('docdiscap-preview');
+    prev.src = dataUrl; prev.style.display='block';
+    document.getElementById('docdiscap-btn-analizar').disabled=false;
+    document.getElementById('docdiscap-btn-sinia').disabled=false;
+  };
+  img.src = dataUrlOriginal;
+}
+function docDiscapFotoElegida(ev){
+  const file = ev.target.files && ev.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => _procesarImagenDocDiscap(e.target.result);
+  reader.readAsDataURL(file);
+}
+async function abrirWebcamDocDiscap(){
+  const err = document.getElementById('docdiscap-webcam-error');
+  err.textContent='';
+  document.getElementById('docdiscap-webcam-wrap').style.display='block';
+  try{
+    docWebcamStream = await navigator.mediaDevices.getUserMedia({video:{width:{ideal:1400}}});
+    document.getElementById('docdiscap-webcam-video').srcObject = docWebcamStream;
+  }catch(e){
+    err.textContent = '⚠️ No se pudo acceder a la cámara (' + e.message + ')';
+    document.getElementById('docdiscap-webcam-wrap').style.display='none';
+  }
+}
+function cerrarWebcamDocDiscap(){
+  if(docWebcamStream){ docWebcamStream.getTracks().forEach(t=>t.stop()); docWebcamStream=null; }
+  const wrap = document.getElementById('docdiscap-webcam-wrap');
+  if(wrap) wrap.style.display='none';
+}
+function capturarFotoDocDiscapWebcam(){
+  const video = document.getElementById('docdiscap-webcam-video');
+  const canvas = document.createElement('canvas');
+  canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+  canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+  _procesarImagenDocDiscap(canvas.toDataURL('image/jpeg', 0.9));
+  cerrarWebcamDocDiscap();
+}
+// Convierte una fecha DD/MM/AAAA (como la devuelve la IA) al formato AAAA-MM-DD
+// que necesitan los <input type=date> del formulario. Si no matchea, devuelve ''
+// en vez de forzar un valor inválido dentro de un campo de fecha.
+function _fechaDMYaISO_(s){
+  if(!s) return '';
+  const m = String(s).trim().match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})$/);
+  if(!m) return '';
+  let [,d,mo,y] = m;
+  if(y.length===2) y = '20'+y;
+  return `${y}-${mo.padStart(2,'0')}-${d.padStart(2,'0')}`;
+}
+async function analizarDocDiscap(){
+  if(!docFotoB64 || !docFotoTarget) return;
+  document.getElementById('docdiscap-btn-analizar').disabled=true;
+  document.getElementById('docdiscap-analizando').style.display='block';
+  try{
+    const accion = docFotoTarget.tipo==='cud' ? 'analizar_foto_cud' : 'analizar_foto_documento_discap';
+    const res = await syncBackendAwait_(accion, {foto_base64:docFotoB64, mime_type:docFotoMime});
+    document.getElementById('docdiscap-analizando').style.display='none';
+    document.getElementById('docdiscap-btn-analizar').disabled=false;
+    if(!res || !res.success){
+      toast('⚠️ No se pudo leer la foto con IA: '+(res&&res.error?res.error:'error desconocido')+' — se guarda solo la foto.','err');
+      _guardarDocDiscapConDatos(null);
+      return;
+    }
+    _guardarDocDiscapConDatos(res.registro||{});
+    toast('✅ Foto analizada — revisá los campos completados antes de guardar el Libro','ok');
+  }catch(e){
+    document.getElementById('docdiscap-analizando').style.display='none';
+    document.getElementById('docdiscap-btn-analizar').disabled=false;
+    toast('❌ Error de conexión al analizar la foto','err');
+    _guardarDocDiscapConDatos(null);
+  }
+}
+function guardarDocDiscapSinIA(){
+  _guardarDocDiscapConDatos(null);
+  toast('📷 Foto guardada (sin analizar) — completá los datos a mano','ok');
+}
+// Aplica el resultado (o null si no se analizó) al destino correspondiente:
+// la foto del CUD en pág.4, o la fila correspondiente de ldEstudios/ldPrestadores.
+// Solo pisa campos que estén vacíos — si el médico ya había escrito algo a mano,
+// no se lo borra.
+function _guardarDocDiscapConDatos(reg){
+  if(!docFotoTarget || !docFotoB64) return;
+  const dataUrl = 'data:' + docFotoMime + ';base64,' + docFotoB64;
+  const {tipo, idx} = docFotoTarget;
+  if(tipo==='cud'){
+    ldFotoCudB64 = dataUrl;
+    document.getElementById('ld4-foto-preview').innerHTML = `<img src="${dataUrl}" style="width:100%;height:100%;object-fit:cover" alt="Certificado CUD">`;
+    if(reg){
+      const setIfEmpty=(id,val)=>{ if(!val) return; const el=document.getElementById(id); if(el && !el.value) el.value=val; };
+      setIfEmpty('ld4-emision', _fechaDMYaISO_(reg.emision));
+      setIfEmpty('ld4-vencimiento', _fechaDMYaISO_(reg.vencimiento));
+      if(reg.codigos){
+        ldCodigos.push({codigo:reg.codigos, descripcion:reg.diagnostico||'', porcentaje:''});
+        renderListaLD('ld4-codigos-lista', ldCodigos, LD_LISTAS_CFG.ldCodigos.campos, 'ldCodigos');
+      }
+      const infoEl = document.getElementById('ld4-informe-ia');
+      if(infoEl && !infoEl.value.trim()){
+        const partes = [];
+        if(reg.diagnostico) partes.push('Diagnóstico: '+reg.diagnostico);
+        if(reg.tipo) partes.push('Tipo: '+reg.tipo+(reg.subtipo?' / '+reg.subtipo:''));
+        if(reg.modalidad) partes.push('Modalidad: '+reg.modalidad);
+        if(reg.orientacion) partes.push('Orientación: '+reg.orientacion);
+        if(reg.junta) partes.push('Junta evaluadora: '+reg.junta);
+        if(reg.efectores) partes.push('Efectores: '+reg.efectores);
+        if(reg.tipoPension) partes.push('Pensión: '+reg.tipoPension);
+        if(reg.trazabilidad) partes.push('Trazabilidad: '+reg.trazabilidad);
+        if(partes.length) infoEl.value = 'Generado automáticamente por IA a partir de la foto — revisar:\n' + partes.join('\n');
+      }
+      const diagEl = document.getElementById('ld3-diagnostico');
+      if(diagEl && !diagEl.value.trim() && reg.diagnostico) diagEl.value = reg.diagnostico;
+    }
+  } else if(tipo==='estudio'){
+    if(idx===null || !ldEstudios[idx]) return;
+    ldEstudios[idx].foto = dataUrl;
+    if(reg){
+      if(reg.tipo_documento && !ldEstudios[idx].estudio) ldEstudios[idx].estudio = reg.tipo_documento;
+      const f = _fechaDMYaISO_(reg.fecha);
+      if(f && !ldEstudios[idx].fecha) ldEstudios[idx].fecha = f;
+      const resTxt = [reg.resumen, reg.institucion?('Institución: '+reg.institucion):''].filter(Boolean).join(' — ');
+      if(resTxt && !ldEstudios[idx].resultado) ldEstudios[idx].resultado = resTxt;
+    }
+    renderListaLD('ld3-estudios-lista', ldEstudios, LD_LISTAS_CFG.ldEstudios.campos, 'ldEstudios');
+  } else if(tipo==='prestador'){
+    if(idx===null || !ldPrestadores[idx]) return;
+    ldPrestadores[idx].foto = dataUrl;
+    if(reg){
+      if(reg.institucion && !ldPrestadores[idx].nombre) ldPrestadores[idx].nombre = reg.institucion;
+      if(reg.tipo_documento && !ldPrestadores[idx].servicio) ldPrestadores[idx].servicio = reg.tipo_documento;
+      const f = _fechaDMYaISO_(reg.fecha);
+      if(f && !ldPrestadores[idx].ultimoInforme) ldPrestadores[idx].ultimoInforme = f;
+    }
+    renderListaLD('ld8-prestadores-lista', ldPrestadores, LD_LISTAS_CFG.ldPrestadores.campos, 'ldPrestadores');
+  }
+  cerrarCapturaDocDiscap();
+}
+
 // Junta diagnóstico (pág.3) + códigos CUD (pág.4) + servicios (pág.6) +
 // último punto de evolución (pág.9) en un solo resumen — la idea es ver de
 // un vistazo el problema completo y el estado de su resolución.
@@ -4883,6 +5096,10 @@ function quitarFilaLD(arrNombre, idx){
 }
 function renderListaLD(contId, arr, camposFn, arrNombre){
   const cont=document.getElementById(contId);
+  // ldEstudios (pág.3 — estudios que avalan el certificado) y ldPrestadores
+  // (pág.8 — informes mensuales) son documentos de respaldo: llevan además
+  // un botón de foto + lectura automática por IA (ver abrirCapturaDocDiscap).
+  const fotoTipo = arrNombre==='ldEstudios' ? 'estudio' : (arrNombre==='ldPrestadores' ? 'prestador' : '');
   cont.innerHTML = arr.map((item,i)=>{
     const campos = camposFn(i);
     const inputs = campos.map(c=>{
@@ -4891,7 +5108,8 @@ function renderListaLD(contId, arr, camposFn, arrNombre){
       }
       return `<input type="${c.tipo||'text'}" placeholder="${c.ph}" value="${item[c.campo]||''}" oninput="${arrNombre}[${i}].${c.campo}=this.value">`;
     }).join('');
-    return `<div class="ld-row">${inputs}<span style="cursor:pointer;color:var(--muted)" onclick="quitarFilaLD('${arrNombre}',${i})">✕</span></div>`;
+    const fotoBtn = fotoTipo ? `<span title="${item.foto?'Ver/reemplazar foto':'Adjuntar foto (lectura automática por IA)'}" style="cursor:pointer;font-size:15px;padding:3px 6px;border-radius:6px;background:${item.foto?'#ecfdf5':'#f1f5f9'}" onclick="abrirCapturaDocDiscap('${fotoTipo}',${i})">${item.foto?'📷✅':'📷'}</span>` : '';
+    return `<div class="ld-row">${inputs}${fotoBtn}<span style="cursor:pointer;color:var(--muted)" onclick="quitarFilaLD('${arrNombre}',${i})">✕</span></div>`;
   }).join('') || `<div class="not-found" style="padding:6px">Sin ítems cargados.</div>`;
 }
 
