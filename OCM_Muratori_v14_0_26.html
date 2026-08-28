@@ -1423,6 +1423,38 @@ body{font-family:'Inter',system-ui,sans-serif;font-size:13px;background:var(--bg
   </div>
 </div>
 
+<!-- MODAL: Cobrar (Mercado Pago) — genera el link real de pago (Checkout Pro) que
+     antes no existía en ningún lado del sistema; el médico lo generaba a mano
+     afuera de OCM. Ahora se genera acá y se manda por WhatsApp al paciente. -->
+<div id="modal-cobro-mp" class="modal-overlay">
+  <div class="modal-box" style="width:440px;max-width:95vw">
+    <div class="modal-header" style="background:linear-gradient(135deg,#0369a1,#0c4a6e)">
+      <span>💳 Generar link de cobro</span>
+      <button onclick="cerrarModal('modal-cobro-mp')">✕</button>
+    </div>
+    <div class="modal-body" style="padding:18px;display:flex;flex-direction:column;gap:12px">
+      <div id="cobromp-paciente" style="font-size:12px;color:var(--muted)"></div>
+      <div>
+        <label style="font-size:11px;font-weight:700;color:var(--muted)">Concepto</label>
+        <input id="cobromp-concepto" type="text" placeholder="Ej: Teleconsulta 5 minutos" style="width:100%;padding:8px 10px;border:1px solid var(--border2);border-radius:6px;font-size:13px;font-family:inherit">
+      </div>
+      <div>
+        <label style="font-size:11px;font-weight:700;color:var(--muted)">Monto (ARS)</label>
+        <input id="cobromp-monto" type="number" min="0" step="1" placeholder="Ej: 5000" style="width:100%;padding:8px 10px;border:1px solid var(--border2);border-radius:6px;font-size:13px;font-family:inherit">
+      </div>
+      <button type="button" class="btn btn-primary" id="cobromp-btn-generar" onclick="generarLinkPagoMP()">💳 Generar link de pago</button>
+      <div id="cobromp-resultado" style="display:none;background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:10px 12px;font-size:12px;word-break:break-all"></div>
+      <div id="cobromp-acciones" style="display:none;gap:8px">
+        <button type="button" class="btn-ghost" style="flex:1" onclick="copiarLinkPagoMP()">📋 Copiar link</button>
+        <button type="button" class="btn btn-primary" style="flex:1" onclick="enviarLinkPagoWA()">📲 Enviar por WhatsApp</button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="cerrarModal('modal-cobro-mp')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL: Catastro de Empresas — riesgo de exposición laboral cerca de los pacientes -->
 <div id="modal-catastro-empresas" class="modal-overlay">
   <div class="modal-box" style="width:820px;max-width:97vw;height:86vh;display:flex;flex-direction:column">
@@ -1582,6 +1614,7 @@ body{font-family:'Inter',system-ui,sans-serif;font-size:13px;background:var(--bg
       <button class="btn btn-ghost btn-sm" onclick="abrirRidmRapido()" title="Cargar datos de filiación en el momento (sin antecedentes)">⚡ Filiación</button>
       <button class="btn btn-ghost btn-sm" onclick="abrirRidmPendientes()" id="btn-ridm-pend">📥 RIDM</button>
       <button class="btn btn-ghost btn-sm" onclick="abrirConsultasOnline()" id="btn-consultas" style="position:relative">💬 Consultas<span id="badge-consultas" style="display:none;position:absolute;top:-4px;right:-4px;background:#dc2626;color:#fff;border-radius:50%;width:16px;height:16px;font-size:9px;font-weight:700;display:none;align-items:center;justify-content:center"></span></button>
+      <button class="btn btn-ghost btn-sm" onclick="abrirModalCobroMP()" title="Generar un link real de Mercado Pago para que el paciente pague a distancia">💳 Cobrar</button>
       <button class="btn btn-ghost btn-sm" onclick="window.location.href='Agenda_Mensajes.html'" id="btn-bandeja-ia" style="position:relative" title="Abrir la Agenda de Mensajes — mails clasificados y con borrador de respuesta por IA">📬 Agenda Mails<span id="badge-bandeja-ia" style="display:none;position:absolute;top:-4px;right:-4px;background:#dc2626;color:#fff;border-radius:50%;width:16px;height:16px;font-size:9px;font-weight:700;align-items:center;justify-content:center"></span></button>
       <button class="btn btn-ghost btn-sm" id="btn-ridm-local" onclick="importarRidmLocal()" style="display:none">📥 RIMP local</button>
       <button class="btn btn-ghost btn-sm" onclick="verHistorialModal()" id="btn-hist" disabled>📋 Historial</button>
@@ -4913,6 +4946,66 @@ async function syncBackendAwait_(action, payload){
     body: JSON.stringify(Object.assign({action}, payload))
   });
   return resp.json();
+}
+// ══════════════════════════════════════════════════════════════════
+// RCM — Cobrar (Mercado Pago): genera el link real de pago (Checkout Pro)
+// y lo manda por WhatsApp al paciente. Antes esto no existía en ningún
+// lado del sistema — el médico lo generaba a mano afuera de OCM.
+// ══════════════════════════════════════════════════════════════════
+let cobrompUltimoLink = '';
+function abrirModalCobroMP(){
+  const elPac = document.getElementById('cobromp-paciente');
+  if(elPac){
+    elPac.textContent = (typeof pacienteActivo!=='undefined' && pacienteActivo)
+      ? `Paciente: ${pacienteActivo.apellido||''}, ${pacienteActivo.nombre||''}${pacienteActivo.dni?' (DNI '+pacienteActivo.dni+')':''}`
+      : 'Sin paciente seleccionado — el link se genera igual, sin vincularlo a un paciente.';
+  }
+  document.getElementById('cobromp-concepto').value = '';
+  document.getElementById('cobromp-monto').value = '';
+  document.getElementById('cobromp-resultado').style.display = 'none';
+  document.getElementById('cobromp-resultado').textContent = '';
+  document.getElementById('cobromp-acciones').style.display = 'none';
+  cobrompUltimoLink = '';
+  abrirModal('modal-cobro-mp');
+}
+async function generarLinkPagoMP(){
+  const concepto = (document.getElementById('cobromp-concepto').value||'').trim() || 'Consulta médica — Dr. Muratori';
+  const monto = parseFloat(document.getElementById('cobromp-monto').value);
+  if(!monto || monto<=0){ toast('⚠️ Ingresá un monto válido','err'); return; }
+  const btn = document.getElementById('cobromp-btn-generar');
+  btn.disabled = true; btn.textContent = 'Generando…';
+  try{
+    const dni = (typeof pacienteActivo!=='undefined' && pacienteActivo && pacienteActivo.dni) ? pacienteActivo.dni : '';
+    const mail = (typeof pacienteActivo!=='undefined' && pacienteActivo && pacienteActivo.mail) ? pacienteActivo.mail : '';
+    const res = await syncBackendAwait_('crear_link_pago_mp', { monto, concepto, dni, mail, tipo:'teleconsulta' });
+    if(res && res.success && res.link){
+      cobrompUltimoLink = res.link;
+      const elRes = document.getElementById('cobromp-resultado');
+      elRes.innerHTML = `<b>Link de pago listo:</b><br><a href="${res.link}" target="_blank">${res.link}</a>`;
+      elRes.style.display = 'block';
+      document.getElementById('cobromp-acciones').style.display = 'flex';
+      toast('✅ Link de pago generado');
+    }else{
+      toast('❌ ' + ((res&&res.error)||'No se pudo generar el link de pago'), 'err');
+    }
+  }catch(err){
+    toast('❌ Error de conexión al generar el link: ' + err, 'err');
+  }finally{
+    btn.disabled = false; btn.textContent = '💳 Generar link de pago';
+  }
+}
+function copiarLinkPagoMP(){
+  if(!cobrompUltimoLink){ toast('⚠️ Todavía no generaste un link','err'); return; }
+  navigator.clipboard.writeText(cobrompUltimoLink)
+    .then(()=>toast('📋 Link copiado al portapapeles'))
+    .catch(()=>toast('❌ No se pudo copiar el link','err'));
+}
+function enviarLinkPagoWA(){
+  if(!cobrompUltimoLink){ toast('⚠️ Todavía no generaste un link','err'); return; }
+  const tel = (typeof pacienteActivo!=='undefined' && pacienteActivo && pacienteActivo.telefono) ? pacienteActivo.telefono.replace(/\D/g,'') : '';
+  if(!tel){ toast('⚠️ El paciente no tiene teléfono cargado','err'); return; }
+  const texto = `Hola${pacienteActivo.nombre?' '+pacienteActivo.nombre:''}! Te paso el link para abonar la consulta por Mercado Pago:\n${cobrompUltimoLink}`;
+  window.open(`https://wa.me/549${tel}?text=${encodeURIComponent(texto)}`,'_blank');
 }
 async function migrarDatosLocalesANube(){
   const statusEl = document.getElementById('migracion-status');
