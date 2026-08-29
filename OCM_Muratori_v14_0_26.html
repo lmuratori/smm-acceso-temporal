@@ -10580,23 +10580,38 @@ function verificarRIDM(dni) {
   const banner = document.getElementById('ridm-banner');
   if (!banner) return;
 
-  // Buscar en localStorage: ridm_{dni} o ridm_{dni_sin_puntos}
-  const keys = [`ridm_${dni}`, `ridm_${(dni||'').replace(/\D/g,'')}`, `ridm_${(dni||'').replace(/\./g,'').replace(/ /g,'')}`];
+  // 1) Instantáneo: localStorage, por si se completó desde ESTE MISMO navegador
+  // (ej. filiación rápida hecha en la compu del consultorio). La clave real que
+  // usa RIDM_Muratori_v1.html es "ridm_local_{dni}" — se agregan variantes viejas
+  // por las dudas de que haya quedado algo de antes.
+  const keys = [`ridm_local_${dni}`, `ridm_${dni}`,
+                `ridm_local_${(dni||'').replace(/\D/g,'')}`, `ridm_${(dni||'').replace(/\D/g,'')}`];
   let data = null;
   for (const k of keys) {
     try { const r = localStorage.getItem(k); if(r){ data=JSON.parse(r); break; } } catch(_){}
   }
+  if (data) { ridmData = data; mostrarBannerRIDM_(data); }
+  else { banner.classList.remove('show'); }
 
-  if (!data) {
-    banner.classList.remove('show');
-    return;
-  }
-
-  ridmData = data;
+  // 2) Desde la nube (RIDM_Pendientes) — el caso normal: el paciente lo completa
+  // en SU celular, no en la compu del consultorio, así que hay que ir a buscarlo
+  // al servidor. Si aparece, pisa lo que haya mostrado el paso 1 (más completo).
+  if (!dni) return;
+  fetch(SHEETS_URL+'?action=get_ridm_paciente&dni='+encodeURIComponent(dni)+tokenQS_())
+    .then(r=>r.json())
+    .then(res=>{
+      if (res && res.success && res.encontrado && res.datos) {
+        ridmData = res.datos;
+        mostrarBannerRIDM_(res.datos);
+      }
+    }).catch(()=>{ /* sin conexión: nos quedamos con lo que haya mostrado el paso 1 */ });
+}
+function mostrarBannerRIDM_(data) {
+  const banner = document.getElementById('ridm-banner');
+  if (!banner) return;
   const nom = `${data.apellido||''}, ${data.nombre||''}`;
   const fechaStr = data.fecha_envio || 'fecha desconocida';
   const motivoCorto = (data.motivo||'sin motivo').slice(0,60) + ((data.motivo||'').length>60?'…':'');
-
   document.getElementById('ridm-banner-pac').textContent    = nom;
   document.getElementById('ridm-banner-fecha').textContent  = fechaStr;
   document.getElementById('ridm-banner-motivo').textContent = motivoCorto;
@@ -10722,6 +10737,12 @@ function importarDatosRIDM() {
   cerrarModal('modal-ridm-detalle');
   ocultarBannerRIDM();
   toast('✅ Datos RIDM importados al recetario','ok');
+
+  // Avisarle al servidor que ya se importó, para que no lo siga marcando como
+  // pendiente en el Dashboard/badge una vez que el médico ya lo tiene en la ficha.
+  if (d._row) {
+    fetch(SHEETS_URL+'?action=marcar_procesado&row='+encodeURIComponent(d._row)+tokenQS_()).catch(()=>{});
+  }
 }
 
 /* ══════════════════════════════════════════════════════════════════
