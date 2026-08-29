@@ -28,6 +28,12 @@
   .badge.privado{background:#fffbeb;color:#b45309}
   .badge.pago-ok{background:#f0fdf4;color:#166534;margin-left:4px}
   .badge.pago-pend{background:#fef2f2;color:#dc2626;margin-left:4px}
+  .badge.origen{background:#eef2ff;color:#4338ca;margin-left:4px}
+  .badge.riesgo-alto{background:#dc2626;color:#fff;margin-left:4px}
+  .badge.riesgo-medio{background:#fffbeb;color:#b45309;margin-left:4px}
+  .msg-card.riesgo-alto{border-color:#fca5a5;background:#fef7f7}
+  .alerta-ia{background:#fef2f2;border:1.5px solid #fca5a5;color:#7f1d1d;border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.55;margin-bottom:10px}
+  .alerta-ia b{display:block;font-size:12.5px;margin-bottom:2px}
   .detalle{padding:20px 26px;overflow-y:auto}
   .vacio{color:var(--muted);text-align:center;margin-top:80px;font-size:13px}
   .card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 18px;margin-bottom:14px}
@@ -114,11 +120,14 @@ async function cargarMensajes(){
     return;
   }
   cont.innerHTML = MENSAJES.map((m,i)=>`
-    <div class="msg-card" id="mc-${i}" onclick="mostrarMensaje(${i})">
-      <div class="rem">${(m.remitente||'').replace(/<.*/,'').trim()||m.remitente}</div>
+    <div class="msg-card ${m.riesgo==='alto'?'riesgo-alto':''}" id="mc-${i}" onclick="mostrarMensaje(${i})">
+      <div class="rem">${m.riesgo==='alto'?'🔴 ':''}${(m.remitente||'').replace(/<.*/,'').trim()||m.remitente}</div>
       <div class="asu">${m.asunto||'(sin asunto)'}</div>
       <span class="badge ${m.clasificacion==='sensible_publico'?'sensible':'privado'}">${m.clasificacion==='sensible_publico'?'Sensible / gratuita':'Privada'}</span>
       ${m.requierePago ? `<span class="badge ${m.estadoPago==='confirmado'?'pago-ok':'pago-pend'}">${m.estadoPago==='confirmado'?'Pago OK':'Pago pendiente'}</span>` : ''}
+      ${m.origen && m.origen!=='Mail' ? `<span class="badge origen">📲 ${m.origen}</span>` : ''}
+      ${m.riesgo==='alto' ? `<span class="badge riesgo-alto">⚠️ Riesgo alto (IA)</span>` : ''}
+      ${m.riesgo==='medio' ? `<span class="badge riesgo-medio">Riesgo medio (IA)</span>` : ''}
     </div>`).join('');
 }
 
@@ -131,9 +140,14 @@ function mostrarMensaje(i){
   const esVariasPreguntas = m.cantPreguntas >= 2 && m.clasificacion !== 'sensible_publico';
 
   cont.innerHTML = `
+    ${m.riesgo==='alto' ? `
+    <div class="alerta-ia">
+      <b>⚠️ La IA marcó esto como riesgo alto — no reemplaza tu criterio, pero conviene revisarlo primero.</b>
+      El detalle de su razonamiento y los estudios habituales para un caso así están al final del mensaje original, abajo.
+    </div>` : ''}
     <div class="card">
       <h3>Mensaje original</h3>
-      <div style="font-size:12px;margin-bottom:8px"><b>De:</b> ${m.remitente} · <b>Asunto:</b> ${m.asunto||'—'} · <b>Preguntas detectadas:</b> ${m.cantPreguntas}</div>
+      <div style="font-size:12px;margin-bottom:8px"><b>De:</b> ${m.remitente} · <b>Asunto:</b> ${m.asunto||'—'} · <b>Preguntas detectadas:</b> ${m.cantPreguntas} · <b>Origen:</b> ${m.origen||'Mail'}</div>
       <div class="cuerpo-original">${(m.cuerpo||'').replace(/</g,'&lt;')}</div>
     </div>
 
@@ -142,8 +156,10 @@ function mostrarMensaje(i){
       <h3>Estado de pago</h3>
       ${m.estadoPago!=='confirmado' ? `<div class="alerta-pago">⚠️ Esta consulta es paga y todavía no está confirmado el pago. No se puede enviar la respuesta hasta confirmarlo.</div>` : `<div style="color:#166534;font-size:12px;font-weight:700">✅ Pago confirmado</div>`}
       <div class="row">
+        ${m.estadoPago!=='confirmado' ? `<button class="btn btn-ghost" onclick="generarCobroMP()">💳 Generar link de cobro (Mercado Pago)</button>` : ''}
         <button class="btn btn-ghost" onclick="marcarPagoConfirmado()">${m.estadoPago==='confirmado'?'✓ Pago ya confirmado':'Marcar pago como confirmado'}</button>
       </div>
+      <div id="cobro-resultado"></div>
     </div>` : ''}
 
     ${esVariasPreguntas ? `
@@ -199,6 +215,35 @@ async function generarMeet(duracionMin){
 function insertarLinkEnRespuesta(link){
   const ta = document.getElementById('respuesta-texto');
   ta.value += `\n\nLink de la videollamada: ${link}`;
+}
+
+// Mismo botón/función que ya usa OCM ("Cobrar") — hoy Mercado Pago está
+// devolviendo un 403 con el token de producción (ticket de soporte abierto,
+// WCS-XXXXX), así que este botón va a fallar hasta que MP lo desbloquee.
+// Queda armado y conectado para que funcione solo apenas eso se resuelva,
+// sin tener que tocar nada acá.
+async function generarCobroMP(){
+  const cont = document.getElementById('cobro-resultado');
+  if(!MENSAJE_ACTUAL) return;
+  const monto = prompt('Monto de la consulta (en pesos, sin puntos ni comas):', '');
+  if(monto===null) return;
+  if(!monto.trim() || isNaN(Number(monto)) || Number(monto)<=0){
+    cont.innerHTML = '<div class="alerta-pago">⚠️ Monto inválido</div>';
+    return;
+  }
+  const destMail = (MENSAJE_ACTUAL.remitente.match(/<(.+)>/)||[])[1] || MENSAJE_ACTUAL.remitente;
+  cont.innerHTML = '<div style="font-size:11px;color:var(--muted);margin-top:6px">Generando link de cobro…</div>';
+  try{
+    const resp = await fetch(SHEETS_URL, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify(Object.assign({action:'crear_link_pago_mp', monto:Number(monto),
+        concepto:'Consulta virtual — Dr. Muratori', mail:destMail, tipo:'teleconsulta'}, APP_TOKEN?{token:APP_TOKEN}:{}))});
+    const data = await resp.json();
+    if(!data.success) throw new Error(data.error||'Error del servidor');
+    cont.innerHTML = `<div class="meet-box">💳 Link generado: <a href="${data.link}" target="_blank">${data.link}</a><br>
+      <button class="btn-mini" onclick="insertarLinkEnRespuesta('${data.link}')" style="margin-top:6px;font-size:11px">+ Insertar en la respuesta</button></div>`;
+  }catch(e){
+    cont.innerHTML = `<div class="alerta-pago">⚠️ No se pudo generar el link de cobro: ${e.message}</div>`;
+  }
 }
 
 async function aprobarYEnviar(){
