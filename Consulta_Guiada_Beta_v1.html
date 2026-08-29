@@ -1,0 +1,616 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Consulta Guiada — Beta (voz + IA)</title>
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<style>
+  :root{--azul:#0369a1;--azul-osc:#0c4a6e;--verde:#16a34a;--ambar:#d97706;--rojo:#dc2626;--muted:#64748b;--border:#e2e8f0;--bg:#f4fbfd;--surface:#fff}
+  *{box-sizing:border-box}
+  body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);margin:0;color:#0f172a;padding-bottom:60px}
+  .topbar{background:linear-gradient(135deg,var(--azul),var(--azul-osc));color:#fff;padding:18px 20px}
+  .topbar h1{margin:0 0 2px;font-size:19px}
+  .topbar p{margin:0;font-size:12px;opacity:.9}
+  main{max-width:860px;margin:0 auto;padding:18px 16px 40px}
+
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:14px}
+  .card h2{margin:0 0 10px;font-size:15px;color:var(--azul-osc)}
+  label{font-size:11px;font-weight:700;color:var(--muted);display:block;margin-bottom:3px}
+  input[type=text],input[type=tel],textarea,select{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:7px;font-size:13px;font-family:inherit;background:#fff}
+  textarea{resize:vertical;min-height:70px;line-height:1.5}
+  .row{display:flex;gap:10px;flex-wrap:wrap}
+  .row > div{flex:1;min-width:150px}
+
+  .stepper{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+  .step-chip{flex:1;min-width:110px;text-align:center;padding:8px 6px;border-radius:8px;font-size:11px;font-weight:700;background:#eef2f7;color:var(--muted);border:1px solid var(--border);cursor:pointer}
+  .step-chip.active{background:var(--azul);color:#fff;border-color:var(--azul)}
+  .step-chip.done{background:#ecfdf5;color:var(--verde);border-color:#a7f3d0}
+
+  .step-panel{display:none}
+  .step-panel.active{display:block}
+
+  .instructor{background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;padding:12px 14px;font-size:12.5px;color:#0c4a6e;margin-bottom:12px;line-height:1.55}
+  .instructor b{display:block;margin-bottom:3px;font-size:12.5px}
+
+  .mic-row{display:flex;align-items:center;gap:10px;margin:10px 0}
+  .btn{border:none;border-radius:8px;padding:9px 16px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit}
+  .btn-primary{background:var(--azul);color:#fff}
+  .btn-primary:hover{background:var(--azul-osc)}
+  .btn-ghost{background:#eef2f7;color:#0f172a}
+  .btn-ghost:hover{background:#e2e8f0}
+  .btn-ia{background:#7c3aed;color:#fff}
+  .btn-ia:hover{background:#6d28d9}
+  .btn-ok{background:var(--verde);color:#fff}
+  .btn:disabled{opacity:.5;cursor:default}
+  .btn-mic{background:#fef2f2;color:var(--rojo);border:1px solid #fca5a5}
+  .btn-mic.on{background:var(--rojo);color:#fff;animation:pulse 1.2s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(220,38,38,.5)}70%{box-shadow:0 0 0 8px rgba(220,38,38,0)}100%{box-shadow:0 0 0 0 rgba(220,38,38,0)}}
+
+  .interim{font-size:12px;color:var(--muted);font-style:italic;min-height:16px;margin-top:4px}
+  .actions-fila{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+
+  .maniobra-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px 0;border-bottom:1px dashed var(--border)}
+  .maniobra-row input[type=checkbox]{width:16px;height:16px}
+  .maniobra-row .nombre{flex:2;min-width:150px;font-size:12.5px;font-weight:600}
+  .maniobra-row select{flex:1;min-width:110px}
+  .maniobra-row input[type=text]{flex:1.3;min-width:130px}
+  .sug-rationale{font-size:10.5px;color:var(--muted);margin-left:24px;margin-top:-4px;margin-bottom:2px}
+
+  .resumen-box{background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:12px 14px;font-size:12.5px;white-space:pre-wrap;line-height:1.6;max-height:400px;overflow-y:auto}
+  .badge{display:inline-block;font-size:9.5px;font-weight:800;padding:2px 7px;border-radius:5px;margin-left:6px;vertical-align:middle}
+  .badge-beta{background:#fef3c7;color:#92400e;border:1px solid #fde68a}
+  .toast-cont{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:999;display:flex;flex-direction:column;gap:6px;align-items:center}
+  .toast{background:#0f172a;color:#fff;padding:9px 16px;border-radius:8px;font-size:12.5px;box-shadow:0 4px 14px rgba(0,0,0,.2)}
+  .toast.err{background:#dc2626}
+  .toast.ok{background:#16a34a}
+  .spin{display:inline-block;width:11px;height:11px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite;vertical-align:middle;margin-right:5px}
+  @keyframes sp{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>🎙️ Consulta Guiada <span class="badge badge-beta">BETA — SEPARADA DE CAM/OCM</span></h1>
+  <p>Vas hablando por sección, la IA arma el relato y sugiere maniobras — al final se guarda en la historia clínica y arma un resumen para el paciente.</p>
+</div>
+
+<main>
+
+  <div class="card">
+    <h2>👤 Paciente</h2>
+    <div class="row">
+      <div><label>Apellido y nombre</label><input type="text" id="pac-nombre" placeholder="Ej: Muratori, Luis"></div>
+      <div><label>DNI (para guardar en la historia clínica)</label><input type="text" id="pac-dni" placeholder="Ej: 22168957"></div>
+      <div><label>Teléfono (para mandarle el resumen)</label><input type="tel" id="pac-tel" placeholder="Ej: 2616586234"></div>
+    </div>
+  </div>
+
+  <div class="stepper" id="stepper"></div>
+
+  <!-- PASO 1: Motivo y antecedentes -->
+  <div class="step-panel" data-step="0">
+    <div class="card">
+      <h2>🎯 Motivo de consulta y antecedentes</h2>
+      <div class="instructor">
+        <b>Instructor virtual</b>
+        Contame por qué viene el paciente hoy y cualquier antecedente relevante (enfermedades previas, cirugías, medicación habitual, alergias). Apretá el micrófono y hablá con naturalidad — después lo pulimos con IA.
+      </div>
+      <div class="mic-row">
+        <button type="button" class="btn btn-mic" id="mic-btn-0" onclick="toggleMic(0)">🎤 Escuchar</button>
+        <span style="font-size:11px;color:var(--muted)">o escribí directo abajo</span>
+      </div>
+      <div class="interim" id="interim-0"></div>
+      <textarea id="texto-0" placeholder="Acá va apareciendo lo que dictás… también podés escribir directo."></textarea>
+      <div class="actions-fila">
+        <button type="button" class="btn btn-ia" onclick="pulirConIA(0,this)">✨ Pulir con IA</button>
+        <button type="button" class="btn btn-primary" onclick="irAPaso(1)">Siguiente: Interrogatorio ▶</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PASO 2: Interrogatorio -->
+  <div class="step-panel" data-step="1">
+    <div class="card">
+      <h2>📝 Desarrollo del interrogatorio</h2>
+      <div class="instructor">
+        <b>Instructor virtual</b>
+        Ahora contame el desarrollo: mecanismo, evolución del cuadro, qué lo alivia o lo empeora, tratamientos previos, impacto funcional. Hablá seguido, la IA arma el relato clínico prolijo al final.
+      </div>
+      <div class="mic-row">
+        <button type="button" class="btn btn-mic" id="mic-btn-1" onclick="toggleMic(1)">🎤 Escuchar</button>
+      </div>
+      <div class="interim" id="interim-1"></div>
+      <textarea id="texto-1" style="min-height:110px" placeholder="Relato del interrogatorio…"></textarea>
+      <div class="actions-fila">
+        <button type="button" class="btn btn-ia" onclick="pulirConIA(1,this)">✨ Redactar en prosa clínica (IA)</button>
+        <button type="button" class="btn btn-ghost" onclick="irAPaso(0)">◀ Volver</button>
+        <button type="button" class="btn btn-primary" onclick="irAPaso(2)">Siguiente: Examen físico ▶</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PASO 3: Examen físico -->
+  <div class="step-panel" data-step="2">
+    <div class="card">
+      <h2>🔎 Examen físico</h2>
+      <div class="instructor">
+        <b>Instructor virtual</b>
+        Pedile a la IA que sugiera maniobras según lo que contaste. Marcá las que hiciste y el resultado; también podés agregar maniobras a mano o dictar hallazgos sueltos.
+      </div>
+      <div class="actions-fila" style="margin-bottom:6px">
+        <button type="button" class="btn btn-ia" onclick="sugerirManiobras(this)">🔎 Sugerir maniobras (IA)</button>
+        <button type="button" class="btn btn-ghost" onclick="agregarManiobraManual()">+ Agregar maniobra manual</button>
+      </div>
+      <div id="maniobras-lista"></div>
+
+      <div style="margin-top:14px">
+        <label>Otros hallazgos del examen (dictado libre)</label>
+        <div class="mic-row">
+          <button type="button" class="btn btn-mic" id="mic-btn-2" onclick="toggleMic(2)">🎤 Escuchar</button>
+        </div>
+        <div class="interim" id="interim-2"></div>
+        <textarea id="texto-2" placeholder="Otros hallazgos del examen físico…"></textarea>
+      </div>
+      <div class="actions-fila">
+        <button type="button" class="btn btn-ghost" onclick="irAPaso(1)">◀ Volver</button>
+        <button type="button" class="btn btn-primary" onclick="irAPaso(3)">Siguiente: Estudios ▶</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PASO 4: Estudios e indicaciones -->
+  <div class="step-panel" data-step="3">
+    <div class="card">
+      <h2>🧪 Estudios e indicaciones</h2>
+      <div class="instructor">
+        <b>Instructor virtual</b>
+        Decime qué estudios pedís y qué indicaciones le das al paciente. Queda anotado acá — todavía no se envía solo a ningún sistema, pero lo vas a poder copiar y pegar en el sistema del hospital o de tu consultorio.
+      </div>
+      <div class="mic-row">
+        <button type="button" class="btn btn-mic" id="mic-btn-3" onclick="toggleMic(3)">🎤 Escuchar</button>
+      </div>
+      <div class="interim" id="interim-3"></div>
+      <textarea id="texto-3" placeholder="Estudios a solicitar, indicaciones, medicación, próximo control…"></textarea>
+      <div class="actions-fila">
+        <button type="button" class="btn btn-ia" onclick="pulirConIA(3,this)">✨ Ordenar con IA</button>
+        <button type="button" class="btn btn-ghost" onclick="irAPaso(2)">◀ Volver</button>
+        <button type="button" class="btn btn-primary" onclick="irAPaso(4)">Siguiente: Cierre ▶</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PASO 5: Cierre -->
+  <div class="step-panel" data-step="4">
+    <div class="card">
+      <h2>✅ Cierre y resumen</h2>
+      <div class="instructor">
+        <b>Instructor virtual</b>
+        Revisá el resumen completo. Lo podés copiar para pegarlo en otro sistema, guardarlo en la historia clínica del sistema, y generar aparte un resumen en lenguaje simple para mandarle al paciente.
+      </div>
+      <button type="button" class="btn btn-ghost" onclick="armarResumenCompleto(this)" style="margin-bottom:8px">🔄 Actualizar resumen</button>
+      <div class="resumen-box" id="resumen-completo">Tocá "Actualizar resumen" para armarlo con todo lo cargado hasta ahora.</div>
+      <div class="actions-fila">
+        <button type="button" class="btn btn-ghost" onclick="copiarResumen()">📋 Copiar resumen completo</button>
+        <button type="button" class="btn btn-ok" onclick="guardarEnHistoriaClinica()" id="btn-guardar-hc">💾 Guardar en historia clínica</button>
+      </div>
+
+      <hr style="border:none;border-top:1px solid var(--border);margin:18px 0">
+
+      <h2>📲 Resumen para el paciente</h2>
+      <button type="button" class="btn btn-ia" onclick="generarResumenPaciente(this)">🧑‍⚕️➜🙂 Generar resumen para el paciente (IA)</button>
+      <div class="resumen-box" id="resumen-paciente" style="margin-top:10px;display:none"></div>
+      <div class="actions-fila" id="acciones-resumen-paciente" style="display:none">
+        <button type="button" class="btn btn-ghost" onclick="copiarResumenPaciente()">📋 Copiar</button>
+        <button type="button" class="btn btn-primary" onclick="enviarResumenPacienteWA()">📲 Enviar por WhatsApp</button>
+      </div>
+
+      <div class="actions-fila" style="margin-top:16px">
+        <button type="button" class="btn btn-ghost" onclick="irAPaso(3)">◀ Volver</button>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<div class="toast-cont" id="toast-cont"></div>
+
+<script>
+const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbwYdoFuU8mQL4YKqufSBQ9AD_yqWEEesLtGzYQjNw2JG1BZIQF7ug80mHB5sLMXhaUpvQ/exec';
+const PASOS = ['Motivo y antecedentes','Interrogatorio','Examen físico','Estudios','Cierre'];
+let pasoActual = 0;
+let ultimoResumenPaciente = '';
+let resumenGenerado = false;
+
+function toast(msg, tipo){
+  const el = document.createElement('div');
+  el.className = 'toast' + (tipo?(' '+tipo):'');
+  el.textContent = msg;
+  document.getElementById('toast-cont').appendChild(el);
+  setTimeout(()=>el.remove(), 3800);
+}
+
+async function llamarBackend(action, payload){
+  const resp = await fetch(SHEETS_URL, {
+    method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify(Object.assign({action}, payload))
+  });
+  return resp.json();
+}
+
+// ══════════════════════════════════════════════════════════════
+// STEPPER
+// ══════════════════════════════════════════════════════════════
+function renderStepper(){
+  const cont = document.getElementById('stepper');
+  cont.innerHTML = PASOS.map((nombre,i)=>
+    `<div class="step-chip ${i===pasoActual?'active':(i<pasoActual?'done':'')}" onclick="irAPaso(${i})">${i+1}. ${nombre}</div>`
+  ).join('');
+}
+function irAPaso(i){
+  pasoActual = i;
+  document.querySelectorAll('.step-panel').forEach(p=>p.classList.toggle('active', +p.dataset.step===i));
+  renderStepper();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+// ══════════════════════════════════════════════════════════════
+// MICRÓFONO — reconocimiento de voz por sección (es-AR), acumulando
+// texto final en el textarea de esa sección sin pisar lo que ya había.
+// ══════════════════════════════════════════════════════════════
+let recognition = null;
+let micActivoPaso = null;
+
+function crearRecognition(){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR){ toast('⚠️ Este navegador no soporta reconocimiento de voz — usá Chrome','err'); return null; }
+  const r = new SR();
+  r.lang = 'es-AR';
+  r.continuous = true;
+  r.interimResults = true;
+  return r;
+}
+
+function toggleMic(paso){
+  if(micActivoPaso === paso){
+    detenerMic();
+    return;
+  }
+  if(micActivoPaso !== null) detenerMic();
+
+  recognition = crearRecognition();
+  if(!recognition) return;
+  micActivoPaso = paso;
+  actualizarBotonMic(paso, true);
+
+  recognition.onresult = (ev)=>{
+    let interim = '';
+    let final = '';
+    for(let i = ev.resultIndex; i < ev.results.length; i++){
+      const t = ev.results[i][0].transcript;
+      if(ev.results[i].isFinal) final += t + ' ';
+      else interim += t;
+    }
+    const interimEl = document.getElementById('interim-'+paso);
+    if(interimEl) interimEl.textContent = interim;
+
+    if(final.trim()){
+      if(!procesarComandoVoz(final.trim(), paso)){
+        const ta = document.getElementById('texto-'+paso);
+        if(ta) ta.value = (ta.value.trim() ? ta.value.trim()+' ' : '') + final.trim();
+      }
+      if(interimEl) interimEl.textContent = '';
+    }
+  };
+  recognition.onerror = (e)=>{
+    if(e.error === 'no-speech') return; // pausa normal, no es un error real
+    toast('⚠️ Error de voz: ' + e.error, 'err');
+    detenerMic();
+  };
+  recognition.onend = ()=>{
+    // continuous a veces corta solo (silencio largo) — si el micro sigue
+    // "prendido" para este paso, lo reiniciamos automático.
+    if(micActivoPaso === paso){
+      try{ recognition.start(); }catch(_){ detenerMic(); }
+    }
+  };
+  try{ recognition.start(); }catch(_){ toast('No se pudo iniciar el micrófono','err'); detenerMic(); }
+}
+function detenerMic(){
+  const paso = micActivoPaso;
+  micActivoPaso = null;
+  if(recognition){ try{ recognition.onend=null; recognition.stop(); }catch(_){ } }
+  if(paso !== null) actualizarBotonMic(paso, false);
+  document.querySelectorAll('.interim').forEach(el=>el.textContent='');
+}
+function actualizarBotonMic(paso, on){
+  const btn = document.getElementById('mic-btn-'+paso);
+  if(!btn) return;
+  btn.textContent = on ? '⏹ Detener' : '🎤 Escuchar';
+  btn.classList.toggle('on', on);
+}
+
+// Comandos de voz simples — si lo dictado coincide (más o menos) con uno
+// de estos, se ejecuta la acción en vez de agregarse como texto dictado.
+function procesarComandoVoz(texto, paso){
+  const t = texto.toLowerCase().replace(/[.,]/g,'').trim();
+  if(t === 'siguiente paso' || t === 'siguiente'){
+    detenerMic();
+    if(pasoActual < PASOS.length-1) irAPaso(pasoActual+1);
+    return true;
+  }
+  if(t === 'paso anterior' || t === 'volver'){
+    detenerMic();
+    if(pasoActual > 0) irAPaso(pasoActual-1);
+    return true;
+  }
+  if(t === 'sugerir maniobras' && paso === 2){
+    sugerirManiobras();
+    return true;
+  }
+  if(t === 'pulir con ia' || t === 'redactar con ia'){
+    pulirConIA(paso);
+    return true;
+  }
+  return false;
+}
+
+// ══════════════════════════════════════════════════════════════
+// IA — pulir/redactar cada sección en prosa clínica
+// ══════════════════════════════════════════════════════════════
+async function pulirConIA(paso, btnEl){
+  const ta = document.getElementById('texto-'+paso);
+  if(!ta || !ta.value.trim()){ toast('⚠️ Todavía no dictaste ni escribiste nada en esta sección','err'); return; }
+  const motivo = document.getElementById('texto-0')?.value || '';
+  const tareas = {
+    0: 'Sos un asistente médico. Redactá en prosa clínica breve y prolija, en español rioplatense, el MOTIVO DE CONSULTA y ANTECEDENTES relevantes a partir de este dictado textual del médico (puede tener muletillas o desorden, arreglalo sin inventar datos que no estén). No agregues encabezados ni markdown, solo el párrafo de texto:\n\n',
+    1: 'Sos un asistente médico especialista en traumatología/ortopedia. Redactá el DESARROLLO DEL INTERROGATORIO en prosa clínica prolija y organizada (mecanismo, evolución, factores agravantes/atenuantes, tratamientos previos, impacto funcional), en español rioplatense, a partir de este dictado textual del médico. No inventes datos que no estén dichos. No agregues encabezados ni markdown, solo el párrafo:\n\nMotivo de consulta: '+motivo+'\n\nDictado del interrogatorio: ',
+    3: 'Sos un asistente médico. Ordená este dictado de ESTUDIOS A SOLICITAR E INDICACIONES en una lista prolija con viñetas simples (usando "- " al inicio de cada línea), agrupando estudios por un lado e indicaciones/medicación por otro si corresponde. No inventes nada que no esté dicho. Sin markdown de títulos, solo texto plano con guiones:\n\n'
+  };
+  const prompt = (tareas[paso]||'Redactá en prosa clínica prolija, en español, sin inventar datos:\n\n') + ta.value.trim();
+  await correrIAEnBoton(btnEl, async ()=>{
+    const res = await llamarBackend('asistente_consulta_ia', {prompt});
+    if(res && res.success && res.texto){
+      ta.value = res.texto;
+      toast('✅ Redactado con IA');
+    }else{
+      toast('❌ ' + ((res&&res.error)||'No se pudo procesar con IA'), 'err');
+    }
+  });
+}
+
+async function correrIAEnBoton(btn, fn){
+  const original = btn ? btn.innerHTML : null;
+  if(btn){ btn.disabled = true; btn.innerHTML = '<span class="spin"></span>Procesando…'; }
+  try{ await fn(); }
+  finally{ if(btn){ btn.disabled = false; btn.innerHTML = original; } }
+}
+
+// ══════════════════════════════════════════════════════════════
+// MANIOBRAS — sugeridas por IA o agregadas a mano
+// ══════════════════════════════════════════════════════════════
+let maniobraCount = 0;
+
+async function sugerirManiobras(btnEl){
+  const motivo = document.getElementById('texto-0')?.value || '';
+  const interrogatorio = document.getElementById('texto-1')?.value || '';
+  if(!motivo.trim() && !interrogatorio.trim()){
+    toast('⚠️ Completá primero el motivo y/o el interrogatorio','err');
+    return;
+  }
+  const prompt = 'Sos un médico especialista en traumatología/ortopedia. En base a este motivo de consulta e interrogatorio, ' +
+    'sugerí entre 3 y 6 MANIOBRAS de examen físico específicas y pertinentes para este caso (nombres reales de maniobras ' +
+    'semiológicas, ej: Lachman, Thomas, Ober, Phalen, Finkelstein, Lasègue, McMurray, etc., según corresponda a la zona ' +
+    'afectada). Devolvé SOLO un JSON válido, sin texto adicional ni markdown, con este formato exacto: ' +
+    '[{"nombre":"...","motivo":"por qué tiene sentido en este caso, una frase corta"}]\n\n' +
+    'Motivo de consulta: ' + motivo + '\n\nInterrogatorio: ' + interrogatorio;
+
+  await correrIAEnBoton(btnEl, async ()=>{
+    const res = await llamarBackend('asistente_consulta_ia', {prompt});
+    if(!res || !res.success || !res.texto){
+      toast('❌ ' + ((res&&res.error)||'No se pudo sugerir maniobras'), 'err');
+      return;
+    }
+    let lista = [];
+    try{
+      const limpio = res.texto.replace(/```json|```/g,'').trim();
+      lista = JSON.parse(limpio);
+    }catch(e){
+      toast('❌ La IA no devolvió una lista válida — probá de nuevo','err');
+      return;
+    }
+    lista.forEach(m => agregarFilaManiobra(m.nombre||'', m.motivo||''));
+    toast('✅ ' + lista.length + ' maniobras sugeridas');
+  });
+}
+
+function agregarManiobraManual(){
+  agregarFilaManiobra('', '');
+}
+
+function agregarFilaManiobra(nombre, rationale){
+  const i = maniobraCount++;
+  const cont = document.getElementById('maniobras-lista');
+  const wrap = document.createElement('div');
+  wrap.id = 'maniobra-wrap-'+i;
+  wrap.innerHTML = `
+    ${rationale ? `<div class="sug-rationale">💡 ${rationale}</div>` : ''}
+    <div class="maniobra-row">
+      <input type="checkbox" id="maniobra-check-${i}" checked>
+      <input type="text" class="nombre" id="maniobra-nombre-${i}" value="${(nombre||'').replace(/"/g,'&quot;')}" placeholder="Nombre de la maniobra">
+      <select id="maniobra-resultado-${i}">
+        <option value="">Resultado…</option>
+        <option value="Normal">Normal</option>
+        <option value="Positivo">Positivo</option>
+        <option value="Negativo">Negativo</option>
+        <option value="No realizada">No realizada</option>
+      </select>
+      <input type="text" id="maniobra-nota-${i}" placeholder="Nota (opcional)">
+      <span style="cursor:pointer;color:var(--muted);padding:0 4px" onclick="document.getElementById('maniobra-wrap-${i}').remove()">✕</span>
+    </div>`;
+  cont.appendChild(wrap);
+}
+
+function textoManiobras_(){
+  const filas = [];
+  document.querySelectorAll('#maniobras-lista [id^="maniobra-wrap-"]').forEach(wrap=>{
+    const i = wrap.id.replace('maniobra-wrap-','');
+    const check = document.getElementById('maniobra-check-'+i);
+    const nombre = document.getElementById('maniobra-nombre-'+i)?.value.trim();
+    if(!nombre || (check && !check.checked)) return;
+    const resultado = document.getElementById('maniobra-resultado-'+i)?.value || '';
+    const nota = document.getElementById('maniobra-nota-'+i)?.value.trim() || '';
+    filas.push(`• ${nombre}${resultado?' — '+resultado:''}${nota?' ('+nota+')':''}`);
+  });
+  return filas;
+}
+
+// ══════════════════════════════════════════════════════════════
+// RESUMEN COMPLETO + GUARDAR EN HISTORIA CLÍNICA + COPIAR
+// ══════════════════════════════════════════════════════════════
+function materialesCrudos_(){
+  const nombre = document.getElementById('pac-nombre').value.trim();
+  const dni = document.getElementById('pac-dni').value.trim();
+  const motivo = document.getElementById('texto-0').value.trim();
+  const interr = document.getElementById('texto-1').value.trim();
+  const examenLibre = document.getElementById('texto-2').value.trim();
+  const maniobras = textoManiobras_();
+  const estudios = document.getElementById('texto-3').value.trim();
+  const fecha = new Date().toLocaleDateString('es-AR');
+  return {nombre, dni, motivo, interr, examenLibre, maniobras, estudios, fecha};
+}
+
+function hayContenidoCargado_(m){
+  return !!(m.motivo || m.interr || m.examenLibre || m.maniobras.length || m.estudios);
+}
+
+// Respaldo por bloques — se usa sólo si falla la IA, para que siempre haya algo para copiar/guardar.
+function textoCompletoSegmentado_(m){
+  const bloques = [];
+  bloques.push(`CONSULTA GUIADA — ${m.fecha}`);
+  bloques.push(`Paciente: ${m.nombre||'—'}${m.dni?' (DNI '+m.dni+')':''}`);
+  if(m.motivo) bloques.push(`\n── MOTIVO DE CONSULTA Y ANTECEDENTES ──\n${m.motivo}`);
+  if(m.interr) bloques.push(`\n── INTERROGATORIO ──\n${m.interr}`);
+  if(m.maniobras.length) bloques.push(`\n── MANIOBRAS DE EXAMEN FÍSICO ──\n${m.maniobras.join('\n')}`);
+  if(m.examenLibre) bloques.push(`\n── OTROS HALLAZGOS DEL EXAMEN ──\n${m.examenLibre}`);
+  if(m.estudios) bloques.push(`\n── ESTUDIOS E INDICACIONES ──\n${m.estudios}`);
+  return bloques.join('\n');
+}
+
+async function armarResumenCompleto(btnEl){
+  const box = document.getElementById('resumen-completo');
+  const m = materialesCrudos_();
+  if(!hayContenidoCargado_(m)){
+    box.textContent = 'Todavía no cargaste nada en las secciones anteriores.';
+    resumenGenerado = false;
+    return;
+  }
+
+  const prompt = 'Sos un médico especialista en traumatología/ortopedia redactando el resumen de una consulta para la historia clínica. ' +
+    'A partir de estos datos sueltos, escribí UN RELATO CLÍNICO CONTINUO EN PROSA — nada de títulos, nada de viñetas, no lo separes en bloques con encabezados — ' +
+    'que cuente de corrido el motivo de consulta y antecedentes, el interrogatorio, los hallazgos del examen físico (integrando naturalmente en el texto las maniobras realizadas y su resultado) y los estudios solicitados. ' +
+    'Cerrá el relato con un párrafo aparte de RECOMENDACIONES que mencione reposo, terapias (kinesiología/rehabilitación si corresponde) y AINEs (antiinflamatorios no esteroideos), sólo si tienen sentido clínico con este caso concreto. ' +
+    'No inventes ningún dato que no esté en lo que te paso. Español rioplatense, tono profesional de historia clínica, sin markdown.\n\n' +
+    `Paciente: ${m.nombre||'—'}${m.dni?' (DNI '+m.dni+')':''}\nFecha: ${m.fecha}\n\n` +
+    (m.motivo ? `Motivo de consulta y antecedentes: ${m.motivo}\n\n` : '') +
+    (m.interr ? `Interrogatorio: ${m.interr}\n\n` : '') +
+    (m.maniobras.length ? `Maniobras de examen físico:\n${m.maniobras.join('\n')}\n\n` : '') +
+    (m.examenLibre ? `Otros hallazgos del examen: ${m.examenLibre}\n\n` : '') +
+    (m.estudios ? `Estudios solicitados e indicaciones: ${m.estudios}` : '');
+
+  box.textContent = '⏳ Redactando el resumen con IA…';
+
+  const correr = async ()=>{
+    const res = await llamarBackend('asistente_consulta_ia', {prompt});
+    if(res && res.success && res.texto){
+      box.textContent = res.texto.trim();
+    }else{
+      toast('❌ ' + ((res&&res.error)||'No se pudo redactar el resumen con IA') + ' — se muestra por secciones', 'err');
+      box.textContent = textoCompletoSegmentado_(m);
+    }
+    resumenGenerado = true;
+  };
+  if(btnEl){ await correrIAEnBoton(btnEl, correr); } else { await correr(); }
+}
+
+function copiarResumen(){
+  if(!resumenGenerado){ toast('⚠️ Primero actualizá el resumen','err'); return; }
+  const texto = document.getElementById('resumen-completo').textContent;
+  navigator.clipboard.writeText(texto)
+    .then(()=>toast('📋 Resumen copiado — pegalo donde lo necesites'))
+    .catch(()=>toast('❌ No se pudo copiar','err'));
+}
+
+async function guardarEnHistoriaClinica(){
+  const dni = document.getElementById('pac-dni').value.trim();
+  if(!dni){ toast('⚠️ Falta el DNI del paciente para guardar en la historia clínica','err'); return; }
+  await armarResumenCompleto();
+  if(!resumenGenerado){ toast('⚠️ No hay nada cargado todavía para guardar','err'); return; }
+  const resumenTexto = document.getElementById('resumen-completo').textContent;
+  const m = materialesCrudos_();
+  const maniobras = m.maniobras.join('\n');
+  const observaciones = [m.interr, maniobras?('Maniobras:\n'+maniobras):'', m.examenLibre].filter(Boolean).join('\n\n');
+
+  const btn = document.getElementById('btn-guardar-hc');
+  await correrIAEnBoton(btn, async ()=>{
+    const res = await llamarBackend('addHistoria', {
+      DNI: dni,
+      Diagnostico: m.motivo.slice(0,300),
+      Observaciones: observaciones || resumenTexto,
+      Estudios_Pendientes: m.estudios,
+      Indicaciones: m.estudios
+    });
+    if(res && res.success){
+      toast('✅ Guardado en la historia clínica (ID '+res.id+')');
+    }else{
+      toast('❌ ' + ((res&&res.error)||'No se pudo guardar'), 'err');
+    }
+  });
+}
+
+// ══════════════════════════════════════════════════════════════
+// RESUMEN PARA EL PACIENTE (IA, lenguaje simple) + WhatsApp
+// ══════════════════════════════════════════════════════════════
+async function generarResumenPaciente(btnEl){
+  await armarResumenCompleto();
+  if(!resumenGenerado){ toast('⚠️ Primero cargá algo en las secciones anteriores','err'); return; }
+  const texto = document.getElementById('resumen-completo').textContent;
+  const prompt = 'Sos un asistente médico. A partir de este resumen clínico interno (en jerga técnica), escribí un mensaje ' +
+    'corto y en LENGUAJE SIMPLE para mandarle directamente al PACIENTE por WhatsApp, contándole qué se habló en la consulta ' +
+    'y qué tiene que hacer ahora (estudios a realizarse, indicaciones, medicación, próximo control) — nada de jerga médica ' +
+    'complicada, tono cordial, en español rioplatense, sin inventar nada que no esté en el resumen. No agregues firma ni ' +
+    'encabezados tipo "Estimado paciente", arrancá directo con el contenido:\n\n' + texto;
+
+  await correrIAEnBoton(btnEl, async ()=>{
+    const res = await llamarBackend('asistente_consulta_ia', {prompt});
+    if(res && res.success && res.texto){
+      ultimoResumenPaciente = res.texto;
+      const box = document.getElementById('resumen-paciente');
+      box.textContent = res.texto;
+      box.style.display = 'block';
+      document.getElementById('acciones-resumen-paciente').style.display = 'flex';
+      toast('✅ Resumen para el paciente listo');
+    }else{
+      toast('❌ ' + ((res&&res.error)||'No se pudo generar el resumen'), 'err');
+    }
+  });
+}
+function copiarResumenPaciente(){
+  if(!ultimoResumenPaciente){ toast('⚠️ Todavía no generaste el resumen','err'); return; }
+  navigator.clipboard.writeText(ultimoResumenPaciente)
+    .then(()=>toast('📋 Copiado'))
+    .catch(()=>toast('❌ No se pudo copiar','err'));
+}
+function enviarResumenPacienteWA(){
+  if(!ultimoResumenPaciente){ toast('⚠️ Todavía no generaste el resumen','err'); return; }
+  const tel = (document.getElementById('pac-tel').value||'').replace(/\D/g,'');
+  if(!tel){ toast('⚠️ Falta el teléfono del paciente','err'); return; }
+  window.open(`https://wa.me/549${tel}?text=${encodeURIComponent(ultimoResumenPaciente)}`,'_blank');
+}
+
+// ══════════════════════════════════════════════════════════════
+renderStepper();
+irAPaso(0);
+</script>
+</body>
+</html>
