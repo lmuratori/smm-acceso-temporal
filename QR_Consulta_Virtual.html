@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Consulta Virtual — Dr. Muratori</title>
+<title>Orientación médica — Dr. Muratori</title>
 <style>
   :root{--azul:#0369a1;--azul-osc:#0c4a6e;--verde:#16a34a;--ambar:#d97706;--rojo:#dc2626;--muted:#64748b;--border:#e2e8f0;--bg:#f4fbfd;--surface:#fff}
   *{box-sizing:border-box}
@@ -11,12 +11,27 @@
   .topbar{background:linear-gradient(135deg,var(--azul),var(--azul-osc));color:#fff;padding:26px 20px 22px;text-align:center}
   .topbar h1{margin:0 0 4px;font-size:19px}
   .topbar p{margin:0;font-size:12.5px;opacity:.92;line-height:1.5}
-  main{max-width:480px;margin:0 auto;padding:18px 16px 60px}
+  main{max-width:520px;margin:0 auto;padding:18px 16px 60px}
   .urgencia{background:#fef2f2;border:1.5px solid #fecaca;color:#991b1b;border-radius:10px;padding:12px 14px;font-size:12.5px;line-height:1.55;margin-bottom:16px}
   .urgencia b{display:block;margin-bottom:2px;font-size:13px}
   .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 16px;margin-bottom:16px}
   .card h2{font-size:14.5px;margin:0 0 6px;color:var(--azul-osc)}
+  .card h3{font-size:12.5px;margin:14px 0 6px;color:var(--azul-osc)}
   .card p.sub{font-size:12px;color:var(--muted);margin:0 0 14px;line-height:1.55}
+  .tabs{display:flex;gap:8px;margin-bottom:12px}
+  .tab-btn{flex:1;border:1.5px solid var(--border);background:#fff;border-radius:8px;padding:9px 8px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;color:#334155}
+  .tab-btn.on{background:var(--azul);border-color:var(--azul);color:#fff}
+  .tab-panel{display:none}
+  .tab-panel.on{display:block}
+  .direccion{border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:8px;font-size:12.5px;line-height:1.55}
+  .direccion b{display:block;font-size:13px;color:var(--azul-osc);margin-bottom:2px}
+  .direccion .horario{color:var(--muted)}
+  .nota{background:#fffbeb;border:1.5px solid #fde68a;color:#92400e;border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.55;margin:10px 0}
+  .guardias{background:#fef2f2;border:1.5px solid #fecaca;border-radius:8px;padding:10px 12px;font-size:12.5px;line-height:1.6;margin-top:8px}
+  .guardias b{display:block;color:#991b1b;margin-bottom:3px}
+  .express-precio{display:flex;align-items:baseline;gap:6px;background:#f0f9ff;border:1px solid #7dd3fc;border-radius:8px;padding:10px 12px;margin:10px 0}
+  .express-precio .monto{font-size:19px;font-weight:800;color:var(--azul-osc)}
+  .express-precio .cuando{font-size:11.5px;color:var(--muted)}
   label{display:block;font-size:12px;font-weight:700;color:#334155;margin:12px 0 5px}
   label .opt{font-weight:400;color:var(--muted)}
   input[type=text],input[type=tel],input[type=email],select,textarea{
@@ -29,6 +44,8 @@
   @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(220,38,38,.5)}70%{box-shadow:0 0 0 8px rgba(220,38,38,0)}100%{box-shadow:0 0 0 0 rgba(220,38,38,0)}}
   .interim{font-size:11.5px;color:var(--muted);font-style:italic;min-height:16px;margin-top:5px}
   .voz-nota{font-size:10.5px;color:var(--muted);margin-top:4px}
+  .foto-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:4px}
+  .foto-nombre{font-size:11.5px;color:var(--muted)}
   .consent{display:flex;gap:9px;align-items:flex-start;margin-top:16px;font-size:11.5px;color:#334155;line-height:1.5}
   .consent input{margin-top:3px;flex-shrink:0}
   .btn{width:100%;padding:14px;border-radius:10px;border:none;font-size:14.5px;font-weight:800;cursor:pointer;font-family:inherit;margin-top:16px}
@@ -39,17 +56,18 @@
   .exito .ico{font-size:44px;margin-bottom:10px}
   .exito h2{color:var(--verde);font-size:17px;margin:0 0 10px}
   .exito p{font-size:13px;color:#334155;line-height:1.6;margin:0 0 6px}
-  .exito.urgente .ico{}
-  .exito.urgente h2{color:var(--rojo)}
-  .exito.urgente .aviso-urgente{background:#fef2f2;border:1.5px solid #fca5a5;color:#7f1d1d;border-radius:10px;padding:14px;font-size:13.5px;line-height:1.6;text-align:left;margin:14px 0}
-  .exito.urgente .aviso-urgente b{display:block;margin-bottom:4px;font-size:14px}
+  .exito .aviso{border-radius:10px;padding:14px;font-size:13.5px;line-height:1.6;text-align:left;margin:14px 0}
+  .exito .aviso b{display:block;margin-bottom:4px;font-size:14px}
+  .exito.guardia h2{color:var(--rojo)}
+  .exito.guardia .aviso{background:#fef2f2;border:1.5px solid #fca5a5;color:#7f1d1d}
+  .exito.entrevista .aviso{background:#f0f9ff;border:1.5px solid #7dd3fc;color:#0c4a6e}
   footer{text-align:center;color:var(--muted);font-size:11px;padding:10px 20px 30px}
 </style>
 </head>
 <body>
 
 <div class="topbar">
-  <h1>🩺 Consulta Virtual</h1>
+  <h1>🩺 Orientación médica por QR</h1>
   <p>Dr. Luis Alberto Muratori — M.N. 100.540 · M.P. 9943<br>Traumatología y Ortopedia</p>
 </div>
 
@@ -57,12 +75,65 @@
 
   <div class="urgencia">
     <b>⚠️ ¿Es una urgencia?</b>
-    Si tenés dolor muy intenso, no podés moverte, hay una herida abierta o cualquier situación que no puede esperar, andá directo a la guardia más cercana. Esta consulta virtual es para casos que no necesitan atención presencial inmediata.
+    Esto NO es un servicio de urgencias ni reemplaza una guardia. Es una entrevista express de asesoramiento médico (una orientación tipo triage) para ayudarte a saber cuál es el paso más adecuado. Si tenés dolor muy intenso, no podés moverte, hay una herida abierta, o cualquier cosa que no puede esperar, andá directo a la guardia más cercana ahora mismo.
+  </div>
+
+  <div class="card">
+    <h2>¿Cómo seguir según tu cobertura?</h2>
+    <p class="sub">Elegí la opción que te corresponde para ver dónde te conviene atenderte.</p>
+    <div class="tabs">
+      <button type="button" class="tab-btn on" id="tab-btn-con" onclick="mostrarTab('con')">Tengo obra social</button>
+      <button type="button" class="tab-btn" id="tab-btn-sin" onclick="mostrarTab('sin')">No tengo obra social</button>
+    </div>
+
+    <div class="tab-panel on" id="tab-con">
+      <p class="sub" style="margin-bottom:8px">Te podés atender en cualquiera de estos consultorios — elegí el que te quede más cerca o donde consigas turno más rápido.</p>
+      <div class="direccion">
+        <b>Rehabilitarte Instituto Médico</b>
+        Av. Belgrano 319, Villa Tulumaya (Lavalle)<br>
+        <span class="horario">Turnos: viernes por la tarde · Tel: 261 5730709</span>
+      </div>
+      <div class="direccion">
+        <b>Consultorios Privados del Norte</b>
+        Av. Belgrano 331, Costa de Araujo (Lavalle)<br>
+        <span class="horario">Turnos: viernes desde las 18 hs · Tel: 261 5258023</span>
+      </div>
+      <div class="direccion">
+        <b>Centro Médico Palmares</b>
+        Panamericana 2650, Godoy Cruz<br>
+        <span class="horario">Turnos: martes 13:30 a 16:45 hs y jueves 13:30 a 20 hs · Tel: 261 4762170</span>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="tab-sin">
+      <p class="sub" style="margin-bottom:8px">Podés pedir turno en los mismos consultorios de arriba, o en el hospital público de Lavalle:</p>
+      <div class="direccion">
+        <b>Hospital Dr. Domingo Sícoli</b>
+        Hospital público — Lavalle
+      </div>
+      <div class="nota">
+        El turno en el Hospital Sícoli está sujeto a la recepción, disponibilidad y confirmación del hospital — no depende de este sistema.
+      </div>
+      <div class="guardias">
+        <b>Si no conseguís turno ahí</b>
+        La guardia traumatológica más cercana es el Hospital Lagomaggiore, el Hospital Central o el Hospital Perrupato. Si sos menor de 14 años, el Hospital Notti.
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Otra opción: entrevista express de asesoramiento médico</h2>
+    <p class="sub">Una videollamada corta por Google Meet con el doctor, para orientarte sobre tu caso. No es una consulta de urgencia — es una entrevista de 5 minutos, paga, con cupos limitados.</p>
+    <div class="express-precio">
+      <span class="monto">$20.000</span>
+      <span class="cuando">entre semana · los fines de semana el valor es mayor</span>
+    </div>
+    <p class="sub" style="margin:0">Se confirma de lunes a viernes de 5 a 6 de la mañana, y sábados y domingos de 9 a 10 — previa carga de tus datos y el pago. Si de la entrevista surge que hace falta verte en persona, se te da un turno para eso en el consultorio que te quede más cerca.</p>
   </div>
 
   <div class="card" id="card-form">
-    <h2>Consulta virtual de bajo costo</h2>
-    <p class="sub">Contanos tu caso y te contactamos para coordinar el día y el horario de una videollamada corta con el doctor.</p>
+    <h2>Contanos tu caso (sin costo)</h2>
+    <p class="sub">Esto es gratuito y no te compromete a nada — con esto el doctor evalúa tu situación y te va a decir cuál es el paso recomendado.</p>
 
     <form id="form-qr" onsubmit="return false;">
       <label>Nombre completo *</label>
@@ -88,7 +159,23 @@
         <option value="Con obra social (especificar en el motivo)">Tengo obra social o prepaga</option>
       </select>
 
-      <label>Motivo de consulta *</label>
+      <label>¿Qué segmento del cuerpo se afectó? *</label>
+      <select id="f-segmento" required>
+        <option value="">Elegí una opción</option>
+        <option>Hombro</option>
+        <option>Codo</option>
+        <option>Muñeca / mano</option>
+        <option>Cadera</option>
+        <option>Rodilla</option>
+        <option>Tobillo / pie</option>
+        <option>Columna</option>
+        <option>Otro</option>
+      </select>
+
+      <label>¿Cuándo pasó?</label>
+      <input type="text" id="f-cuando" placeholder="Ej: hace 3 días, esta mañana, hace 2 semanas">
+
+      <label>Relato de lo que pasó *</label>
       <div class="mic-row">
         <button type="button" class="btn-mic" id="mic-btn" onclick="toggleMic()">🎤 Contar por voz</button>
       </div>
@@ -96,21 +183,40 @@
       <textarea id="f-motivo" placeholder="Contanos qué te pasa, desde cuándo, y qué obra social tenés si corresponde — podés escribir o apretar el botón de voz"></textarea>
       <div class="voz-nota" id="voz-no-disponible" style="display:none">Tu navegador no tiene dictado por voz — escribí directamente acá arriba.</div>
 
-      <div class="consent">
-        <input type="checkbox" id="f-consiente">
-        <span>Entiendo que esto es una <b>consulta virtual</b> y no reemplaza una atención de urgencia presencial, y doy mi consentimiento para el uso de mis datos de salud para esta consulta, conforme a la Ley 25.326 de Protección de Datos Personales.</span>
+      <label>¿Ya viste a un médico por esto?</label>
+      <select id="f-vio-medico" onchange="toggleDiagnosticoPrevio()">
+        <option value="No">No</option>
+        <option value="Sí">Sí</option>
+      </select>
+
+      <div id="bloque-diagnostico-previo" style="display:none">
+        <label>¿Qué diagnóstico te dieron?</label>
+        <input type="text" id="f-diagnostico-previo">
       </div>
 
-      <button type="button" class="btn btn-primary" id="btn-enviar" onclick="enviarSolicitud()">Enviar solicitud</button>
+      <label>¿Qué medicación o receta te dieron (si te dieron alguna)?</label>
+      <input type="text" id="f-medicacion">
+
+      <label>Foto de la radiografía o del informe <span class="opt">(opcional)</span></label>
+      <div class="foto-row">
+        <input type="file" id="f-foto" accept="image/*" onchange="onFotoElegida(event)">
+      </div>
+      <div class="foto-nombre" id="foto-nombre" style="display:none"></div>
+
+      <div class="consent">
+        <input type="checkbox" id="f-consiente">
+        <span>Entiendo que esto <b>no es una consulta de urgencia</b>, sino una orientación / entrevista express de asesoramiento médico que no reemplaza una atención presencial de urgencia, y doy mi consentimiento para el uso de mis datos de salud, conforme a la Ley 25.326 de Protección de Datos Personales.</span>
+      </div>
+
+      <button type="button" class="btn btn-primary" id="btn-enviar" onclick="enviarSolicitud()">Enviar</button>
       <div class="err" id="err-msg"></div>
     </form>
   </div>
 
   <div class="card exito" id="card-exito">
     <div class="ico" id="exito-ico">✅</div>
-    <h2 id="exito-titulo">¡Listo, recibimos tu solicitud!</h2>
-    <div class="aviso-urgente" id="exito-aviso-urgente" style="display:none"></div>
-    <p>Te vamos a contactar a la brevedad para coordinar el día y el horario de la videollamada.</p>
+    <h2 id="exito-titulo">¡Listo, recibimos tu consulta!</h2>
+    <div class="aviso" id="exito-aviso"></div>
     <p style="color:var(--muted);font-size:12px">Si mientras tanto tu situación empeora, no esperes: andá a la guardia más cercana.</p>
   </div>
 
@@ -124,6 +230,37 @@ const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbwYdoFuU8mQL4YKqufSB
 function origenDesdeUrl_(){
   const params = new URLSearchParams(window.location.search);
   return (params.get('origen') || 'Sin especificar').trim() || 'Sin especificar';
+}
+
+function mostrarTab(cual){
+  document.getElementById('tab-con').classList.toggle('on', cual==='con');
+  document.getElementById('tab-sin').classList.toggle('on', cual==='sin');
+  document.getElementById('tab-btn-con').classList.toggle('on', cual==='con');
+  document.getElementById('tab-btn-sin').classList.toggle('on', cual==='sin');
+}
+
+function toggleDiagnosticoPrevio(){
+  const si = document.getElementById('f-vio-medico').value === 'Sí';
+  document.getElementById('bloque-diagnostico-previo').style.display = si ? 'block' : 'none';
+}
+
+// ══════════════════════════════════════════════════════════════
+// Foto del estudio/informe — opcional, se manda como base64
+// ══════════════════════════════════════════════════════════════
+let fotoBase64_ = '';
+function onFotoElegida(e){
+  const f = e.target.files && e.target.files[0];
+  const nombreEl = document.getElementById('foto-nombre');
+  fotoBase64_ = '';
+  if(!f){ nombreEl.style.display='none'; return; }
+  const reader = new FileReader();
+  reader.onload = () => {
+    fotoBase64_ = reader.result;
+    nombreEl.textContent = '📎 ' + f.name;
+    nombreEl.style.display = 'block';
+  };
+  reader.onerror = () => { fotoBase64_ = ''; }; // si falla la lectura, se manda igual sin foto
+  reader.readAsDataURL(f);
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -189,11 +326,17 @@ async function enviarSolicitud(){
   const telefono = document.getElementById('f-telefono').value.trim();
   const email = document.getElementById('f-email').value.trim();
   const obraSocial = document.getElementById('f-obra-social').value;
+  const segmento = document.getElementById('f-segmento').value;
+  const cuando = document.getElementById('f-cuando').value.trim();
   const motivo = document.getElementById('f-motivo').value.trim();
+  const vioMedico = document.getElementById('f-vio-medico').value;
+  const diagnosticoPrevio = document.getElementById('f-diagnostico-previo').value.trim();
+  const medicacionRecibida = document.getElementById('f-medicacion').value.trim();
   const consiente = document.getElementById('f-consiente').checked;
 
   if(!nombre){ return mostrarError_('Falta tu nombre completo'); }
   if(!telefono && !email){ return mostrarError_('Dejá al menos un teléfono o un mail de contacto'); }
+  if(!segmento){ return mostrarError_('Elegí qué segmento del cuerpo se afectó'); }
   if(!motivo){ return mostrarError_('Contanos brevemente el motivo de tu consulta'); }
   if(!consiente){ return mostrarError_('Hace falta que aceptes la casilla de consentimiento para continuar'); }
 
@@ -205,7 +348,9 @@ async function enviarSolicitud(){
       method: 'POST', headers: {'Content-Type':'text/plain;charset=utf-8'},
       body: JSON.stringify({
         action: 'qr_solicitud_consulta',
-        nombre, dni, telefono, email, obraSocial, motivo,
+        nombre, dni, telefono, email, obraSocial, segmento, cuando, motivo,
+        vioMedico, diagnosticoPrevio, medicacionRecibida,
+        fotoBase64: fotoBase64_ || undefined,
         origen: origenDesdeUrl_()
       })
     });
@@ -216,7 +361,7 @@ async function enviarSolicitud(){
     mostrarExito_(data);
   }catch(e){
     mostrarError_('No se pudo enviar: ' + e.message);
-    btn.disabled = false; btn.textContent = 'Enviar solicitud';
+    btn.disabled = false; btn.textContent = 'Enviar';
   }
 }
 
@@ -226,22 +371,24 @@ function mostrarError_(msg){
   errEl.style.display = 'block';
 }
 
-// data = { success, id, alerta_riesgo, mensaje_paciente } — alerta_riesgo y
-// mensaje_paciente vienen de una primera lectura que hace la IA sobre el
-// motivo contado (ver evaluarTriageIA_ en el backend). Nunca reemplaza la
-// recomendación fija de arriba de ir a la guardia ante una urgencia real —
-// esto es un refuerzo adicional, no el único aviso.
+// data = { success, id, recomendacion, alerta_riesgo, mensaje_paciente } — la
+// recomendación y el mensaje vienen de una primera lectura que hace la IA
+// sobre todo lo que cargó el paciente (ver evaluarTriageIA_ en el backend).
+// Nunca reemplaza la recomendación fija de arriba de ir a la guardia ante una
+// urgencia real — esto es una orientación adicional, siempre presente,
+// nunca un diagnóstico.
 function mostrarExito_(data){
   const card = document.getElementById('card-exito');
-  if(data && data.alerta_riesgo){
-    card.classList.add('urgente');
-    document.getElementById('exito-ico').textContent = '⚠️';
-    document.getElementById('exito-titulo').textContent = 'Recibimos tu solicitud — pero por favor leé esto';
-    const aviso = document.getElementById('exito-aviso-urgente');
-    aviso.innerHTML = '<b>Te recomendamos no esperar</b>' +
-      (data.mensaje_paciente || 'Por lo que contaste, sería mejor que vayas a una guardia ahora en vez de esperar la videollamada.');
-    aviso.style.display = 'block';
-  }
+  const esGuardia = !!(data && data.recomendacion === 'guardia');
+  card.classList.add(esGuardia ? 'guardia' : 'entrevista');
+  document.getElementById('exito-ico').textContent = esGuardia ? '⚠️' : '✅';
+  document.getElementById('exito-titulo').textContent = esGuardia
+    ? 'Recibimos tu consulta — por favor leé esto'
+    : '¡Listo, recibimos tu consulta!';
+  const aviso = document.getElementById('exito-aviso');
+  const mensaje = (data && data.mensaje_paciente) ||
+    'Recibimos tu consulta. Nos vamos a comunicar a la brevedad para coordinar la entrevista express de asesoramiento médico.';
+  aviso.innerHTML = '<b>' + (esGuardia ? 'Te recomendamos no esperar' : 'Cómo sigue esto') + '</b>' + mensaje;
   card.style.display = 'block';
 }
 </script>
