@@ -1,0 +1,536 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Autoevaluación semanal de seguimiento — Dr. Muratori</title>
+<style>
+  :root{--azul:#0369a1;--azul-osc:#0c4a6e;--verde:#16a34a;--ambar:#d97706;--rojo:#dc2626;--muted:#64748b;--border:#e2e8f0;--bg:#f4fbfd;--surface:#fff}
+  *{box-sizing:border-box}
+  body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);margin:0;color:#0f172a}
+  .topbar{background:linear-gradient(135deg,var(--azul),var(--azul-osc));color:#fff;padding:26px 20px 22px;text-align:center}
+  .topbar h1{margin:0 0 4px;font-size:19px}
+  .topbar p{margin:0;font-size:12.5px;opacity:.92;line-height:1.5}
+  main{max-width:560px;margin:0 auto;padding:18px 16px 60px}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 16px;margin-bottom:16px}
+  .card h2{font-size:14.5px;margin:0 0 10px;color:var(--azul-osc)}
+  .card h3{font-size:12.5px;margin:14px 0 8px;color:var(--azul-osc)}
+  .card p.sub{font-size:12px;color:var(--muted);margin:0 0 14px;line-height:1.55}
+  .datos-paciente{display:flex;flex-wrap:wrap;gap:10px 20px;font-size:12.5px}
+  .datos-paciente div b{display:block;color:var(--muted);font-size:10.5px;text-transform:uppercase;letter-spacing:.03em;margin-bottom:2px}
+  label{display:block;font-size:12.5px;font-weight:700;color:#334155;margin:14px 0 6px}
+  label .opt{font-weight:400;color:var(--muted);font-size:11.5px}
+  .slider-row{display:flex;align-items:center;gap:10px}
+  input[type=range]{flex:1;accent-color:var(--azul)}
+  .slider-val{min-width:34px;text-align:center;font-weight:800;color:var(--azul-osc);font-size:14px}
+  .slider-labels{display:flex;justify-content:space-between;font-size:10.5px;color:var(--muted);margin-top:2px}
+  select,input[type=text]{width:100%;border:1.5px solid var(--border);border-radius:8px;padding:10px 12px;font-size:14px;font-family:inherit;background:#fff}
+  textarea{width:100%;border:1.5px solid var(--border);border-radius:8px;padding:10px 12px;font-size:14px;font-family:inherit;resize:vertical;min-height:70px;background:#fff}
+  .check-row{display:flex;gap:9px;align-items:flex-start;margin:8px 0;font-size:13px;line-height:1.5}
+  .check-row input{margin-top:3px;flex-shrink:0}
+  .chip-group{display:flex;flex-wrap:wrap;gap:8px;margin-top:2px}
+  .chip{border:1.5px solid var(--border);background:#fff;border-radius:20px;padding:7px 13px;font-size:12.5px;cursor:pointer;user-select:none}
+  .chip.on{background:var(--azul);border-color:var(--azul);color:#fff;font-weight:700}
+  .radio-opt{border:1.5px solid var(--border);border-radius:8px;padding:9px 11px;margin-bottom:7px;font-size:12.5px;line-height:1.5;display:flex;gap:9px;align-items:flex-start;cursor:pointer}
+  .radio-opt input{margin-top:2px;flex-shrink:0}
+  .radio-opt.on{border-color:var(--azul);background:#f0f9ff}
+  .fila2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .medrow{display:flex;gap:8px;margin-bottom:8px}
+  .medrow input{flex:1}
+  .btn-quitar{border:1px solid var(--border);background:#fff;border-radius:8px;padding:0 12px;font-size:13px;cursor:pointer;color:var(--rojo)}
+  .btn-agregar{border:1.5px dashed var(--border);background:#fff;border-radius:8px;padding:8px 12px;font-size:12.5px;font-weight:700;cursor:pointer;color:var(--azul);width:100%}
+  .nota{background:#fffbeb;border:1.5px solid #fde68a;color:#92400e;border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.55;margin:10px 0}
+  .btn{width:100%;padding:14px;border-radius:10px;border:none;font-size:14.5px;font-weight:800;cursor:pointer;font-family:inherit;margin-top:16px}
+  .btn-primary{background:var(--azul);color:#fff}
+  .btn-primary:disabled{background:#cbd5e1;cursor:not-allowed}
+  .err{color:var(--rojo);font-size:12px;margin-top:10px;font-weight:600;display:none}
+  .exito{display:none;text-align:center;padding:30px 10px}
+  .exito .ico{font-size:44px;margin-bottom:10px}
+  .exito h2{color:var(--verde);font-size:17px;margin:0 0 10px}
+  .exito p{font-size:13px;color:#334155;line-height:1.6;margin:0 0 6px}
+  .exito .aviso{border-radius:10px;padding:14px;font-size:13.5px;line-height:1.6;text-align:left;margin:14px 0;background:#fef2f2;border:1.5px solid #fca5a5;color:#7f1d1d}
+  .exito.ok .aviso{background:#f0f9ff;border-color:#7dd3fc;color:#0c4a6e}
+  #form-wrap.oculto, .exito.mostrar{display:none}
+  .exito.mostrar{display:block}
+  footer{text-align:center;color:var(--muted);font-size:11px;padding:10px 20px 30px}
+  .placeholder{text-align:center;padding:30px 14px;color:var(--muted);font-size:13px;line-height:1.6}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>📋 Autoevaluación semanal de seguimiento</h1>
+  <p>Dr. Luis Alberto Muratori — M.N. 100.540 · M.P. 9943<br>Traumatología y Ortopedia</p>
+</div>
+
+<main>
+
+  <div class="card">
+    <h2>Tus datos</h2>
+    <div class="datos-paciente">
+      <div><b>Nombre</b><span id="d-nombre">—</span></div>
+      <div><b>DNI</b><span id="d-dni">—</span></div>
+      <div><b>Segmento en seguimiento</b><span id="d-segmento">—</span></div>
+    </div>
+  </div>
+
+  <div id="placeholder-card" class="card" style="display:none">
+    <div class="placeholder">
+      🛠️ Esta sección todavía está en preparación.<br>Por ahora el formulario está disponible solo para <b>columna lumbar</b>.<br>Cuando esté lista, vas a recibir un nuevo link para tu segmento.
+    </div>
+  </div>
+
+  <div id="form-wrap">
+
+    <form id="f-rmyt" onsubmit="return false">
+
+      <div class="card">
+        <h2>Dolor esta semana</h2>
+        <label>¿Cómo describirías el dolor? <span class="opt">(podés elegir más de uno)</span></label>
+        <div class="chip-group" id="chips-tipo-dolor">
+          <div class="chip" data-v="Punzante">Punzante</div>
+          <div class="chip" data-v="Quemante o ardor">Quemante / ardor</div>
+          <div class="chip" data-v="Eléctrico (corrientazo)">Eléctrico (corrientazo)</div>
+          <div class="chip" data-v="Sordo o profundo">Sordo / profundo</div>
+          <div class="chip" data-v="Opresivo">Opresivo</div>
+          <div class="chip" data-v="Otro">Otro</div>
+        </div>
+
+        <label>Dolor en reposo <span class="opt">(0 = sin dolor · 10 = el peor dolor imaginable)</span></label>
+        <div class="slider-row">
+          <input type="range" id="f-eva-reposo" min="0" max="10" value="0" oninput="reflejarSlider('f-eva-reposo','v-eva-reposo')">
+          <div class="slider-val" id="v-eva-reposo">0</div>
+        </div>
+
+        <label>Dolor al moverte <span class="opt">(0 = sin dolor · 10 = el peor dolor imaginable)</span></label>
+        <div class="slider-row">
+          <input type="range" id="f-eva-movimiento" min="0" max="10" value="0" oninput="reflejarSlider('f-eva-movimiento','v-eva-movimiento')">
+          <div class="slider-val" id="v-eva-movimiento">0</div>
+        </div>
+
+        <label>¿Sentís hormigueo, adormecimiento o corriente que baja por la pierna?</label>
+        <select id="f-neurodinamico">
+          <option value="0">No, nunca</option>
+          <option value="1">A veces</option>
+          <option value="2">Todo el tiempo</option>
+        </select>
+
+        <label>Comparado con antes de empezar el tratamiento, ¿cuánto sentís que mejoraste?</label>
+        <div class="slider-row">
+          <input type="range" id="f-recuperacion" min="0" max="100" step="5" value="0" oninput="reflejarSlider('f-recuperacion','v-recuperacion')">
+          <div class="slider-val" id="v-recuperacion">0%</div>
+        </div>
+        <div class="slider-labels"><span>Nada mejor</span><span>Completamente recuperado</span></div>
+      </div>
+
+      <div class="card">
+        <h2>Cuestionario funcional — Columna lumbar</h2>
+        <p class="sub">Elegí en cada punto la frase que mejor describe cómo estuviste ESTA semana.</p>
+        <div id="preguntas-funcionales"></div>
+      </div>
+
+      <div class="card">
+        <h2>Medicación</h2>
+        <label>¿Qué estás tomando para el dolor?</label>
+        <div class="radio-opt" id="opt-med-magistral" onclick="elegirMedTipo('magistral')">
+          <input type="radio" name="med-tipo" value="magistral">
+          <div>Medicación magistral que ya me indicaron</div>
+        </div>
+        <div class="radio-opt" id="opt-med-farmacopea" onclick="elegirMedTipo('farmacopea')">
+          <input type="radio" name="med-tipo" value="farmacopea">
+          <div>Medicación habitual de farmacia (fármaco y dosis)</div>
+        </div>
+        <div class="radio-opt" id="opt-med-ninguna" onclick="elegirMedTipo('ninguna')">
+          <input type="radio" name="med-tipo" value="ninguna">
+          <div>No estoy tomando medicación</div>
+        </div>
+
+        <div id="bloque-med-magistral" style="display:none">
+          <label>¿En qué farmacia la preparás?</label>
+          <select id="f-magistral-farmacia">
+            <option value="">Elegí una opción</option>
+            <option value="Farmacia Sevilla">Farmacia Sevilla</option>
+            <option value="Farmacia San Jorge">Farmacia San Jorge</option>
+            <option value="No recuerdo">No recuerdo</option>
+          </select>
+        </div>
+
+        <div id="bloque-med-farmacopea" style="display:none">
+          <label>Fármaco y dosis <span class="opt">(agregá uno por renglón)</span></label>
+          <div id="lista-farmacopea"></div>
+          <button type="button" class="btn-agregar" onclick="agregarFilaFarmaco()">+ Agregar otro medicamento</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Efectos y tolerancia</h2>
+        <div class="check-row">
+          <input type="checkbox" id="f-tiene-efecto-adverso" onchange="toggleDetalle('f-tiene-efecto-adverso','bloque-detalle-efecto')">
+          <div>¿Notaste algún efecto que no esperabas con la medicación?</div>
+        </div>
+        <div id="bloque-detalle-efecto" style="display:none">
+          <textarea id="f-detalle-efecto" placeholder="Contanos qué notaste"></textarea>
+        </div>
+
+        <div class="check-row">
+          <input type="checkbox" id="f-tiene-intolerancia" onchange="toggleDetalle('f-tiene-intolerancia','bloque-detalle-intolerancia')">
+          <div>¿Tenés alguna intolerancia a la medicación que estás tomando?</div>
+        </div>
+        <div id="bloque-detalle-intolerancia" style="display:none">
+          <textarea id="f-detalle-intolerancia" placeholder="Contanos cuál"></textarea>
+        </div>
+
+        <div class="check-row">
+          <input type="checkbox" id="f-gastritis">
+          <div>¿Tuviste ardor de estómago, acidez o dolor de panza esta semana?</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Cumplimiento de esta semana</h2>
+        <p class="sub">De 0 (no lo hice) a 10 (lo hice siempre) ¿cuánto cumpliste con...?</p>
+
+        <label>Tomar la medicación indicada</label>
+        <div class="slider-row">
+          <input type="range" id="f-cump-medicacion" min="0" max="10" value="10" oninput="reflejarSlider('f-cump-medicacion','v-cump-medicacion')">
+          <div class="slider-val" id="v-cump-medicacion">10</div>
+        </div>
+        <label>Hacer los ejercicios indicados</label>
+        <div class="slider-row">
+          <input type="range" id="f-cump-ejercicios" min="0" max="10" value="10" oninput="reflejarSlider('f-cump-ejercicios','v-cump-ejercicios')">
+          <div class="slider-val" id="v-cump-ejercicios">10</div>
+        </div>
+        <label>Asistir a kinesiología</label>
+        <div class="slider-row">
+          <input type="range" id="f-cump-kinesio" min="0" max="10" value="10" oninput="reflejarSlider('f-cump-kinesio','v-cump-kinesio')">
+          <div class="slider-val" id="v-cump-kinesio">10</div>
+        </div>
+        <label>Mantener la actividad guiada indicada</label>
+        <div class="slider-row">
+          <input type="range" id="f-cump-actividad" min="0" max="10" value="10" oninput="reflejarSlider('f-cump-actividad','v-cump-actividad')">
+          <div class="slider-val" id="v-cump-actividad">10</div>
+        </div>
+      </div>
+
+      <div class="nota">Esta autoevaluación no reemplaza una consulta médica. Si tenés dolor muy intenso, pérdida de fuerza o de control de esfínteres, contactate de inmediato con el consultorio o andá a una guardia.</div>
+
+      <div id="err-msg" class="err"></div>
+      <button type="button" class="btn btn-primary" id="btn-enviar" onclick="enviarAutoevaluacion()">Enviar autoevaluación</button>
+    </form>
+  </div>
+
+  <div class="exito" id="card-exito">
+    <div class="ico">✅</div>
+    <h2 id="exito-titulo">¡Gracias!</h2>
+    <p id="exito-texto">Tu autoevaluación quedó registrada.</p>
+    <div class="aviso" id="exito-aviso"></div>
+  </div>
+
+</main>
+
+<footer>Dr. Luis Alberto Muratori — M.N. 100.540 · M.P. 9943 · Mendoza, Argentina</footer>
+
+<script>
+const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbwYdoFuU8mQL4YKqufSBQ9AD_yqWEEesLtGzYQjNw2JG1BZIQF7ug80mHB5sLMXhaUpvQ/exec';
+
+// ══════════════════════════════════════════════════════════════════
+// Módulo compartido (todos los segmentos) + banco de preguntas
+// funcionales específico por segmento — inspirado, en su ESPÍRITU
+// evaluativo, en instrumentos validados internacionales de discapacidad
+// funcional (tipo Oswestry para columna, DASH para miembro superior,
+// etc.), pero redactado con enunciados propios y originales, sin copiar
+// ningún texto de esos instrumentos, para no afectar la propiedad
+// intelectual de sus autores. Cada respuesta va de 0 (sin limitación) a
+// 5 (limitación máxima); el puntaje del segmento es el promedio de las
+// preguntas respondidas, llevado a un porcentaje de 0 a 100.
+// Por ahora solo está cargado el banco de "Columna lumbar" — el resto de
+// los 18 segmentos se agrega de a uno reutilizando esta misma estructura.
+// ══════════════════════════════════════════════════════════════════
+const SEGMENTOS_RMYT = {
+  'Columna lumbar': {
+    escala_nombre: 'Escala funcional lumbar (adaptada, espíritu Oswestry)',
+    preguntas: [
+      { id:'cuidado_personal', texto:'Higiene y vestirte', opciones:[
+        'Puedo higienizarme y vestirme sin ninguna dificultad ni dolor.',
+        'Puedo hacerlo solo, aunque el dolor lumbar me molesta un poco.',
+        'Me cuesta más de lo habitual y voy más despacio por el dolor.',
+        'Necesito ayuda en algunas partes (por ejemplo, atarme los cordones).',
+        'Necesito ayuda en la mayoría de las tareas de higiene y vestido.',
+        'No puedo higienizarme ni vestirme solo por el dolor lumbar.'
+      ]},
+      { id:'levantar_peso', texto:'Levantar objetos', opciones:[
+        'Puedo levantar objetos pesados sin que aumente el dolor.',
+        'Puedo levantar objetos pesados, pero me genera más dolor.',
+        'El dolor me impide levantar objetos pesados del piso, pero sí puedo si están en un lugar cómodo (por ejemplo, una mesa).',
+        'El dolor me impide levantar objetos pesados, pero sí livianos o medianos si están en un lugar cómodo.',
+        'Solo puedo levantar objetos muy livianos.',
+        'No puedo levantar ni transportar ningún objeto.'
+      ]},
+      { id:'caminar', texto:'Caminar', opciones:[
+        'El dolor no me limita para caminar ninguna distancia.',
+        'El dolor me impide caminar más de dos o tres kilómetros.',
+        'El dolor me impide caminar más de un kilómetro.',
+        'El dolor me impide caminar más de algunas cuadras.',
+        'Solo puedo caminar ayudado con bastón o muletas.',
+        'Paso la mayor parte del tiempo en la cama y me cuesta mucho llegar al baño.'
+      ]},
+      { id:'sentado', texto:'Permanecer sentado', opciones:[
+        'Puedo permanecer sentado en cualquier silla todo el tiempo que quiera.',
+        'Puedo permanecer sentado todo el tiempo que quiera, solo en mi silla favorita.',
+        'El dolor me impide estar sentado más de una hora.',
+        'El dolor me impide estar sentado más de media hora.',
+        'El dolor me impide estar sentado más de diez minutos.',
+        'El dolor me impide estar sentado por completo.'
+      ]},
+      { id:'de_pie', texto:'Permanecer de pie', opciones:[
+        'Puedo permanecer de pie todo el tiempo que quiera sin que aumente el dolor.',
+        'Puedo permanecer de pie todo el tiempo que quiera, pero el dolor aumenta.',
+        'El dolor me impide estar de pie más de una hora.',
+        'El dolor me impide estar de pie más de media hora.',
+        'El dolor me impide estar de pie más de diez minutos.',
+        'El dolor me impide estar de pie por completo.'
+      ]},
+      { id:'dormir', texto:'Dormir', opciones:[
+        'El dolor no me interrumpe el sueño.',
+        'Solo puedo dormir bien usando alguna almohada o postura especial.',
+        'Aun con esos cuidados, duermo menos de seis horas.',
+        'Aun con esos cuidados, duermo menos de cuatro horas.',
+        'Aun con esos cuidados, duermo menos de dos horas.',
+        'El dolor me impide dormir por completo.'
+      ]},
+      { id:'vida_social', texto:'Vida social', opciones:[
+        'Mi vida social es normal y no me genera dolor extra.',
+        'Mi vida social es normal, pero me aumenta el dolor.',
+        'El dolor no me limita para salir, salvo en actividades que exigen más esfuerzo (por ejemplo, bailar o deportes).',
+        'El dolor limita mi vida social y salgo con menos frecuencia.',
+        'El dolor limita mi vida social al ámbito de mi casa.',
+        'No tengo vida social por el dolor.'
+      ]},
+      { id:'viajar', texto:'Desplazarte o viajar', opciones:[
+        'Puedo viajar a cualquier lugar sin que me genere dolor extra.',
+        'Puedo viajar a cualquier lugar, aunque me genera más dolor.',
+        'El dolor es fuerte, pero puedo hacer viajes de más de dos horas.',
+        'El dolor me limita a viajes de menos de una hora.',
+        'El dolor me limita a viajes cortos y necesarios de menos de media hora.',
+        'El dolor me impide viajar, salvo para ir al médico o al hospital.'
+      ]},
+      { id:'tareas_hogar_trabajo', texto:'Tareas del hogar o del trabajo', opciones:[
+        'Puedo realizar mis tareas habituales sin dificultad.',
+        'Puedo realizarlas, pero me generan más dolor.',
+        'Puedo realizar la mayoría, aunque debo evitar las más exigentes (levantar peso, cargar, agacharme mucho).',
+        'El dolor me impide hacer tareas que no sean las más livianas.',
+        'El dolor me impide hacer casi cualquier tarea.',
+        'El dolor me impide hacer cualquier tarea de la casa o el trabajo.'
+      ]},
+      { id:'vida_afectiva', texto:'Vida afectiva / íntima', opcional:true, opciones:[
+        'No se ve afectada por el dolor lumbar.',
+        'Se ve levemente afectada, con algo más de dolor.',
+        'Se ve afectada de forma moderada.',
+        'Se ve bastante limitada por el dolor.',
+        'Está casi anulada por el dolor.',
+        'Está completamente anulada por el dolor.'
+      ]}
+    ]
+  }
+};
+
+function inicializarChipsDolor_(){
+  document.querySelectorAll('#chips-tipo-dolor .chip').forEach(chip => {
+    chip.addEventListener('click', () => chip.classList.toggle('on'));
+  });
+}
+
+function reflejarSlider(idInput, idVal){
+  const el = document.getElementById(idInput);
+  const val = document.getElementById(idVal);
+  val.textContent = idInput === 'f-recuperacion' ? (el.value + '%') : el.value;
+}
+
+function toggleDetalle(idCheck, idBloque){
+  document.getElementById(idBloque).style.display = document.getElementById(idCheck).checked ? 'block' : 'none';
+}
+
+function elegirMedTipo(tipo){
+  ['magistral','farmacopea','ninguna'].forEach(t=>{
+    const opt = document.getElementById('opt-med-'+t);
+    opt.classList.toggle('on', t===tipo);
+    opt.querySelector('input').checked = (t===tipo);
+  });
+  document.getElementById('bloque-med-magistral').style.display = (tipo==='magistral') ? 'block' : 'none';
+  document.getElementById('bloque-med-farmacopea').style.display = (tipo==='farmacopea') ? 'block' : 'none';
+  if(tipo==='farmacopea' && document.getElementById('lista-farmacopea').children.length===0) agregarFilaFarmaco();
+}
+
+function agregarFilaFarmaco(){
+  const cont = document.getElementById('lista-farmacopea');
+  const div = document.createElement('div');
+  div.className = 'medrow';
+  div.innerHTML = `
+    <input type="text" placeholder="Fármaco" class="f-farmaco">
+    <input type="text" placeholder="Dosis (ej: 500mg cada 8hs)" class="f-dosis">
+    <button type="button" class="btn-quitar" onclick="this.parentElement.remove()">✕</button>`;
+  cont.appendChild(div);
+}
+
+let SEGMENTO_ACTUAL = '';
+
+function renderPreguntasFuncionales(segmento){
+  const cont = document.getElementById('preguntas-funcionales');
+  const def = SEGMENTOS_RMYT[segmento];
+  if(!def){ cont.innerHTML = ''; return; }
+  cont.innerHTML = def.preguntas.map((p, pi) => {
+    const opciones = p.opciones.map((texto, oi) => `
+      <label class="radio-opt" onclick="marcarRadioOn(this)">
+        <input type="radio" name="preg-${p.id}" value="${oi}">
+        <div>${texto}</div>
+      </label>`).join('') + (p.opcional ? `
+      <label class="radio-opt" onclick="marcarRadioOn(this)">
+        <input type="radio" name="preg-${p.id}" value="na">
+        <div>Prefiero no responder</div>
+      </label>` : '');
+    return `<h3>${pi+1}. ${p.texto}${p.opcional ? ' <span class="opt">(opcional)</span>' : ''}</h3>${opciones}`;
+  }).join('');
+}
+
+function marcarRadioOn(label){
+  const name = label.querySelector('input').name;
+  document.querySelectorAll(`input[name="${name}"]`).forEach(inp => {
+    inp.closest('.radio-opt').classList.toggle('on', inp === label.querySelector('input'));
+  });
+}
+
+function leerParametros(){
+  const params = new URLSearchParams(location.search);
+  return {
+    dni: params.get('dni') || '',
+    segmento: params.get('segmento') || 'Columna lumbar',
+    apellido: params.get('apellido') || '',
+    nombre: params.get('nombre') || ''
+  };
+}
+
+function iniciar(){
+  const p = leerParametros();
+  SEGMENTO_ACTUAL = p.segmento;
+  document.getElementById('d-nombre').textContent = (p.nombre || p.apellido) ? `${p.nombre} ${p.apellido}`.trim() : '—';
+  document.getElementById('d-dni').textContent = p.dni || '—';
+  document.getElementById('d-segmento').textContent = p.segmento || '—';
+
+  if(!SEGMENTOS_RMYT[SEGMENTO_ACTUAL]){
+    document.getElementById('placeholder-card').style.display = 'block';
+    document.getElementById('form-wrap').style.display = 'none';
+    return;
+  }
+  renderPreguntasFuncionales(SEGMENTO_ACTUAL);
+  inicializarChipsDolor_();
+}
+
+function calcularPorcentajeDiscapacidad_(segmento){
+  const def = SEGMENTOS_RMYT[segmento];
+  let sumaPuntos = 0, cantidadRespondidas = 0, faltanObligatorias = false;
+  def.preguntas.forEach(p => {
+    const marcado = document.querySelector(`input[name="preg-${p.id}"]:checked`);
+    if(!marcado){ if(!p.opcional) faltanObligatorias = true; return; }
+    if(marcado.value === 'na') return; // "prefiero no responder", no entra en el cálculo
+    sumaPuntos += Number(marcado.value);
+    cantidadRespondidas++;
+  });
+  if(faltanObligatorias) return { error: true };
+  if(cantidadRespondidas === 0) return { error: true };
+  const pct = Math.round((sumaPuntos / (cantidadRespondidas * 5)) * 1000) / 10;
+  return { error: false, pct };
+}
+
+function mostrarError(msg){
+  const err = document.getElementById('err-msg');
+  err.textContent = msg;
+  err.style.display = 'block';
+  err.scrollIntoView({behavior:'smooth', block:'center'});
+}
+
+async function enviarAutoevaluacion(){
+  document.getElementById('err-msg').style.display = 'none';
+  const p = leerParametros();
+  if(!p.dni){ mostrarError('Falta el DNI en el link — pedí que te reenvíen el link de autoevaluación.'); return; }
+
+  const medTipoEl = document.querySelector('input[name="med-tipo"]:checked');
+  const medTipo = medTipoEl ? medTipoEl.value : '';
+
+  const farmacopea = [];
+  document.querySelectorAll('#lista-farmacopea .medrow').forEach(row => {
+    const farmaco = row.querySelector('.f-farmaco').value.trim();
+    const dosis = row.querySelector('.f-dosis').value.trim();
+    if(farmaco || dosis) farmacopea.push({farmaco, dosis});
+  });
+  if(medTipo === 'farmacopea' && farmacopea.length === 0){
+    mostrarError('Contanos al menos un fármaco y su dosis, o elegí otra opción de medicación.');
+    return;
+  }
+  if(medTipo === 'magistral' && !document.getElementById('f-magistral-farmacia').value){
+    mostrarError('Elegí en qué farmacia preparás la medicación magistral.');
+    return;
+  }
+
+  const calc = calcularPorcentajeDiscapacidad_(SEGMENTO_ACTUAL);
+  if(calc.error){ mostrarError('Respondé todas las preguntas del cuestionario funcional (podés omitir solo las marcadas como opcionales).'); return; }
+
+  const tiposDolor = Array.from(document.querySelectorAll('#chips-tipo-dolor .chip.on')).map(c => c.dataset.v);
+
+  const datos = {
+    segmento: { titulo: SEGMENTO_ACTUAL, escala_nombre: SEGMENTOS_RMYT[SEGMENTO_ACTUAL].escala_nombre, escala_pct_discapacidad: calc.pct },
+    dolor: { tipo: tiposDolor, eva_reposo: Number(document.getElementById('f-eva-reposo').value), eva_movimiento: Number(document.getElementById('f-eva-movimiento').value) },
+    neurodinamico: Number(document.getElementById('f-neurodinamico').value),
+    incapacidad_relativa_pct: calc.pct,
+    recuperacion_percibida_pct: Number(document.getElementById('f-recuperacion').value),
+    medicacion: medTipo === 'magistral'
+      ? { tipo:'magistral', magistral_farmacia: document.getElementById('f-magistral-farmacia').value }
+      : (medTipo === 'farmacopea' ? { tipo:'farmacopea', farmacopea } : { tipo:'ninguna' }),
+    efectos_adversos: { tiene: document.getElementById('f-tiene-efecto-adverso').checked, detalle: document.getElementById('f-detalle-efecto').value.trim() },
+    intolerancias: { tiene: document.getElementById('f-tiene-intolerancia').checked, detalle: document.getElementById('f-detalle-intolerancia').value.trim() },
+    gastritis: document.getElementById('f-gastritis').checked,
+    cumplimiento: {
+      medicacion: Number(document.getElementById('f-cump-medicacion').value),
+      ejercicios: Number(document.getElementById('f-cump-ejercicios').value),
+      kinesio: Number(document.getElementById('f-cump-kinesio').value),
+      actividad_guiada: Number(document.getElementById('f-cump-actividad').value)
+    }
+  };
+
+  const btn = document.getElementById('btn-enviar');
+  btn.disabled = true; btn.textContent = 'Enviando…';
+  try{
+    const resp = await fetch(SHEETS_URL, {
+      method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({ action:'saveAutoevaluacionRMYT', dni:p.dni, datos })
+    });
+    const data = await resp.json();
+    if(!data.success){ mostrarError(data.error || 'No se pudo registrar la autoevaluación. Probá de nuevo en unos minutos.'); btn.disabled=false; btn.textContent='Enviar autoevaluación'; return; }
+    mostrarExito_(data);
+  }catch(e){
+    mostrarError('No se pudo conectar para enviar la autoevaluación. Revisá tu conexión y probá de nuevo.');
+    btn.disabled = false; btn.textContent = 'Enviar autoevaluación';
+  }
+}
+
+function mostrarExito_(data){
+  document.getElementById('form-wrap').style.display = 'none';
+  document.getElementById('placeholder-card').style.display = 'none';
+  const card = document.getElementById('card-exito');
+  const alerta = data.alerta || '';
+  const hayAlerta = !!alerta;
+  card.classList.toggle('ok', !hayAlerta);
+  document.getElementById('exito-titulo').textContent = hayAlerta ? 'Registrado — te vamos a contactar' : '¡Gracias por completarla!';
+  document.getElementById('exito-texto').textContent = 'Tu autoevaluación semanal quedó registrada y suma a tu seguimiento.';
+  const aviso = document.getElementById('exito-aviso');
+  if(hayAlerta){
+    aviso.innerHTML = '<b>⚠️ Vimos algo para revisar</b>Por lo que contaste esta semana, el consultorio se va a comunicar con vos para revisarlo. Si mientras tanto el dolor es muy intenso o notás algo que empeora rápido, no esperes: contactate directamente o andá a una guardia.';
+  } else {
+    aviso.innerHTML = '<b>✅ Seguimos así</b>Gracias por tomarte el tiempo de completarla — esto ayuda al Dr. Muratori a ver con más precisión cómo vas evolucionando semana a semana.';
+  }
+  card.classList.add('mostrar');
+}
+
+iniciar();
+</script>
+</body>
+</html>

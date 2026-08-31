@@ -49,6 +49,23 @@
   .alerta-pago{background:#fef2f2;border:1px solid #fecaca;color:#dc2626;border-radius:8px;padding:10px 12px;font-size:12px;margin-bottom:10px}
   .meet-box{background:#f0f9ff;border:1px solid #7dd3fc;border-radius:8px;padding:10px 12px;font-size:12px;margin-top:10px}
   .not-found{color:var(--muted);font-size:12px;text-align:center;padding:20px}
+  .qr-datos{background:#f8fafc;border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.7;margin-top:8px}
+  .qr-datos b{color:#334155}
+  .qr-datos img{max-width:100%;border-radius:6px;margin-top:6px;display:block}
+  .btn-cv{background:#7c3aed;color:#fff}
+  /* ── Espacio de Consulta Virtual — modal que conecta Agenda + OCM ── */
+  .cv-overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:500;align-items:flex-start;justify-content:center;overflow-y:auto;padding:24px 12px}
+  .cv-modal{background:#fff;border-radius:12px;max-width:720px;width:100%;padding:20px 22px;margin-top:20px}
+  .cv-modal h2{font-size:15px;margin:0 0 4px;color:var(--azul-osc)}
+  .cv-modal .cv-sub{font-size:11.5px;color:var(--muted);margin:0 0 14px}
+  .cv-cerrar{float:right;background:none;border:none;font-size:18px;cursor:pointer;color:var(--muted)}
+  .cv-timer-row{display:flex;align-items:center;gap:12px;background:#f8fafc;border-radius:10px;padding:12px 14px;margin:12px 0}
+  .cv-timer{font-size:30px;font-weight:800;color:var(--azul-osc);font-variant-numeric:tabular-nums}
+  .cv-timer.cv-timer-cero{color:var(--rojo)}
+  .cv-cols{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:6px}
+  @media (max-width:640px){.cv-cols{grid-template-columns:1fr}}
+  .cv-box{background:#f8fafc;border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.65;max-height:260px;overflow-y:auto}
+  .cv-box h4{margin:0 0 6px;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -151,6 +168,18 @@ function mostrarMensaje(i){
       <div class="cuerpo-original">${(m.cuerpo||'').replace(/</g,'&lt;')}</div>
     </div>
 
+    ${(m.segmento || m.cuando || m.vioMedico || m.diagnosticoPrevio || m.medicacionRecibida || m.fotoUrl) ? `
+    <div class="card">
+      <h3>Datos cargados por el paciente (QR)</h3>
+      <div class="qr-datos">
+        ${m.segmento ? `<div><b>Segmento afectado:</b> ${m.segmento}</div>` : ''}
+        ${m.cuando ? `<div><b>Cuándo pasó:</b> ${m.cuando}</div>` : ''}
+        ${m.vioMedico ? `<div><b>¿Ya vio a un médico?:</b> ${m.vioMedico}${m.diagnosticoPrevio ? ' — diagnóstico dado: '+m.diagnosticoPrevio : ''}</div>` : ''}
+        ${m.medicacionRecibida ? `<div><b>Medicación/receta recibida:</b> ${m.medicacionRecibida}</div>` : ''}
+        ${m.fotoUrl ? `<div><b>Foto del estudio/informe:</b> <a href="${m.fotoUrl}" target="_blank">ver imagen</a></div>` : ''}
+      </div>
+    </div>` : ''}
+
     ${m.requierePago ? `
     <div class="card">
       <h3>Estado de pago</h3>
@@ -158,6 +187,7 @@ function mostrarMensaje(i){
       <div class="row">
         ${m.estadoPago!=='confirmado' ? `<button class="btn btn-ghost" onclick="generarCobroMP()">💳 Generar link de cobro (Mercado Pago)</button>` : ''}
         <button class="btn btn-ghost" onclick="marcarPagoConfirmado()">${m.estadoPago==='confirmado'?'✓ Pago ya confirmado':'Marcar pago como confirmado'}</button>
+        <button class="btn btn-cv" onclick="abrirConsultaVirtual()">🎥 Abrir espacio de Consulta Virtual</button>
       </div>
       <div id="cobro-resultado"></div>
     </div>` : ''}
@@ -166,8 +196,8 @@ function mostrarMensaje(i){
     <div class="card">
       <h3>Varias preguntas — ¿coordinar videollamada?</h3>
       <div class="row">
-        <button class="btn btn-ghost" onclick="generarMeet(5)">📅 Generar Meet — turno breve (5 min, sin costo)</button>
-        <button class="btn btn-ghost" onclick="generarMeet(15)">📅 Generar Meet — consulta virtual (15 min, paga)</button>
+        <button class="btn btn-ghost" onclick="generarMeet(5)">📅 Generar Meet — entrevista express (5 min · $20.000)</button>
+        <button class="btn btn-ghost" onclick="generarMeet(15)">📅 Generar Meet — consulta virtual (15 min · $60.000)</button>
       </div>
       <div id="meet-resultado"></div>
     </div>` : ''}
@@ -215,6 +245,223 @@ async function generarMeet(duracionMin){
 function insertarLinkEnRespuesta(link){
   const ta = document.getElementById('respuesta-texto');
   ta.value += `\n\nLink de la videollamada: ${link}`;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// Espacio de Consulta Virtual — pantalla única para la entrevista en sí:
+// junta lo que contó el paciente por el QR, su historia previa del OCM
+// (buscada por DNI con get_vista_consolidada, la misma función que ya usa
+// OCM), el link de Meet, un timer visible (corte manual, ver conversación
+// sobre por qué no hay corte automático de Meet con cuenta Gmail gratuita),
+// y guarda la nota de la entrevista directamente en Historia_Clinica con
+// addHistoria — la misma acción que ya usa OCM, así queda todo en un solo
+// lugar sin tener que cargar nada dos veces.
+// ══════════════════════════════════════════════════════════════════
+let cvDuracionMin = 5;
+let cvSegundosRestantes = 5*60;
+let cvTimerInterval = null;
+let cvDniActual = '';
+
+function cvExtraerDNI_(cuerpo){
+  const m = String(cuerpo||'').match(/DNI:\s*([^\n]+)/i);
+  const dni = m ? m[1].trim() : '';
+  return (dni && dni !== '') ? dni : '';
+}
+
+function abrirConsultaVirtual(){
+  if(!MENSAJE_ACTUAL) return;
+  const m = MENSAJE_ACTUAL;
+  document.getElementById('cv-paciente-nombre').textContent = (m.remitente||'').replace(/<.*/,'').trim() || m.remitente;
+
+  document.getElementById('cv-datos-qr').innerHTML = `
+    ${m.segmento ? `<div><b>Segmento:</b> ${m.segmento}</div>` : ''}
+    ${m.cuando ? `<div><b>Cuándo pasó:</b> ${m.cuando}</div>` : ''}
+    ${m.vioMedico ? `<div><b>¿Vio médico?:</b> ${m.vioMedico}${m.diagnosticoPrevio ? ' — '+m.diagnosticoPrevio : ''}</div>` : ''}
+    ${m.medicacionRecibida ? `<div><b>Medicación recibida:</b> ${m.medicacionRecibida}</div>` : ''}
+    ${m.fotoUrl ? `<div><a href="${m.fotoUrl}" target="_blank">📎 Ver foto del estudio</a></div>` : ''}
+    <div style="margin-top:6px;white-space:pre-wrap">${(m.cuerpo||'').replace(/</g,'&lt;')}</div>
+  `;
+
+  cvDniActual = cvExtraerDNI_(m.cuerpo);
+  document.getElementById('cv-historia-ocm').textContent = cvDniActual ? 'Cargando…' : 'No se encontró DNI en la solicitud — cargalo a mano si querés vincularlo con el OCM.';
+  document.getElementById('cv-tendencia-rmyt').textContent = cvDniActual ? 'Cargando…' : 'No se encontró DNI en la solicitud.';
+  document.getElementById('cv-meet-box').innerHTML = `<button class="btn btn-ghost" onclick="cvGenerarMeet()">📅 Generar link de Meet</button>`;
+  document.getElementById('cv-notas').value = '';
+  document.getElementById('cv-diagnostico').value = '';
+  document.getElementById('cv-proximo-control').value = '';
+  document.getElementById('cv-guardado-resultado').textContent = '';
+  cvSetDuracion(5);
+
+  document.getElementById('cv-overlay').style.display = 'flex';
+
+  if(cvDniActual){
+    cvCargarHistoriaOCM_(cvDniActual);
+    cvCargarTendenciaRMYT_(cvDniActual);
+  }
+}
+
+// ── Tendencia RMYT (motor predictivo simple, ver calcularTendenciaRMYT_ en
+// Codigo.gs): compara la evolución objetiva (EVA / % de discapacidad) contra
+// la recuperación percibida por el paciente, semana a semana, para ayudar a
+// distinguir una mejoría real y sostenida de una simple apreciación
+// personal. Es una estimación por regresión lineal simple, no un
+// diagnóstico — se muestra siempre con ese lenguaje prudente.
+const CV_TENDENCIA_LABELS = {
+  mejoria_sostenida: {ico:'📈', color:'#16a34a', texto:'Mejoría sostenida'},
+  estancado: {ico:'➖', color:'#d97706', texto:'Estancado'},
+  empeorando: {ico:'📉', color:'#dc2626', texto:'Empeorando'},
+  datos_insuficientes: {ico:'⏳', color:'#64748b', texto:'Datos insuficientes'}
+};
+
+async function cvCargarTendenciaRMYT_(dni){
+  const cont = document.getElementById('cv-tendencia-rmyt');
+  try{
+    const resp = await fetch(SHEETS_URL + '?action=getAutoevaluacionesRMYT&dni=' + encodeURIComponent(dni));
+    const data = await resp.json();
+    if(!data.success || !data.tendencia || data.tendencia.estado === 'datos_insuficientes'){
+      cont.textContent = (data.tendencia && data.tendencia.mensaje) || 'Todavía no hay autoevaluaciones semanales cargadas para este paciente.';
+      return;
+    }
+    const t = data.tendencia;
+    const label = CV_TENDENCIA_LABELS[t.estado] || CV_TENDENCIA_LABELS.datos_insuficientes;
+    let html = `<div style="font-weight:800;color:${label.color}">${label.ico} ${label.texto}</div>
+      <div style="margin-top:3px">${t.mensaje}</div>
+      <div style="color:var(--muted);font-size:11px;margin-top:3px">Basado en ${t.n_registros} autoevaluaciones — estimación, no reemplaza el criterio clínico.</div>`;
+    if(t.discordancia){
+      html += `<div style="margin-top:6px;padding-top:6px;border-top:1px dashed var(--border)"><b>⚠️ Discordancia objetivo/percibido:</b> ${t.mensaje_discordancia}</div>`;
+    }
+    if(t.proyeccion_semanas_a_leve){
+      html += `<div style="margin-top:6px;color:var(--muted)">Proyección aproximada: ~${t.proyeccion_semanas_a_leve} semana(s) más al ritmo actual para llegar a discapacidad leve.</div>`;
+    }
+    cont.innerHTML = html;
+  }catch(e){
+    cont.textContent = 'No se pudo cargar la tendencia RMYT (sin conexión con el backend).';
+  }
+}
+
+function cerrarConsultaVirtual(){
+  document.getElementById('cv-overlay').style.display = 'none';
+  if(cvTimerInterval){ clearInterval(cvTimerInterval); cvTimerInterval = null; }
+}
+
+async function cvCargarHistoriaOCM_(dni){
+  const cont = document.getElementById('cv-historia-ocm');
+  try{
+    const resp = await fetch(SHEETS_URL + '?action=get_vista_consolidada&dni=' + encodeURIComponent(dni));
+    const data = await resp.json();
+    if(!data.success || !data.vista){ cont.textContent = 'No se encontró historia previa para este DNI — sería un paciente nuevo.'; return; }
+    const v = data.vista;
+    if(!v.apellido && !v.nombre && (!v.historia || !v.historia.length)){
+      cont.textContent = 'No se encontró historia previa para este DNI — sería un paciente nuevo.';
+      return;
+    }
+    let html = '';
+    if(v.apellido || v.nombre) html += `<div><b>${v.apellido||''} ${v.nombre||''}</b></div>`;
+    if(v.obra_social) html += `<div><b>Obra social:</b> ${v.obra_social}</div>`;
+    if(v.estado_tratamiento) html += `<div><b>Estado tratamiento:</b> ${v.estado_tratamiento}</div>`;
+    const historia = Array.isArray(v.historia) ? v.historia : [];
+    if(historia.length){
+      html += '<div style="margin-top:6px"><b>Consultas anteriores:</b></div>';
+      historia.slice(-5).reverse().forEach(h=>{
+        html += `<div style="margin-top:4px;padding-top:4px;border-top:1px solid var(--border)">
+          <div style="color:var(--muted);font-size:11px">${h.Fecha||''}</div>
+          ${h.Diagnostico ? `<div>${h.Diagnostico}</div>` : ''}
+          ${h.Observaciones ? `<div style="color:var(--muted)">${h.Observaciones}</div>` : ''}
+        </div>`;
+      });
+    } else {
+      html += '<div style="margin-top:6px;color:var(--muted)">Sin consultas previas registradas.</div>';
+    }
+    cont.innerHTML = html;
+  }catch(e){
+    cont.textContent = 'No se pudo cargar la historia previa (sin conexión con el backend).';
+  }
+}
+
+async function cvGenerarMeet(){
+  if(!MENSAJE_ACTUAL) return;
+  const cont = document.getElementById('cv-meet-box');
+  const destMail = (MENSAJE_ACTUAL.remitente.match(/<(.+)>/)||[])[1] || MENSAJE_ACTUAL.remitente;
+  const ahora = new Date();
+  cont.innerHTML = '<div style="font-size:11px;color:var(--muted)">Generando…</div>';
+  try{
+    const resp = await fetch(SHEETS_URL, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify(Object.assign({action:'generarLinkMeet', fechaHoraISO:ahora.toISOString(), duracionMin:cvDuracionMin,
+        titulo:(cvDuracionMin===5?'Entrevista express':'Consulta virtual')+' — Dr. Muratori',
+        mailPaciente:destMail, descripcion:'Generado desde el Espacio de Consulta Virtual'}, APP_TOKEN?{token:APP_TOKEN}:{}))});
+    const data = await resp.json();
+    if(!data.success) throw new Error(data.error||'Error del servidor');
+    cont.innerHTML = `<div class="meet-box">📹 <a href="${data.link}" target="_blank">${data.link}</a><br>
+      <button class="btn-mini" onclick="insertarLinkEnRespuesta('${data.link}')" style="margin-top:6px;font-size:11px">+ Insertar en la respuesta</button></div>`;
+  }catch(e){
+    cont.innerHTML = `<div class="alerta-pago">⚠️ No se pudo generar el link: ${e.message}</div>`;
+  }
+}
+
+function cvFormatTimer_(seg){
+  const m = Math.floor(seg/60), s = seg%60;
+  return String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+}
+
+function cvSetDuracion(min){
+  if(cvTimerInterval){ clearInterval(cvTimerInterval); cvTimerInterval = null; }
+  cvDuracionMin = min;
+  cvSegundosRestantes = min*60;
+  const el = document.getElementById('cv-timer');
+  el.textContent = cvFormatTimer_(cvSegundosRestantes);
+  el.classList.remove('cv-timer-cero');
+  document.getElementById('cv-timer-btn').textContent = '▶ Iniciar';
+}
+
+function cvToggleTimer(){
+  const btn = document.getElementById('cv-timer-btn');
+  if(cvTimerInterval){
+    clearInterval(cvTimerInterval); cvTimerInterval = null;
+    btn.textContent = '▶ Continuar';
+    return;
+  }
+  btn.textContent = '⏸ Pausar';
+  cvTimerInterval = setInterval(()=>{
+    cvSegundosRestantes--;
+    const el = document.getElementById('cv-timer');
+    if(cvSegundosRestantes <= 0){
+      cvSegundosRestantes = 0;
+      el.textContent = '00:00';
+      el.classList.add('cv-timer-cero');
+      clearInterval(cvTimerInterval); cvTimerInterval = null;
+      btn.textContent = '⏱ Terminado — cortá el Meet';
+      return;
+    }
+    el.textContent = cvFormatTimer_(cvSegundosRestantes);
+  }, 1000);
+}
+
+function cvReiniciarTimer(){
+  cvSetDuracion(cvDuracionMin);
+}
+
+async function cvGuardarEnOCM(){
+  const cont = document.getElementById('cv-guardado-resultado');
+  let dni = cvDniActual;
+  if(!dni){
+    dni = (prompt('No se encontró DNI en la solicitud. Ingresalo para guardar la nota en el OCM (o cancelá para no guardar):','')||'').trim();
+    if(!dni){ cont.textContent = 'No se guardó — hace falta un DNI para vincularlo con el OCM.'; return; }
+  }
+  const notas = document.getElementById('cv-notas').value.trim();
+  const diagnostico = document.getElementById('cv-diagnostico').value.trim();
+  const proximoControl = document.getElementById('cv-proximo-control').value.trim();
+  if(!notas && !diagnostico){ cont.textContent = 'Cargá al menos una nota o un diagnóstico antes de guardar.'; return; }
+  cont.textContent = 'Guardando…';
+  try{
+    const resp = await fetch(SHEETS_URL, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify(Object.assign({action:'addHistoria', DNI:dni, Diagnostico:diagnostico,
+        Observaciones:notas, Proximo_Control:proximoControl}, APP_TOKEN?{token:APP_TOKEN}:{}))});
+    const data = await resp.json();
+    if(!data.success) throw new Error(data.error||'Error del servidor');
+    cont.innerHTML = '<span style="color:#166534;font-weight:700">✅ Guardado en la Historia Clínica (OCM)</span>';
+  }catch(e){
+    cont.innerHTML = `<span style="color:var(--rojo)">⚠️ No se pudo guardar: ${e.message}</span>`;
+  }
 }
 
 // Mismo botón/función que ya usa OCM ("Cobrar") — hoy Mercado Pago está
@@ -271,6 +518,63 @@ async function aprobarYEnviar(){
 cargarMensajes();
 setInterval(cargarMensajes, 60000); // se refresca sola cada 1 minuto
 </script>
+
+<!-- ══ Espacio de Consulta Virtual — conecta la Agenda con el OCM durante la entrevista ══ -->
+<div class="cv-overlay" id="cv-overlay">
+  <div class="cv-modal">
+    <button class="cv-cerrar" onclick="cerrarConsultaVirtual()">✕</button>
+    <h2>🎥 Espacio de Consulta Virtual</h2>
+    <p class="cv-sub" id="cv-paciente-nombre">—</p>
+
+    <div class="cv-timer-row">
+      <div class="cv-timer" id="cv-timer">05:00</div>
+      <div class="row" style="margin:0">
+        <button class="btn btn-ghost" onclick="cvSetDuracion(5)">5 min</button>
+        <button class="btn btn-ghost" onclick="cvSetDuracion(15)">15 min</button>
+        <button class="btn btn-verde" id="cv-timer-btn" onclick="cvToggleTimer()">▶ Iniciar</button>
+        <button class="btn btn-ghost" onclick="cvReiniciarTimer()">↺ Reiniciar</button>
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-top:-8px;margin-bottom:10px">El corte es manual: cuando el contador llega a 0, cerrá vos la videollamada de Meet.</div>
+
+    <div id="cv-meet-box"></div>
+
+    <div class="cv-cols">
+      <div class="cv-box">
+        <h4>Lo que contó el paciente (QR)</h4>
+        <div id="cv-datos-qr">—</div>
+      </div>
+      <div class="cv-box">
+        <h4>Historia clínica previa (OCM)</h4>
+        <div id="cv-historia-ocm">Cargando…</div>
+      </div>
+    </div>
+
+    <div class="cv-box" style="margin-top:14px">
+      <h4>Tendencia de seguimiento (RMYT — estimación)</h4>
+      <div id="cv-tendencia-rmyt">—</div>
+    </div>
+
+    <label style="display:block;font-size:12px;font-weight:700;color:#334155;margin:14px 0 5px">Notas de esta entrevista</label>
+    <textarea id="cv-notas" rows="4" placeholder="Qué se conversó, indicaciones dadas…" style="width:100%;border:1.5px solid var(--border);border-radius:6px;padding:10px 12px;font-size:12.5px;font-family:inherit"></textarea>
+
+    <div class="fila2-cv" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
+      <div>
+        <label style="display:block;font-size:12px;font-weight:700;color:#334155;margin:0 0 5px">Diagnóstico / indicaciones</label>
+        <input type="text" id="cv-diagnostico" style="width:100%;border:1.5px solid var(--border);border-radius:6px;padding:9px 11px;font-size:12.5px;font-family:inherit">
+      </div>
+      <div>
+        <label style="display:block;font-size:12px;font-weight:700;color:#334155;margin:0 0 5px">Próximo control / turno presencial</label>
+        <input type="text" id="cv-proximo-control" placeholder="Ej: turno presencial en Rehabilitarte, viernes" style="width:100%;border:1.5px solid var(--border);border-radius:6px;padding:9px 11px;font-size:12.5px;font-family:inherit">
+      </div>
+    </div>
+
+    <div class="row">
+      <button class="btn btn-verde" onclick="cvGuardarEnOCM()">💾 Guardar en Historia Clínica (OCM)</button>
+    </div>
+    <div id="cv-guardado-resultado" style="font-size:12px;margin-top:8px"></div>
+  </div>
+</div>
 
 <!-- ══ TRIAL: bloqueo si venció el período de prueba (ver configurarTrial() en Codigo.gs) ══ -->
 <div id="trial-lock-overlay" style="display:none;position:fixed;inset:0;background:#0b1f3a;color:#fff;z-index:999999;align-items:center;justify-content:center;text-align:center;padding:24px;font-family:system-ui,-apple-system,sans-serif">
