@@ -14141,15 +14141,22 @@ function enviarChecklistPorMail(tipo){
 <style>body.trial-vencido>*:not(#trial-lock-overlay){display:none!important} body.trial-vencido{overflow:hidden!important}</style>
 <script>
 (function(){
-  try{
-    fetch(SHEETS_URL+'?action=check_trial',{signal:AbortSignal.timeout(6000)})
-      .then(function(r){return r.json();}).then(function(d){
-        if(d && d.vencido){
-          document.body.classList.add('trial-vencido');
-          var ov=document.getElementById('trial-lock-overlay'); if(ov) ov.style.display='flex';
-        }
-      }).catch(function(){});
-  }catch(e){}
+  function chequearTrial_(){
+    try{
+      fetch(SHEETS_URL+'?action=check_trial',{signal:AbortSignal.timeout(6000)})
+        .then(function(r){return r.json();}).then(function(d){
+          if(d && d.vencido){
+            document.body.classList.add('trial-vencido');
+            var ov=document.getElementById('trial-lock-overlay'); if(ov) ov.style.display='flex';
+          }
+        }).catch(function(){});
+    }catch(e){}
+  }
+  chequearTrial_();
+  // Además del chequeo al cargar la página, se repite cada 10 minutos —
+  // así, si alguien deja la pestaña abierta desde antes de que venza el
+  // trial, igual se bloquea sin necesidad de recargar manualmente.
+  setInterval(chequearTrial_, 10*60*1000);
 })();
 </script>
 </body>
