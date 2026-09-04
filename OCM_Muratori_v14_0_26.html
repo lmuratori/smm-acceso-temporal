@@ -30,7 +30,18 @@ body{font-family:'Inter',system-ui,sans-serif;font-size:13px;background:var(--bg
 
 /* ── LAYOUT ── */
 .app{display:grid;grid-template-rows:56px 1fr 48px;height:100vh;}
-.main{display:grid;grid-template-columns:170px 280px minmax(320px,1fr) minmax(280px,1fr) 132px;grid-template-rows:auto 1fr;overflow-x:auto;overflow-y:hidden;}
+/* max-width:100vw agregado agosto 2026: sin esto, el grid interno de 5
+   columnas (con dos tracks 1fr anidados dentro del grid de .app, que
+   también usa una columna implícita "auto") entraba en un caso de
+   sizing circular de CSS Grid y terminaba calculando su ancho según el
+   contenido (~2175px) en vez de según la ventana real — el panel
+   izquierdo quedaba fijo pero el panel derecho (Planning Quirúrgico)
+   se iba mucho más allá del borde de la pantalla y no se podía ver ni
+   haciendo scroll, porque el body tiene overflow:hidden. Con
+   max-width:100vw, .main queda anclado al ancho real de la ventana; si
+   igual no entra todo (ventanas muy angostas), el overflow-x:auto que
+   ya tenía sigue funcionando como scroll interno de respaldo. */
+.main{display:grid;grid-template-columns:170px 280px minmax(320px,1fr) minmax(280px,1fr) 132px;grid-template-rows:auto 1fr;overflow-x:auto;overflow-y:hidden;max-width:100vw;}
 .panel-izq-hdr{grid-column:1 / 3;grid-row:1}
 .panel-qx-hdr{grid-column:4 / 6;grid-row:1}
 .panel-izq{grid-row:2}
@@ -362,10 +373,23 @@ body{font-family:'Inter',system-ui,sans-serif;font-size:13px;background:var(--bg
 @keyframes toastIn{from{transform:translateX(40px);opacity:0}to{transform:translateX(0);opacity:1}}
 
 /* ── PRINT ── */
+/* Tamaño real del recetario del Dr. Muratori: 150mm de ancho x 210mm de
+   alto (una sola hoja), NO A4. Antes no había @page acá, así que la
+   impresión usaba el tamaño de hoja por defecto del navegador/impresora
+   (A4 o Carta) — en pantalla entraba todo en "una página" del preview
+   porque A4 es más alto (297mm), pero al imprimir en la hoja física real
+   de 150x210mm el excedente se cortaba a una segunda hoja, arrastrando
+   la firma con él (agosto 2026). */
 @media print{
+  @page{size:150mm 210mm;margin:6mm}
   body{background:white;overflow:visible;}
   .app{display:block;height:auto;}
-  .top-bar,.panel-izq,#cert-zone{display:none!important;}
+  /* .panel-izq-hdr es el cartelito celeste "OCM / Optimizador de Consultas
+     Médicas" — un elemento aparte de .panel-izq, así que no quedaba
+     tapado por esa regla y se imprimía arriba de la receta, sumando ~5mm
+     más de alto y ayudando a empujar la firma a una 2da hoja (corregido
+     agosto 2026, junto con los .modal-overlay más abajo). */
+  .top-bar,.panel-izq,.panel-izq-hdr,#cert-zone{display:none!important;}
   .bot-bar{display:none!important;}
   /* El submenú de categoría (ej: la lista desplegada de Radiografías) vive en
      un contenedor aparte del panel-izq — sin esto, si quedaba abierto al
@@ -381,9 +405,31 @@ body{font-family:'Inter',system-ui,sans-serif;font-size:13px;background:var(--bg
   .panel-rec{padding:0;background:white;}
   .panel-view:not(.active){display:none;}
   #view-receta{display:flex;flex-direction:column;background:white;padding:0;}
-  .receta{border:none;max-width:148mm;min-height:210mm;margin:0 auto;box-shadow:none;}
+  /* 150mm de hoja - 6mm de margen a cada lado (ver @page) = 138mm de
+     ancho imprimible; 210mm de hoja - 6mm arriba y abajo = 198mm de alto
+     imprimible como techo real. El min-height se deja en 190mm (no 198mm)
+     a propósito: son ~8mm de colchón por debajo del techo exacto de la
+     hoja — pegar el "relleno" decorativo justo al límite hacía que
+     cualquier redondeo de sub-píxel del motor de impresión empujara todo
+     a una 2da hoja igual, incluso con el achicado automático ya aplicado
+     (corregido agosto 2026). Sin max-height ni overflow:hidden a
+     propósito: si el achicado automático (ajustarBloquesRecetaParaImprimir,
+     más abajo en el JS) no alcanza a hacer entrar todo, preferimos que
+     pase a una 2da hoja de forma visible antes que recortar contenido de
+     la receta en silencio. */
+  .receta{border:none;max-width:138mm;min-height:190mm;margin:0 auto;box-shadow:none;}
   .rec-centro-info{display:none;}
   #ai-panel,#voz-overlay,#btn-final-consulta-wrap{display:none!important;}
+  /* CAUSA PRINCIPAL de la receta en 2 hojas (encontrada y corregida agosto
+     2026): TODOS los modales del sistema (nuevo paciente, certificados,
+     cobro por Mercado Pago, etc.) son <div class="modal-overlay"> fijos
+     (position:fixed) del tamaño de toda la pantalla, ocultos en pantalla
+     solo con opacity:0 — nunca con display:none — para poder animarlos.
+     Nada en esta hoja de impresión los ocultaba, así que CADA modal
+     (aunque estuviera invisible) sumaba una pantalla completa de alto al
+     documento a imprimir, y esa era la razón real por la que la firma
+     terminaba en una 2da hoja, incluso con una receta corta. */
+  .modal-overlay,#cert-zone{display:none!important;}
 }
 
 /* ── CERT ZONE ── */
@@ -6234,34 +6280,62 @@ async function guardarConsulta(silencioso=false){
 // IMPRIMIR / WHATSAPP
 // ══════════════════════════════════════════════════════════════════
 // ── Auto-ajuste del cuerpo del recetario antes de imprimir ──
-// Reduce el tamaño de los bloques de certificado/plantilla dentro de #rec-body
-// para que el contenido entre en una sola hoja (la .receta imprime a 210mm de alto).
+// Reduce el tamaño de TODO el contenido cargado en #rec-body (ítems sueltos
+// de medicación/estudios, y también los bloques de certificado/plantilla)
+// para que entre en una sola hoja de 150x210mm (ver @page en el CSS de
+// impresión) y la firma no se corra a una 2da hoja.
+// IMPORTANTE (bug corregido agosto 2026): antes esto solo achicaba
+// .cert-bloque/.plant-bloque/etc. — los ítems sueltos de medicación
+// (.rec-item sin esas clases, que es lo que más se acumula en una receta
+// típica con varios fármacos) no se tocaban, así que una receta con varios
+// ítems podía desbordar igual y arrastrar la firma a la hoja 2 aunque esta
+// función ya existiera.
 function ajustarBloquesRecetaParaImprimir(){
   const receta = document.getElementById('receta');
   if(!receta) return;
   const bloques = document.querySelectorAll('#rec-body .cert-bloque, #rec-body .plant-bloque');
   const chicos  = document.querySelectorAll('#rec-body .cert-titulo-rec, #rec-body .cert-dias-badge, #rec-body .plant-serie-rec');
-  if(!bloques.length && !chicos.length) return;
+  const items   = document.querySelectorAll('#rec-body .rec-item:not(.cert-bloque):not(.plant-bloque):not(.cert-titulo-rec):not(.cert-dias-badge):not(.plant-serie-rec)');
+  if(!bloques.length && !chicos.length && !items.length) return;
   // Guardar tamaños originales una sola vez, para poder restaurarlos después de imprimir
-  [...bloques,...chicos].forEach(b=>{
+  [...bloques,...chicos,...items].forEach(b=>{
     if(!b.dataset.origFs){
       b.dataset.origFs = b.style.fontSize || '';
       b.dataset.origLh = b.style.lineHeight || '';
     }
   });
-  const maxH = 780; // ≈ alto disponible de una hoja A5 (210mm) a 96dpi
-  let fsBloque=11, lhBloque=1.5, fsChico=10;
+  // Medimos con el MISMO ancho y SIN el alto mínimo decorativo que se usa al
+  // imprimir (138mm de ancho imprimible, .receta con min-height:190mm "de
+  // relleno" para que una receta corta igual se vea como una hoja completa).
+  // Si midiéramos con el ancho/alto de pantalla (530px, sin ese mínimo) el
+  // cálculo no reflejaba lo que después pasaba realmente al imprimir — eso
+  // fue justamente lo que causaba que la firma terminara en una 2da hoja
+  // aunque este ajuste ya se hubiera aplicado (corregido agosto 2026).
+  receta.style.setProperty('max-width','138mm','important');
+  receta.style.setProperty('min-height','0','important');
+  // ≈ alto imprimible de la hoja de 150x210mm con margen de 6mm (198mm) a
+  // 96dpi (~748px), con colchón de seguridad para variaciones de impresora.
+  const maxH = 700;
+  let fsBloque=11, lhBloque=1.5, fsChico=10, fsItem=12, lhItem=1.7;
   const aplicar=()=>{
     bloques.forEach(b=>{ b.style.fontSize=fsBloque+'pt'; b.style.lineHeight=String(lhBloque); });
     chicos.forEach(b=>{ b.style.fontSize=fsChico+'pt'; });
+    items.forEach(b=>{ b.style.fontSize=fsItem+'pt'; b.style.lineHeight=String(lhItem); });
   };
   aplicar();
   let guard=0;
-  while(receta.scrollHeight>maxH && fsBloque>7 && guard<40){
-    fsBloque-=0.5; lhBloque=Math.max(1.3, lhBloque-0.06); fsChico=Math.max(6.5, fsChico-0.3);
+  while(receta.scrollHeight>maxH && (fsBloque>7 || fsItem>7.5) && guard<40){
+    fsBloque=Math.max(7, fsBloque-0.5); lhBloque=Math.max(1.3, lhBloque-0.06);
+    fsChico=Math.max(6.5, fsChico-0.3);
+    fsItem=Math.max(7.5, fsItem-0.4); lhItem=Math.max(1.25, lhItem-0.05);
     aplicar();
     guard++;
   }
+  // El min-height decorativo se restaura para que, al imprimir, una receta
+  // corta siga viéndose como una hoja completa (el max-width de impresión lo
+  // vuelve a fijar igual la hoja de estilos de @media print).
+  receta.style.removeProperty('max-width');
+  receta.style.removeProperty('min-height');
 }
 function restaurarBloquesReceta(){
   document.querySelectorAll('#rec-body [data-orig-fs]').forEach(b=>{
