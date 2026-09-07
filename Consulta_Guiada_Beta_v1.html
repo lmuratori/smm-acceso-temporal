@@ -10,9 +10,18 @@
   *{box-sizing:border-box}
   body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);margin:0;color:#0f172a;padding-bottom:60px}
   .topbar{background:linear-gradient(135deg,var(--azul),var(--azul-osc));color:#fff;padding:18px 20px}
+  .topbar-top{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
   .topbar h1{margin:0 0 2px;font-size:19px}
   .topbar p{margin:0;font-size:12px;opacity:.9}
   main{max-width:860px;margin:0 auto;padding:18px 16px 40px}
+
+  .simm-nav-wrap{position:relative}
+  .simm-nav-btn{cursor:pointer;border:1px solid rgba(255,255,255,.5);background:rgba(255,255,255,.12);color:#fff;border-radius:7px;padding:6px 10px;font-size:11.5px;font-weight:700}
+  .simm-nav-btn:hover{background:rgba(255,255,255,.22)}
+  .simm-nav-dropdown{display:none;position:absolute;top:100%;right:0;margin-top:6px;background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.2);min-width:230px;max-height:70vh;overflow-y:auto;z-index:200;padding:4px;text-align:left}
+  .simm-nav-grupo{font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);padding:8px 10px 2px}
+  .simm-nav-item{display:block;padding:7px 10px;font-size:12px;color:#0f172a;text-decoration:none;border-radius:6px;white-space:nowrap}
+  .simm-nav-item:hover{background:#f1f5f9}
 
   .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:14px}
   .card h2{margin:0 0 10px;font-size:15px;color:var(--azul-osc)}
@@ -71,7 +80,38 @@
 <body>
 
 <div class="topbar">
-  <h1>🎙️ Consulta Guiada <span class="badge badge-beta">BETA — SEPARADA DE CAM/OCM</span></h1>
+  <div class="topbar-top">
+    <h1>🎙️ Consulta Guiada <span class="badge badge-beta">BETA — SEPARADA DE CAM/OCM</span></h1>
+    <div class="simm-nav-wrap">
+      <button type="button" class="simm-nav-btn" onclick="toggleSimmNav()" title="Ir a otro programa de SIM-M">🔀 Ir a…</button>
+      <div id="simm-nav-dropdown" class="simm-nav-dropdown">
+        <a href="index.html" class="simm-nav-item">🏠 Portada de SIM-M</a>
+        <div class="simm-nav-grupo">Consulta diaria</div>
+        <a href="OCM_Muratori_v14_0_26.html" class="simm-nav-item">🗂️ OCM — Historia Clínica</a>
+        <a href="CAM_Herramientas_Clinicas.html" class="simm-nav-item">🧬 CAM — Herramientas Clínicas</a>
+        <a href="Lector_Historias.html" class="simm-nav-item">📋 Lector de Fichas</a>
+        <div class="simm-nav-grupo">Cobros y Kinesiología</div>
+        <a href="KSM_Kinesiologia.html" class="simm-nav-item">🦵 KSM — Kinesiología</a>
+        <div class="simm-nav-grupo">Mediciones GONIO</div>
+        <a href="GONIO_Podoscopia_v1.html" class="simm-nav-item">📐 Podoscopía</a>
+        <a href="GONIO_ValgoVaro_v1.html" class="simm-nav-item">📐 Valgo / Varo</a>
+        <a href="GONIO_CostaBartani_v1.html" class="simm-nav-item">📐 Costa-Bartani</a>
+        <a href="GONIO_AnguloFrente_v1.html" class="simm-nav-item">📐 Ángulo Frente</a>
+        <div class="simm-nav-grupo">Investigación y Análisis</div>
+        <a href="Estadisticas_SMM.html" class="simm-nav-item">📊 Estadísticas SMM</a>
+        <a href="GONIO_SeguimientoCientifico_v1.html" class="simm-nav-item">🔬 Seguimiento Científico</a>
+        <div class="simm-nav-grupo">Contactos y Discapacidad</div>
+        <a href="Lector_CUD.html" class="simm-nav-item">📸 Lector CUD</a>
+        <a href="CUD_Seguimiento_v1.html" class="simm-nav-item">♿ CUD — Seguimiento</a>
+        <a href="Asistente_Isa_Discapacidad.html" class="simm-nav-item">🤖 Asistente Isa</a>
+        <div class="simm-nav-grupo">Administración</div>
+        <a href="Agenda_Mensajes.html" class="simm-nav-item">✉️ Agenda de Mensajes</a>
+        <a href="QR_Generador.html" class="simm-nav-item">🔳 Generador de QR</a>
+        <a href="Panel_Especialistas.html" class="simm-nav-item">🔐 Panel de Especialistas</a>
+        <a href="COL_Colegas_SIMM.html" class="simm-nav-item">🤝 Colegas (SIM-M)</a>
+      </div>
+    </div>
+  </div>
   <p>Vas hablando por sección, la IA arma el relato y sugiere maniobras — al final se guarda en la historia clínica y arma un resumen para el paciente.</p>
 </div>
 
@@ -217,6 +257,22 @@
 
 <script>
 const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbwYdoFuU8mQL4YKqufSBQ9AD_yqWEEesLtGzYQjNw2JG1BZIQF7ug80mHB5sLMXhaUpvQ/exec';
+
+// ══════════════════════════════════════════════════════════════
+// MENÚ "IR A…" — navegación a los demás programas de SIM-M
+// (mismo patrón que ya usa CAM_Herramientas_Clinicas.html)
+// ══════════════════════════════════════════════════════════════
+function toggleSimmNav(){
+  const dd = document.getElementById('simm-nav-dropdown');
+  if(!dd) return;
+  dd.style.display = dd.style.display==='none' || !dd.style.display ? 'block' : 'none';
+}
+document.addEventListener('click', e=>{
+  const wrap = document.querySelector('.simm-nav-wrap');
+  const dd = document.getElementById('simm-nav-dropdown');
+  if(wrap && dd && !wrap.contains(e.target)) dd.style.display='none';
+});
+
 const PASOS = ['Motivo y antecedentes','Interrogatorio','Examen físico','Estudios','Cierre'];
 let pasoActual = 0;
 let ultimoResumenPaciente = '';

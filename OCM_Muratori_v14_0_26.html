@@ -4636,14 +4636,20 @@ function renderAgendaPacientes(filtro){
     cont.innerHTML = '<div style="text-align:center;color:var(--muted);padding:30px;font-size:13px">Sin pacientes que coincidan en esta categoría.</div>';
     return;
   }
+  const CATEGORIAS_CIRCUITO_QX = ['planificacion','seguimiento','tratamiento','decidido','observado','programacion'];
   cont.innerHTML = lista.map(p=>`
     <div onclick="irAHistorialDesdeAgenda(${p.id})" style="cursor:pointer;display:flex;align-items:center;gap:10px;padding:9px 12px;margin-bottom:6px;border-radius:8px;background:${p._color.bg};color:${p._color.texto}">
       <div style="flex:1">
         <div style="font-weight:700;font-size:13px">${p.apellido||''}, ${p.nombre||''}</div>
         <div style="font-size:11px;opacity:.85">DNI ${p.dni||'—'}${p._color.label?' · '+p._color.label:''}</div>
       </div>
+      ${CATEGORIAS_CIRCUITO_QX.includes(p._categoria) ? `<button onclick="event.stopPropagation();abrirLegajoIntegral('${String(p.dni||'').replace(/[^0-9A-Za-z]/g,'')}')" title="Abrir Legajo Integral (SSQ)" style="border:none;background:rgba(255,255,255,.5);color:inherit;border-radius:6px;padding:5px 8px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">📋 Legajo</button>` : ''}
       <span style="font-size:16px">›</span>
     </div>`).join('');
+}
+function abrirLegajoIntegral(dni){
+  const caso = (dni||'SIN-DNI')+'_sin-fecha';
+  window.open('SSQ_Legajo_Integral_v1.html?caso='+encodeURIComponent(caso)+'&tab=evento','_blank');
 }
 function irAHistorialDesdeAgenda(id){
   const pac = agendaPacientesCache.find(p=>p.id===id);
