@@ -552,7 +552,7 @@ body{font-family:'Inter',system-ui,sans-serif;font-size:13px;background:var(--bg
 .imd-ej-meta span{background:#eff6ff;padding:2px 8px;border-radius:10px}
 .imd-disclaimer{background:#fef3c7;border:1px solid #fcd34d;border-radius:6px;padding:10px 14px;font-size:11px;color:#92400e;margin-top:14px;line-height:1.5}
 /* F3 — Evaluación */
-.imd-f3-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.imd-f4-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
 .imd-param-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
 .imd-param-row:last-child{border-bottom:none}
 .imd-param-label{min-width:190px;flex-shrink:0}
@@ -570,7 +570,7 @@ body{font-family:'Inter',system-ui,sans-serif;font-size:13px;background:var(--bg
 .imd-conector-title{font-weight:700;font-size:13px;color:var(--text)}
 .imd-conector-desc{font-size:10px;color:var(--muted);margin-top:2px;line-height:1.4}
 .imd-empty-meds{color:#9ca3af;font-style:italic;padding:14px;text-align:center;background:#f8fafc;border-radius:6px;border:1px dashed var(--border)}
-@media(max-width:680px){.imd-f3-grid{grid-template-columns:1fr}.imd-conectores{flex-direction:column}.imd-med-fields{grid-template-columns:1fr}.imd-tabs-bar{flex-wrap:wrap}}
+@media(max-width:680px){.imd-f4-grid{grid-template-columns:1fr}.imd-conectores{flex-direction:column}.imd-med-fields{grid-template-columns:1fr}.imd-tabs-bar{flex-wrap:wrap}}
 
 /* ══ DASHBOARD RSG ══ */
 .rsg-modal-box{width:980px;max-width:99vw;max-height:96vh;display:flex;flex-direction:column;overflow:hidden}
@@ -896,6 +896,10 @@ body{font-family:'Inter',system-ui,sans-serif;font-size:13px;background:var(--bg
       <div style="margin-top:6px;display:flex;align-items:center;gap:8px;background:#fff7ed;border:1px solid #fed7aa;border-radius:6px;padding:8px 10px">
         <input type="checkbox" id="p-discapacidad" style="width:auto;margin:0">
         <label for="p-discapacidad" style="margin:0;font-size:11.5px;font-weight:600;color:#9a3412;cursor:pointer">Trámite de discapacidad (CUD) — el RIMP que se le envíe incluirá vivienda, trabajos, infancia, vacunas y COVID (si no, se manda la versión breve)</label>
+      </div>
+      <div style="margin-top:6px;display:flex;align-items:center;gap:8px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:8px 10px">
+        <input type="checkbox" id="p-membresia" style="width:auto;margin:0">
+        <label for="p-membresia" style="margin:0;font-size:11.5px;font-weight:600;color:#166534;cursor:pointer">🤝 Paciente con membresía — habilita RMYT, respuesta de mail con contexto clínico, agendas y seguimiento posquirúrgico. Elección tuya, sin costo — no todo paciente con filiación la tiene.</label>
       </div>
       <div id="modal-pac-msg" class="msg-error" style="display:none"></div>
     </div>
@@ -1666,6 +1670,7 @@ body{font-family:'Inter',system-ui,sans-serif;font-size:13px;background:var(--bg
       <button class="btn btn-ghost btn-sm" onclick="abrirModalNuevoPaciente()">+ Paciente</button>
       <button class="btn btn-ghost btn-sm" onclick="abrirAgendaPacientes()" title="Todos los pacientes cargados en este equipo, en orden alfabético y coloreados por discapacidad/circuito quirúrgico — entrás directo a la historia clínica de cada uno">📇 Agenda</button>
       <button class="btn btn-ghost btn-sm" onclick="abrirRidmRapido()" title="Cargar datos de filiación en el momento (sin antecedentes)">⚡ Filiación</button>
+      <button class="btn btn-ghost btn-sm" id="btn-membresia" onclick="toggleMembresiaPaciente()" disabled title="Seleccioná un paciente primero">🤝 Dar membresía</button>
       <button class="btn btn-ghost btn-sm" onclick="abrirRidmPendientes()" id="btn-ridm-pend">📥 RIDM</button>
       <button class="btn btn-ghost btn-sm" onclick="abrirConsultasOnline()" id="btn-consultas" style="position:relative">💬 Consultas<span id="badge-consultas" style="display:none;position:absolute;top:-4px;right:-4px;background:#dc2626;color:#fff;border-radius:50%;width:16px;height:16px;font-size:9px;font-weight:700;display:none;align-items:center;justify-content:center"></span></button>
       <button class="btn btn-ghost btn-sm" onclick="abrirModalCobroMP()" title="Generar un link real de Mercado Pago para que el paciente pague a distancia">💳 Cobrar</button>
@@ -2220,7 +2225,8 @@ body{font-family:'Inter',system-ui,sans-serif;font-size:13px;background:var(--bg
   <button class="acc-btn" title="Imprimir (Ctrl+P)" onclick="imprimirReceta()">🖨 Imprimir</button>
   <div class="acc-sep"></div>
   <!-- GRUPO 4: ENVÍO -->
-  <button class="acc-btn acc-mail" title="Enviar por Mail" onclick="mailReceta()">✉ Mail</button>
+  <button class="acc-btn acc-mail" title="Enviar receta al paciente — usa el mail si está cargado; si no tiene, avisa para decidir manualmente (imprimir o WhatsApp)" onclick="enviarRecetaInteligente()">📤 Enviar</button>
+  <button class="acc-btn" title="WhatsApp manual — solo si vos decidís mandarlo así (no se envía nunca solo)" onclick="enviarWhatsApp()">🟢 WhatsApp</button>
   <div class="acc-sep"></div>
   <!-- GRUPO 5: DATOS -->
   <button class="acc-btn" style="color:#7c3aed;border-color:#c4b5fd;background:#faf5ff" title="Dashboard RSG" onclick="abrirDashboardRSG()">📈 Dashboard RSG</button>
@@ -4258,6 +4264,7 @@ function seleccionarPaciente(p){
   document.getElementById('btn-segui').disabled=false;
   const btnGenImd = document.getElementById('btn-gen-imd') || document.getElementById('cmd-genrmyt');
   if(btnGenImd) btnGenImd.disabled=false;
+  actualizarBotonMembresia_();
   // Verificar si existe RIDM pre-consulta para este paciente
   if (p.dni) verificarRIDM(p.dni);
   // Cargar el carrito de "Recetas de esta consulta" guardado para este DNI (si había uno a medio armar)
@@ -4414,6 +4421,8 @@ function abrirModalNuevoPaciente(datos){
   if(chkPrimera) chkPrimera.checked = !pacEditId; // paciente nuevo: tildado por default; al editar uno existente, no
   const chkDiscapacidad=document.getElementById('p-discapacidad');
   if(chkDiscapacidad) chkDiscapacidad.checked = !!(datos && datos.discapacidad);
+  const chkMembresia=document.getElementById('p-membresia');
+  if(chkMembresia) chkMembresia.checked = !!(datos && datos.membresia);
   if(datos){
     const sv=(id,v)=>{const el=document.getElementById(id);if(el)el.value=v||'';};
     sv('p-dni',datos.dni);sv('p-ape',datos.apellido);sv('p-nom',datos.nombre);
@@ -4439,6 +4448,11 @@ async function guardarPaciente(){
   };
   const esPrimeraConsulta = !!document.getElementById('p-primera-consulta')?.checked;
   const esDiscapacidad = !!document.getElementById('p-discapacidad')?.checked;
+  // Membresía: elección del Dr. Muratori, sin costo — habilita RMYT, respuesta
+  // de mail con contexto clínico (RSP), agendas y seguimiento posquirúrgico
+  // (RSPQ). La filiación por sí sola NO la da — solo abre lo transaccional
+  // (recetas, pedidos de estudio, certificados).
+  const esMembresia = !!document.getElementById('p-membresia')?.checked;
   const payload={dni,apellido:ape,nombre:nom,fecha_nac:g('p-fnac'),edad:g('p-edad'),
     direccion:g('p-dir'),telefono:g('p-tel'),mail:g('p-mail'),
     obra_social:g('p-os'),plan:g('p-plan'),nro_afiliado:g('p-afil'),
@@ -4447,6 +4461,7 @@ async function guardarPaciente(){
     // nunca quedaba en el registro local — por eso 📇 Agenda de Pacientes no
     // podía detectarlo sin que además existiera el Libro de Discapacidad.
     discapacidad:esDiscapacidad,
+    membresia:esMembresia,
     updated_at:new Date().toISOString()};
   try{
     let id;
@@ -4468,7 +4483,8 @@ async function guardarPaciente(){
       Primera_Consulta: esPrimeraConsulta,
       // Si está tildado, el RIMP que se manda es el completo (vivienda, trabajos,
       // infancia, vacunas, COVID) — si no, se manda la versión breve.
-      Discapacidad: esDiscapacidad
+      Discapacidad: esDiscapacidad,
+      Membresia: esMembresia
     };
     // Si hay datos de RIMP para este mismo paciente, sumar localidad/trabajos/vivienda
     if(ridmData && String(ridmData.dni||'')===String(dni||'')){
@@ -4493,6 +4509,146 @@ async function guardarPaciente(){
     msg.style.display='block';
   }
 }
+
+// ══════════════════════════════════════════════════════════════════
+// FILIACIÓN AUTOMÁTICA DESDE EL RECETARIO — pedido del Dr. Muratori:
+// al atender, tipeando directo en el encabezado del recetario (Paciente,
+// DNI, etc.) eso mismo da de alta la filiación real, sin tener que abrir
+// aparte el modal "Nuevo paciente". Sirve en especial para pacientes sin
+// mail: no depende de mandarles nada, el médico carga los datos él mismo
+// en el momento y ya puede hacer la receta/certificado.
+// ══════════════════════════════════════════════════════════════════
+async function autoCrearFiliacionDesdeReceta_(){
+  const gTxt = id => (document.getElementById(id)?.textContent || '').trim();
+  const dni = gTxt('rf-dni');
+  const nombreCompleto = gTxt('rf-paciente');
+  if(!dni || !nombreCompleto){
+    toast('Para crear la filiación automáticamente completá al menos "Paciente" y "DNI" en el encabezado del recetario','err');
+    return null;
+  }
+  // El campo "Paciente" se muestra como "Apellido, Nombre" para los
+  // pacientes ya existentes (ver seleccionarPaciente) — mantenemos esa
+  // misma convención para separar apellido y nombre de lo tipeado a mano.
+  const comaIdx = nombreCompleto.indexOf(',');
+  let apellido, nombre;
+  if(comaIdx>-1){
+    apellido = nombreCompleto.slice(0,comaIdx).trim();
+    nombre = nombreCompleto.slice(comaIdx+1).trim();
+  } else {
+    apellido = nombreCompleto.trim(); nombre = '';
+  }
+  if(!apellido || !nombre){
+    toast('Escribí el campo "Paciente" como Apellido, Nombre (con coma) para poder crear la filiación automáticamente','err');
+    return null;
+  }
+  const payload = {
+    dni, apellido, nombre,
+    fecha_nac: gTxt('rf-fnac'), edad: gTxt('rf-edad'),
+    direccion: gTxt('rf-dir'), telefono: gTxt('rf-tel'), mail: gTxt('rf-mail'),
+    obra_social: gTxt('rf-os'), plan: gTxt('rf-plan'), nro_afiliado: gTxt('rf-afil'),
+    antecedentes_generales: {}, discapacidad: false,
+    // La filiación cargada rápido desde el recetario (ej. para pedir un
+    // estudio) NO da membresía por sí sola — eso lo decidís vos aparte,
+    // con el botón "🤝 Dar membresía", si el paciente te elige como médico.
+    membresia: false,
+    created_at: new Date().toISOString(), updated_at: new Date().toISOString()
+  };
+  let id;
+  try{
+    id = await dbAdd('pacientes', payload);
+  }catch(e){
+    toast(e.message.includes('constraint') ? 'Ya existe un paciente con ese DNI — buscalo en vez de tipearlo de nuevo' : 'Error creando filiación: '+e.message, 'err');
+    return null;
+  }
+  const creado = {...payload, id};
+  seleccionarPaciente(creado);
+  toast('✅ Filiación creada automáticamente desde el recetario','ok');
+  if(typeof vistaActual!=='undefined' && vistaActual==='pacientes') cargarListaPacientes();
+  // Sincronizar a la nube igual que guardarPaciente() — si falla, va a la cola de reintento
+  const payloadCloud = {
+    action:'addPaciente', Apellido:apellido, Nombre:nombre, DNI:dni,
+    Fecha_Nac:payload.fecha_nac||'', Obra_Social:payload.obra_social||'', N_Afiliado:payload.nro_afiliado||'',
+    Plan:payload.plan||'', Telefono:payload.telefono||'', Email:payload.mail||'',
+    Domicilio:payload.direccion||'', Lugar_Atencion:currentCentroKey||'',
+    Diagnostico_Principal:'', Estado_Tratamiento:'Activo',
+    Antecedentes_Generales:{}, Primera_Consulta:true, Discapacidad:false, Membresia:false
+  };
+  try{
+    const resp = await fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payloadCloud),signal:AbortSignal.timeout(8000)});
+    const data = await resp.json();
+    if(data && data.rimpEnviado) toast(`✉️ RIMP enviado a ${payload.mail} para que complete sus antecedentes`,'ok');
+  }catch(_){
+    colaAgregar('addPaciente', payloadCloud);
+  }
+  return creado;
+}
+
+// ── Membresía: elección del Dr. Muratori, sin costo, cuando el paciente lo
+//    elige como médico. Es el interruptor real de RMYT / RSP con contexto
+//    clínico / agendas / RSPQ — la filiación por sí sola NO la da. Se puede
+//    dar en cualquier momento (no solo al crear la filiación), por eso vive
+//    como un botón aparte en la barra superior, igual de directo que "⚡
+//    Filiación": un solo click, sin abrir modal.
+async function toggleMembresiaPaciente(){
+  if(!pacienteActivo){ toast('Seleccioná un paciente primero','err'); return; }
+  const nuevoEstado = !pacienteActivo.membresia;
+  pacienteActivo.membresia = nuevoEstado;
+  try{ await dbPut('pacientes', pacienteActivo); }catch(e){ console.warn('No se pudo guardar la membresía localmente:', e); }
+  actualizarBotonMembresia_();
+  toast(nuevoEstado
+    ? '🤝 Membresía activada — ya tiene acceso a RMYT, respuesta de mail con contexto clínico, agendas y seguimiento posquirúrgico'
+    : 'Membresía desactivada para este paciente', 'ok');
+  const payloadCloud = {action:'set_membresia', DNI: pacienteActivo.dni, Membresia: nuevoEstado};
+  try{
+    await fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payloadCloud),signal:AbortSignal.timeout(8000)});
+  }catch(_){
+    colaAgregar('set_membresia', payloadCloud);
+  }
+}
+function actualizarBotonMembresia_(){
+  const btn=document.getElementById('btn-membresia');
+  if(!btn) return;
+  if(!pacienteActivo){
+    btn.disabled=true; btn.title='Seleccioná un paciente primero';
+    btn.textContent='🤝 Dar membresía';
+    btn.style.background=''; btn.style.color=''; btn.style.borderColor='';
+    return;
+  }
+  btn.disabled=false;
+  const activa = !!pacienteActivo.membresia;
+  btn.textContent = activa ? '🤝 Con membresía' : '🤝 Dar membresía';
+  btn.title = activa
+    ? 'Ya tiene membresía (RMYT, mail con contexto clínico, agendas, seguimiento posquirúrgico) — click para quitarla'
+    : 'Elección tuya, sin costo — click para darle membresía si eligió quedar como tu paciente';
+  btn.style.background = activa ? '#dcfce7' : '';
+  btn.style.color = activa ? '#166534' : '';
+  btn.style.borderColor = activa ? '#86efac' : '';
+}
+
+// Disparador: al salir del campo DNI o Paciente en el encabezado del
+// recetario (blur), si ambos ya tienen datos y no coinciden con el
+// paciente ya cargado: busca si existe (y lo carga con todos sus datos)
+// o, si no existe, crea la filiación directo con lo tipeado — sin pasar
+// por el modal "Nuevo paciente".
+async function rfAutoFiliacion_(){
+  const gTxt = id => (document.getElementById(id)?.textContent || '').trim();
+  const dni = gTxt('rf-dni');
+  const nombreCompleto = gTxt('rf-paciente');
+  if(!dni || !nombreCompleto) return;
+  if(pacienteActivo && String(pacienteActivo.dni)===String(dni)) return;
+  try{
+    const existentes = await buscarPacientesDB(dni);
+    const encontrado = (existentes||[]).find(p=>String(p.dni)===String(dni));
+    if(encontrado){
+      seleccionarPaciente(encontrado);
+      toast(`✅ ${encontrado.apellido}, ${encontrado.nombre} — cargado desde filiación existente`,'ok');
+      return;
+    }
+  }catch(e){ console.warn('No se pudo buscar paciente existente:', e); }
+  await autoCrearFiliacionDesdeReceta_();
+}
+document.getElementById('rf-dni')?.addEventListener('blur', rfAutoFiliacion_);
+document.getElementById('rf-paciente')?.addEventListener('blur', rfAutoFiliacion_);
 
 // ══════════════════════════════════════════════════════════════════
 // RIDM PENDIENTES — puente real entre el formulario que llena el paciente y OCM
@@ -6284,7 +6440,13 @@ async function elimPac(id){
 // GUARDAR CONSULTA
 // ══════════════════════════════════════════════════════════════════
 async function guardarConsulta(silencioso=false){
-  if(!pacienteActivo){if(!silencioso)alert('Seleccioná un paciente primero');return;}
+  if(!pacienteActivo){
+    // Red de seguridad: si por algún motivo el blur de rf-dni/rf-paciente no
+    // llegó a disparar la filiación automática (ej. datos pegados sin pasar
+    // el foco), lo intentamos acá antes de bloquear el guardado.
+    const creado = await autoCrearFiliacionDesdeReceta_();
+    if(!creado){ if(!silencioso)alert('Seleccioná un paciente primero'); return; }
+  }
   const body=document.getElementById('rec-body');
   const cuerpo=body.innerText.replace(/▸.*/,'').trim();
   const dx=document.getElementById('rf-dx').textContent.trim();
@@ -6383,6 +6545,18 @@ function enviarWhatsApp(){
 //    IMPORTANTE: se captura la receta VISIBLE directamente (no una copia
 //    oculta), porque el código QR se dibuja dinámicamente y una copia
 //    fuera de pantalla lo pierde, dejando el PDF en blanco. ──
+// ── Envío "inteligente": revisa primero si hay mail cargado y en ese caso
+//    manda automáticamente por mail (mailReceta). Si NO hay mail, NO manda
+//    nada solo por WhatsApp (decisión explícita del Dr. Muratori por
+//    privacidad — el wa.me abre desde su WhatsApp personal) — en cambio
+//    avisa para que decida a mano: imprimir, entregar en mano, o usar el
+//    botón "🟢 WhatsApp" de al lado él mismo si quiere. ──
+function enviarRecetaInteligente(){
+  if(!pacienteActivo){ toast('⚠️ No hay paciente seleccionado','err'); return; }
+  if(pacienteActivo.mail){ mailReceta(); return; }
+  toast('⚠️ Este paciente no tiene mail cargado. Imprimí la receta, entregala en mano, o mandala vos mismo con el botón "🟢 WhatsApp"','err');
+}
+
 async function mailReceta(){
   if(!pacienteActivo){ toast('⚠️ No hay paciente seleccionado','err'); return; }
   if(!pacienteActivo.mail){ toast('⚠️ Este paciente no tiene mail cargado — cargalo en RIMP o en la ficha del paciente','err'); return; }
@@ -7084,6 +7258,7 @@ async function finalConsulta(){
   ['btn-hist','btn-segui','btn-gen-imd','cmd-genrmyt'].forEach(id=>{
     const b=document.getElementById(id); if(b) b.disabled=true;
   });
+  actualizarBotonMembresia_();
   // Limpiar buscador para que el médico pueda buscar el siguiente paciente
   const buscarEl = document.getElementById('buscar-pac');
   if(buscarEl){ buscarEl.value=''; buscarEl.focus(); }
@@ -9106,8 +9281,21 @@ function czYesoAgregar(tipo){
 /* ══════════════════════════════════════════════════════════════════
    OCM Muratori v12 — IMDCMYT COMPLETO 16 REGIONES + 3 CAPAS SEGURIDAD
    F1: Medicación + WhatsApp Farmacia
-   F2: Ejercicios Isométricos por región + YouTube
-   F3: Evaluación Semanal + Dashboard Cartesiano + Conectores
+   F2: Resumen de la consulta y estudios solicitados (desde Historia Clínica)
+   F3: FKT — Ejercicios Isométricos por región + YouTube + conectores por mail
+       al kinesiólogo y a los evaluadores del kinesiólogo
+   F4: Evaluación Semanal + Dashboard Cartesiano + Conectores (turno presencial
+       y teleconsulta) — reordenado sep 2026: lo que antes era F2/F3 pasó a
+       ser F3/F4 para dejar lugar al nuevo resumen de consulta en F2. A pedido
+       del Dr. Muratori, todos los conectores de contacto (turno, teleconsulta,
+       kinesiólogo, evaluadores) dejaron de abrir WhatsApp y ahora abren un
+       mailto: a MAIL_KINESIOLOGIA_12 — la misma casilla que ya usa el resto
+       del sistema para kinesiología, así el mismo procesarBandejaEntrada/IA
+       del backend los tria igual que cualquier otro mensaje entrante. El
+       asunto de cada mail indica de qué conector y qué región RMYT salió,
+       para que quede claro el origen al leerlo. El WhatsApp de la Farmacia
+       (F1) NO se tocó — ese es un pedido de stock a un tercero, no un
+       contacto con "el médico".
    Seguridad: 3 capas anticopia/antirreplicación con denuncia
    ══════════════════════════════════════════════════════════════════ */
 
@@ -9115,6 +9303,7 @@ function czYesoAgregar(tipo){
 const FARMACIA_WA_12 = '5492634779960';
 const DOCTOR_WA_12   = '5492616586234';
 const DOCTOR_MAIL     = 'drluismuratori@gmail.com';
+const MAIL_KINESIOLOGIA_12 = 'consultas.sism@gmail.com';
 
 /* ─── Parámetros base RSG (comunes a todas las regiones) ─── */
 const IMD_BASE = [
@@ -9636,15 +9825,16 @@ function abrirIMDCMYT(regionKey) {
     : '👤 Sin paciente seleccionado';
   document.getElementById('imd-pac-info').textContent = `${pac}   |   CIE-10: ${d.cie10}`;
 
-  // F2 título
-  const f2t = document.getElementById('imd-f2-title');
-  if (f2t) f2t.textContent = `🏋️ Ejercicios Isométricos — ${d.titulo}`;
+  // F3 título (antes F2 — Ejercicios Isométricos, renumerado sep 2026)
+  const f3t = document.getElementById('imd-f3-title');
+  if (f3t) f3t.textContent = `🏋️ Ejercicios Isométricos — ${d.titulo}`;
 
   imdF1SetModo('farmacia');
   poblarPresentacionesDatalist();
   poblarPrincipiosDatalist();
   cargarMedsIMD();
   imdVademecumRender();
+  cargarResumenHistoriaIMD();
   cargarEjerciciosIMD(d.ejs);
   cargarParametrosIMD(d.params);
 
@@ -9659,7 +9849,83 @@ function imdTab(tab) {
   const pn = document.getElementById(`imd-${tab}`);
   if (tb) tb.classList.add('active');
   if (pn) pn.style.display = 'block';
-  if (tab === 'f3') setTimeout(renderDashboardIMD, 120);
+  if (tab === 'f4') setTimeout(renderDashboardIMD, 120);
+}
+
+/* F2 — Resumen de la consulta y estudios solicitados (sep 2026, ampliado).
+   Combina dos fuentes ya existentes en el sistema, ninguna nueva:
+   1) Historia_Clinica (action get_historial) — Diagnóstico, Estudios_
+      Realizados, Estudios_Pendientes, Indicaciones: el registro formal
+      que carga addHistoria en cada consulta.
+   2) IMDCYMT_Docs (action getIMDCYMT) — lo que ya arma el "Generador RMYT"
+      (modal-gen-imdcymt / generarIMDCYMTPaciente): consulta.estudios es la
+      interpretación/hallazgo de esos estudios (ej: "RMN: hernia L4-L5..."),
+      consulta.resumen + medicacion son el tratamiento decidido, y kinesio
+      indica si ese tratamiento incluye kinesiología y con qué prescripción.
+   No se inventa ningún campo nuevo — se refleja lo que el médico ya carga
+   en otras pantallas del sistema. */
+async function cargarResumenHistoriaIMD() {
+  const cont = document.getElementById('imd-resumen-historia');
+  if (!cont) return;
+  if (!pacienteActivo || !pacienteActivo.dni) {
+    cont.innerHTML = '<p class="imd-sec-desc">Seleccioná un paciente para ver el resumen de su historia clínica.</p>';
+    return;
+  }
+  cont.innerHTML = '<p class="imd-sec-desc">Cargando…</p>';
+  const fila = (etq, val) => val ? `<div class="imd-param-row"><div class="imd-param-label"><span>${etq}</span></div><div class="imd-sec-desc" style="text-align:left;flex:1">${String(val).replace(/\n/g,'<br>')}</div></div>` : '';
+  try {
+    const dniQ = encodeURIComponent(pacienteActivo.dni);
+    const [respHist, respImd] = await Promise.all([
+      fetch(SHEETS_URL + '?action=get_historial&dni=' + dniQ + tokenQS_(), { signal: AbortSignal.timeout(10000) }),
+      fetch(SHEETS_URL + '?action=getIMDCYMT&dni=' + dniQ + tokenQS_(), { signal: AbortSignal.timeout(10000) })
+    ]);
+    const dataHist = await respHist.json();
+    const dataImd  = await respImd.json();
+    const historial = (dataHist && dataHist.historial) || [];
+    const datos = (dataImd && dataImd.datos) || null;
+
+    if (!historial.length && !datos) {
+      cont.innerHTML = '<p class="imd-sec-desc">Todavía no hay consulta ni RMYT cargados para este paciente.</p>';
+      return;
+    }
+
+    // El registro más reciente de Historia_Clinica (formato dd/mm/aaaa, como lo guarda addHistoria)
+    const parseFecha = f => { const [d,m,y] = String(f||'').split('/'); return new Date(`${y}-${m}-${d}`); };
+    const ultimo = historial.length ? historial.slice().sort((a,b) => parseFecha(b.Fecha) - parseFecha(a.Fecha))[0] : null;
+
+    // Tratamiento decidido: resumen de la consulta + medicación efectivamente prescripta
+    let tratamiento = (datos && datos.consulta && datos.consulta.resumen) || '';
+    if (datos && datos.medicacion) {
+      const meds = [].concat(datos.medicacion.magistral||[], datos.medicacion.farmacopeo||[])
+        .filter(m => m && m.principio_activo)
+        .map(m => `• ${m.principio_activo}${m.dosis_mg?(' '+m.dosis_mg+'mg'):''}${m.frecuencia?(' — '+m.frecuencia):''}`);
+      if (meds.length) tratamiento += (tratamiento?'\n\n':'') + 'Medicación indicada:\n' + meds.join('\n');
+    }
+
+    // Kinesio: se aclara explícitamente si el tratamiento decidido incluye kinesiología
+    let kinesioTxt = '';
+    if (datos && datos.kinesio && datos.kinesio.prescripcion) {
+      kinesioTxt = `Sí — ${datos.kinesio.prescripcion}` +
+        (datos.kinesio.sesiones ? ` · ${datos.kinesio.sesiones} sesiones` : '') +
+        (datos.kinesio.frecuencia ? ` · ${datos.kinesio.frecuencia}` : '');
+    }
+
+    const filas = [
+      fila('🩺 Diagnóstico', (datos && datos.consulta && datos.consulta.dx) || (ultimo && ultimo.Diagnostico)),
+      fila('📝 Estudios solicitados', ultimo && ultimo.Estudios_Pendientes),
+      fila('🔬 Estudios realizados', ultimo && ultimo.Estudios_Realizados),
+      fila('🔎 Resumen de lo encontrado', datos && datos.consulta && datos.consulta.estudios),
+      fila('💊 Tratamiento decidido', tratamiento),
+      fila('🏋️ ¿Incluye tratamiento kinésico?', kinesioTxt || 'No'),
+      fila('📋 Indicaciones', ultimo && ultimo.Indicaciones)
+    ].join('');
+
+    cont.innerHTML =
+      (ultimo ? `<div class="imd-sec-desc" style="margin-bottom:10px">Última consulta registrada: <strong>${ultimo.Fecha||'—'}</strong></div>` : '') +
+      (filas || '<p class="imd-sec-desc">Todavía no hay datos cargados en estos campos.</p>');
+  } catch (e) {
+    cont.innerHTML = '<p class="imd-sec-desc">⚠️ No se pudo cargar el resumen de la consulta.</p>';
+  }
 }
 
 /* F1 — Toggle Receta de Farmacia / Prescripción Magistral (agosto 2026) */
@@ -10093,18 +10359,44 @@ function whatsappFarmaciaIMD() {
   window.open(`https://wa.me/${FARMACIA_WA_12}?text=${encodeURIComponent(msg)}`, '_blank');
 }
 
-function whatsappTurnoIMD() {
-  const pac = pacienteActivo ? `${pacienteActivo.apellido||''}, ${pacienteActivo.nombre||''}` : '[mi nombre]';
-  const reg = IMD_REGIONES.find(r => r.key === imdRegionActual)?.n || imdRegionActual;
-  const msg = `Hola Dr. Muratori, soy *${pac}*.\nQuisiera solicitar un *turno presencial de seguimiento* por mi tratamiento de *${reg}*.\n¿Tiene disponibilidad próximamente?\nMuchas gracias.`;
-  window.open(`https://wa.me/${DOCTOR_WA_12}?text=${encodeURIComponent(msg)}`, '_blank');
+/* Conectores por mail (sep 2026) — reemplazan a los de WhatsApp. Todos abren
+   un mailto: a MAIL_KINESIOLOGIA_12 (consultas.sism@gmail.com), la misma
+   casilla que ya procesa procesarBandejaEntrada()/analizarConIA_() en el
+   backend: ese triage por IA es el que decide si es el 1er/2do mensaje
+   (gratis) o si hay que ofrecer consulta abreviada/virtual paga, así que acá
+   no se repite esa lógica — solo se manda el mensaje con el asunto marcado
+   según de qué conector y qué región RMYT salió, para que se sepa el origen
+   al leerlo o al armar la respuesta automática. */
+function mailtoIMD_(asunto, cuerpo) {
+  window.open(`mailto:${MAIL_KINESIOLOGIA_12}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`, '_blank');
 }
-
-function whatsappVideollamadaIMD() {
+function mailTurnoIMD() {
   const pac = pacienteActivo ? `${pacienteActivo.apellido||''}, ${pacienteActivo.nombre||''}` : '[mi nombre]';
   const reg = IMD_REGIONES.find(r => r.key === imdRegionActual)?.n || imdRegionActual;
-  const msg = `Hola Dr. Muratori, soy *${pac}*.\nQuiero solicitar una *teleconsulta de 5 minutos* sobre mi tratamiento de *${reg}*.\n\nAguardo el link de pago por *Mercado Pago* para abonar antes de la llamada.\nUna vez confirmado el pago, coordinamos el horario.\n\nGracias.`;
-  window.open(`https://wa.me/${DOCTOR_WA_12}?text=${encodeURIComponent(msg)}`, '_blank');
+  const asunto = `RMYT — Turno presencial — ${reg}`;
+  const cuerpo = `Hola Dr. Muratori, soy ${pac}.\nQuisiera solicitar un turno presencial de seguimiento por mi tratamiento de ${reg}.\n¿Tiene disponibilidad próximamente?\nMuchas gracias.`;
+  mailtoIMD_(asunto, cuerpo);
+}
+function mailVideollamadaIMD() {
+  const pac = pacienteActivo ? `${pacienteActivo.apellido||''}, ${pacienteActivo.nombre||''}` : '[mi nombre]';
+  const reg = IMD_REGIONES.find(r => r.key === imdRegionActual)?.n || imdRegionActual;
+  const asunto = `RMYT — Teleconsulta 5 minutos — ${reg}`;
+  const cuerpo = `Hola Dr. Muratori, soy ${pac}.\nQuiero solicitar una teleconsulta de 5 minutos sobre mi tratamiento de ${reg}.\n\nEntiendo que esta opción tiene un costo y que antes de coordinar el horario me van a pasar el link de pago por Mercado Pago.\n\nGracias.`;
+  mailtoIMD_(asunto, cuerpo);
+}
+function mailKinesiologoIMD() {
+  const pac = pacienteActivo ? `${pacienteActivo.apellido||''}, ${pacienteActivo.nombre||''}` : '[mi nombre]';
+  const reg = IMD_REGIONES.find(r => r.key === imdRegionActual)?.n || imdRegionActual;
+  const asunto = `RMYT — Consulta al kinesiólogo — ${reg}`;
+  const cuerpo = `Hola, soy ${pac}.\nTengo una consulta sobre mi tratamiento de kinesiología/FKT de ${reg} (ejercicios, técnica, dudas del plan indicado).\n\nGracias.`;
+  mailtoIMD_(asunto, cuerpo);
+}
+function mailEvaluadoresKinesiologoIMD() {
+  const pac = pacienteActivo ? `${pacienteActivo.apellido||''}, ${pacienteActivo.nombre||''}` : '[mi nombre]';
+  const reg = IMD_REGIONES.find(r => r.key === imdRegionActual)?.n || imdRegionActual;
+  const asunto = `RMYT — Evaluadores del kinesiólogo — ${reg}`;
+  const cuerpo = `Hola, soy ${pac}.\nNecesito contactar a los evaluadores de mi tratamiento de kinesiología/FKT de ${reg} (auditoría / seguimiento de la evolución del plan).\n\nGracias.`;
+  mailtoIMD_(asunto, cuerpo);
 }
 
 /* ─── Interceptor addToReceta para IMDCMYT ─── */
@@ -11492,7 +11784,7 @@ function renderHistItemHTML(c){
       </div>
       <!-- IMDCYMT región -->
       <div>
-        <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);display:block;margin-bottom:4px">Región del IMDCYMT (ejercicios)</label>
+        <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);display:block;margin-bottom:4px">Región del RMYT (ejercicios)</label>
         <select id="gen-region" style="width:100%;border:1.5px solid var(--border);border-radius:6px;padding:7px 10px;font-size:12px;font-family:inherit">
           <option value="">— Sin ejercicios específicos (general) —</option>
         </select>
@@ -11712,8 +12004,9 @@ function renderHistItemHTML(c){
     <div class="imd-pac-bar" id="imd-pac-info">—</div>
     <div class="imd-tabs-bar">
       <button class="imd-tab active" id="imdtab-f1" onclick="imdTab('f1')">💊 F1 — Medicación</button>
-      <button class="imd-tab" id="imdtab-f2" onclick="imdTab('f2')">🏋️ F2 — Ejercicios Isométricos</button>
-      <button class="imd-tab" id="imdtab-f3" onclick="imdTab('f3')">📊 F3 — Evaluación</button>
+      <button class="imd-tab" id="imdtab-f2" onclick="imdTab('f2')">📋 F2 — Resumen de la consulta</button>
+      <button class="imd-tab" id="imdtab-f3" onclick="imdTab('f3')">🏋️ F3 — FKT</button>
+      <button class="imd-tab" id="imdtab-f4" onclick="imdTab('f4')">📊 F4 — Evaluación</button>
     </div>
     <!-- F1 -->
     <div id="imd-f1" class="imd-panel" style="display:block">
@@ -11778,18 +12071,44 @@ function renderHistItemHTML(c){
         </div>
       </div>
     </div>
-    <!-- F2 -->
+    <!-- F2 — Resumen de la consulta y estudios solicitados (sep 2026) -->
     <div id="imd-f2" class="imd-panel" style="display:none">
       <div class="imd-sec-header">
-        <h3 id="imd-f2-title">🏋️ Ejercicios Isométricos</h3>
+        <h3>📋 Resumen de la consulta y estudios solicitados</h3>
+        <p class="imd-sec-desc">Tomado de la historia clínica del paciente — el mismo registro que carga el Dr. Muratori en la consulta.</p>
+      </div>
+      <div id="imd-resumen-historia"><p class="imd-sec-desc">Cargando…</p></div>
+    </div>
+    <!-- F3 — FKT (antes F2 — Ejercicios Isométricos) -->
+    <div id="imd-f3" class="imd-panel" style="display:none">
+      <div class="imd-sec-header">
+        <h3 id="imd-f3-title">🏋️ Ejercicios Isométricos</h3>
         <p class="imd-sec-desc">Realice cada ejercicio <strong>lenta y controladamente</strong>. Si siente dolor irradiado, parestesias o mareo: <strong>suspenda y consulte.</strong></p>
       </div>
       <div id="imd-ejercicios-list"></div>
       <div class="imd-disclaimer">⚠️ Estos ejercicios son indicados específicamente por el Dr. Muratori. No los realice sin supervisión médica si tiene patologías graves.</div>
+      <div class="imd-conectores" style="margin-top:16px">
+        <div class="imd-conector-card">
+          <div class="imd-conector-icon">🧑‍⚕️</div>
+          <div class="imd-conector-body">
+            <div class="imd-conector-title">Consulta al kinesiólogo</div>
+            <div class="imd-conector-desc">Dudas sobre la técnica o el plan de ejercicios de esta región</div>
+          </div>
+          <button class="imd-btn imd-btn-sm" onclick="mailKinesiologoIMD()">✉️ Mail</button>
+        </div>
+        <div class="imd-conector-card">
+          <div class="imd-conector-icon">📊</div>
+          <div class="imd-conector-body">
+            <div class="imd-conector-title">Evaluadores del kinesiólogo</div>
+            <div class="imd-conector-desc">Auditoría / seguimiento de la evolución del plan de FKT</div>
+          </div>
+          <button class="imd-btn imd-btn-sm" onclick="mailEvaluadoresKinesiologoIMD()">✉️ Mail</button>
+        </div>
+      </div>
     </div>
-    <!-- F3 -->
-    <div id="imd-f3" class="imd-panel" style="display:none">
-      <div class="imd-f3-grid">
+    <!-- F4 — Evaluación (antes F3) -->
+    <div id="imd-f4" class="imd-panel" style="display:none">
+      <div class="imd-f4-grid">
         <div>
           <div class="imd-sec-header">
             <h3>📋 Evaluación Semanal</h3>
@@ -11813,15 +12132,15 @@ function renderHistItemHTML(c){
             <div class="imd-conector-title">Solicitar turno presencial</div>
             <div class="imd-conector-desc">Consulta de seguimiento con el Dr. Muratori</div>
           </div>
-          <button class="imd-btn imd-btn-wa imd-btn-sm" onclick="whatsappTurnoIMD()">📲 WhatsApp</button>
+          <button class="imd-btn imd-btn-sm" onclick="mailTurnoIMD()">✉️ Mail</button>
         </div>
         <div class="imd-conector-card">
           <div class="imd-conector-icon">📹</div>
           <div class="imd-conector-body">
             <div class="imd-conector-title">Teleconsulta 5 minutos</div>
-            <div class="imd-conector-desc"><strong>Requiere pago previo por Mercado Pago.</strong> Sin pago confirmado no se recibe respuesta.</div>
+            <div class="imd-conector-desc"><strong>Es una opción paga.</strong> Antes de coordinar el horario se envía el link de pago por Mercado Pago.</div>
           </div>
-          <button class="imd-btn imd-btn-mp imd-btn-sm" onclick="whatsappVideollamadaIMD()">📹 Solicitar</button>
+          <button class="imd-btn imd-btn-mp imd-btn-sm" onclick="mailVideollamadaIMD()">✉️ Mail</button>
         </div>
       </div>
     </div>
