@@ -430,6 +430,14 @@ body{font-family:'Inter',system-ui,sans-serif;font-size:13px;background:var(--bg
      documento a imprimir, y esa era la razón real por la que la firma
      terminaba en una 2da hoja, incluso con una receta corta. */
   .modal-overlay,#cert-zone{display:none!important;}
+  /* GAP encontrado sep 2026 (auditoría general del sistema): #modal-foto-pac
+     (la foto ampliada del paciente) es un mismo tipo de overlay fijo de
+     pantalla completa, pero NO usa la clase .modal-overlay — se muestra/oculta
+     con su propio style="display:none/flex" en JS. La regla de arriba no lo
+     alcanza, así que si quedaba abierto al imprimir podía reproducir el mismo
+     problema (receta en 2 hojas) que ya se había corregido para el resto de
+     los modales. */
+  #modal-foto-pac{display:none!important;}
 }
 
 /* ── CERT ZONE ── */
@@ -4993,9 +5001,19 @@ function syncBackendFireAndForget_(action, payload){
 // no duplica nada — solo actualiza.
 // ══════════════════════════════════════════════════════════════════
 async function syncBackendAwait_(action, payload){
+  // BUGFIX (sep 2026): a diferencia de los fetch por GET (que sí agregan el
+  // token con tokenQS_()), este helper nunca mandaba el token en el body del
+  // POST. Varias de las acciones que pasan por acá están en la lista
+  // ACCIONES_POST_PROTEGIDAS_ del backend (crear_link_pago_mp —el botón
+  // "Cobrar por Mercado Pago"—, analizar_foto_cud, analizar_foto_documento_discap,
+  // asistente_consulta_ia, analizar_texto_paciente, guardar_paciente_historial,
+  // sync_empresa_catastro, guardar_cud_libro_discapacidad, sync_plantilla): si
+  // en las Propiedades del script hay un APP_TOKEN configurado, el backend las
+  // rechazaba todas con "Token inválido o faltante", incluida la generación
+  // del link de pago.
   const resp = await fetch(SHEETS_URL, {
     method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
-    body: JSON.stringify(Object.assign({action}, payload))
+    body: JSON.stringify(Object.assign({action, token:APP_TOKEN}, payload))
   });
   return resp.json();
 }

@@ -907,12 +907,35 @@ function enviarRIDM() {
         }
       });
     } else {
+      // BUGFIX (sep 2026, auditoría general del sistema): en modo completo esta
+      // pantalla se mostraba siempre igual, sin importar si el mail al paciente
+      // (ridm_submit → guardarRidmSubmit → enviarLinkRimpAPaciente_) realmente
+      // salió o falló — a diferencia del modo rápido, nunca se leía la
+      // respuesta real del servidor (mail_enviado / mail_error). El médico no
+      // tenía forma de enterarse si el mail no había llegado. Ahora, cuando
+      // este envío usa mail (ridm_submit, no ridm_antecedentes), se agrega el
+      // mismo chequeo que ya existía en modo rápido.
+      const tieneMailCompleto = envioBackend === 'ridm_submit' && !!(datos.mail && datos.mail.trim());
       r.innerHTML = `
         <strong>👤 ${apellido}, ${nombre}</strong> · DNI: ${dni || '—'}<br>
         🎯 Motivo: ${motivo}<br>
         📍 Zona: ${datos.zonas || '—'} · 🔴 Dolor: ${datos.dolor}/10<br>
         💊 Medicación: ${datos.medicacion || 'No refiere'}<br>
-        📅 Enviado: ${datos.fecha_envio}`;
+        📅 Enviado: ${datos.fecha_envio}
+        ${tieneMailCompleto ? '<div id="ridm-envio-status-completo" style="margin-top:10px;font-size:11.5px;color:#64748b">⏳ Confirmando envío del mail al paciente…</div>' : ''}`;
+      if (tieneMailCompleto) {
+        envioPromise.then(resultado => {
+          const st = document.getElementById('ridm-envio-status-completo');
+          if (!st) return;
+          if (resultado && resultado.success) {
+            st.textContent = resultado.mail_enviado
+              ? '📧 Mail con el link de antecedentes enviado al paciente.'
+              : ('⚠️ El mail al paciente NO se pudo enviar' + (resultado.mail_error ? (': ' + resultado.mail_error) : '') + '. Los datos ya quedaron guardados — mandale el link a mano por WhatsApp.');
+          } else {
+            st.textContent = '⚠️ No se pudo confirmar el envío con el servidor (puede que haya llegado igual). Revisá la conexión.';
+          }
+        });
+      }
     }
   }
 
