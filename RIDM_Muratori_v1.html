@@ -546,7 +546,6 @@ body.modo-breve .solo-extenso{display:none}
       <div class="confirm-resumen" id="confirm-resumen"></div>
       <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:14px">
         <button onclick="window.print()" style="background:var(--accent);color:#fff;border:none;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">🖨 Imprimir confirmación</button>
-        <button onclick="compartirWA()" style="background:#25D366;color:#fff;border:none;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">📲 Compartir por WhatsApp</button>
       </div>
     </div>
   </div>
@@ -883,12 +882,10 @@ function enviarRIDM() {
         <strong>👤 ${apellido}, ${nombre}</strong> · DNI: ${dni || '—'} · 📞 ${tel}<br>
         🏥 ${datos.os || '—'} · Plan: ${datos.plan || '—'}<br>
         📅 Registrado: ${datos.fecha_envio}<br><br>
-        <strong>Próximo paso:</strong> ${tieneMail ? 'le mandamos por mail el link para que complete sus antecedentes médicos en casa.' : 'no cargaste un mail para este paciente, así que no se le puede mandar el link automático — copialo o mandaselo por WhatsApp:'}<br>
+        <strong>Próximo paso:</strong> ${tieneMail ? 'le mandamos por mail el link para que complete sus antecedentes médicos en casa.' : 'no cargaste un mail para este paciente, así que no se le puede mandar el link automático — copialo y mandaselo por la vía que prefieras:'}<br>
         <a href="${linkP2}" target="_blank" style="word-break:break-all;color:#2563eb">${linkP2}</a><br><br>
         <div style="font-size:10.5px;color:var(--muted);margin-bottom:4px">Por si hace falta reenviarlo a mano:</div>
         <button onclick="navigator.clipboard.writeText('${linkP2}').then(()=>alert('¡Link copiado!'))" style="background:#2563eb;color:#fff;border:none;padding:8px 16px;border-radius:7px;font-size:12px;cursor:pointer;font-family:inherit">📋 Copiar link</button>
-        &nbsp;
-        <button onclick="window.open('https://wa.me/${tel.replace(/\\D/g,'')}?text='+encodeURIComponent('Estimado/a ${nombre}, por favor complete sus antecedentes médicos antes de su próxima consulta con el Dr. Muratori: ${linkP2}'),'_blank')" style="background:#25D366;color:#fff;border:none;padding:8px 16px;border-radius:7px;font-size:12px;cursor:pointer;font-family:inherit">📲 Enviar por WhatsApp</button>
         <div id="ridm-envio-status" style="margin-top:14px;font-size:11.5px;color:#64748b">⏳ Confirmando envío…</div>
         <div class="row-btns" style="margin-top:8px">
           <button onclick="volverAOCM_()" style="background:#0369a1;color:#fff;border:none;padding:8px 16px;border-radius:7px;font-size:12px;cursor:pointer;font-family:inherit">↩ Volver a OCM ahora</button>
@@ -930,7 +927,7 @@ function enviarRIDM() {
           if (resultado && resultado.success) {
             st.textContent = resultado.mail_enviado
               ? '📧 Mail con el link de antecedentes enviado al paciente.'
-              : ('⚠️ El mail al paciente NO se pudo enviar' + (resultado.mail_error ? (': ' + resultado.mail_error) : '') + '. Los datos ya quedaron guardados — mandale el link a mano por WhatsApp.');
+              : ('⚠️ El mail al paciente NO se pudo enviar' + (resultado.mail_error ? (': ' + resultado.mail_error) : '') + '. Los datos ya quedaron guardados — mandale el link a mano por la vía que prefieras.');
           } else {
             st.textContent = '⚠️ No se pudo confirmar el envío con el servidor (puede que haya llegado igual). Revisá la conexión.';
           }
@@ -940,76 +937,12 @@ function enviarRIDM() {
   }
 
   irASec('confirm');
-
-  // WhatsApp al doctor (solo en modo completo o clínico — en modo rápido el link se muestra en pantalla)
-  if (MODO !== 'rapido') {
-    setTimeout(() => {
-      const msg = buildMsgWA(datos);
-      window.open(`https://wa.me/5492616586234?text=${encodeURIComponent(msg)}`, '_blank');
-    }, 800);
-  }
 }
 
-function buildMsgWA(d) {
-  return `📋 *RIDM — DATOS PREVIOS A CONSULTA*
-` +
-    `*${d.apellido}, ${d.nombre}* · DNI: ${d.dni || '—'}
-` +
-    `📞 ${d.tel} · ${d.mail || ''}
-` +
-    `🎂 ${d.fnac || '—'} · ${d.sexo || '—'}
-` +
-    `🏠 ${d.domicilio || '—'}
-
-` +
-    `🏥 *COBERTURA:* ${d.os || '—'} · Plan: ${d.plan || '—'} · N°: ${d.afil || '—'}
-` +
-    `Autorizó: ${d.autorizacion || '—'}
-
-` +
-    `🎯 *MOTIVO:* ${d.motivo}
-` +
-    `📍 Zona: ${d.zonas || '—'}
-` +
-    `🔴 Dolor actual: ${d.dolor}/10
-` +
-    `⏱ Evolución: ${d.evolucion || '—'}
-` +
-    `🔧 Tratamientos previos: ${d.tratamientos || 'No refiere'}
-
-` +
-    `📋 *ANTECEDENTES:*
-` +
-    `Enfermedades: ${d.enfermedades || 'Ninguna relevante'}
-` +
-    `${d.otras_enf ? 'Otras: ' + d.otras_enf + '\n' : ''}` +
-    `Cirugías: ${d.cirugias || 'Sin cirugías previas'}
-` +
-    `💊 Medicación: ${d.medicacion || 'No refiere'}
-` +
-    `⚠️ Alergias: ${d.alergia || '—'} ${d.alergia_det ? '— ' + d.alergia_det : ''}
-
-` +
-    `💼 *ACTIVIDAD:*
-` +
-    `Profesión: ${d.profesion || '—'}
-` +
-    `Jornada: ${d.jornada || '—'}
-` +
-    `Deporte: ${d.deporte || '—'} ${d.deporte_det ? '(' + d.deporte_det + ')' : ''}
-
-` +
-    `${d.obs ? '💬 *Observaciones:* ' + d.obs + '\n\n' : ''}` +
-    `📅 ${d.fecha_envio}`;
-}
-
-function compartirWA() {
-  const apellido = document.getElementById('f-apellido')?.value || '';
-  const nombre   = document.getElementById('f-nombre')?.value || '';
-  const msg = `✅ Envié mis datos al Dr. Muratori antes de mi consulta.
-Paciente: *${apellido}, ${nombre}*`;
-  window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
-}
+// (WhatsApp sacado del sistema, sep 2026 — el médico ya ve estos envíos en
+// RIDM_Pendientes dentro de OCM, sin necesidad de un aviso aparte que además
+// se abría solo, sin que nadie lo pidiera con un clic. También se sacó el
+// botón de "Compartir por WhatsApp" que veía el paciente en la confirmación.)
 </script>
 
 <!-- ══ TRIAL: bloqueo si venció el período de prueba (ver configurarTrial() en Codigo.gs) ══ -->

@@ -136,6 +136,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:#111;font-size:13
 const SHEETS_URL='https://script.google.com/macros/s/AKfycbwYdoFuU8mQL4YKqufSBQ9AD_yqWEEesLtGzYQjNw2JG1BZIQF7ug80mHB5sLMXhaUpvQ/exec';
 const FIRMA_B64="data:image/png;base64,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";
 const DOCTOR_WA='5492616586234';
+const DOCTOR_MAIL='drluismuratori@gmail.com';
 
 const CENTROS = {
   sicoli:   {label:'H. Sicoli', nombreHTML:'HOSPITAL DR. DOMINGO SICOLI<br>LAVALLE MENDOZA — CONSULTORIO EXTERNO',
@@ -349,7 +350,6 @@ function renderMedicacion(){
     }
     html += '</div>'+
       '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">'+
-        '<a class="btn btn-wa" href="https://wa.me/'+f.wa+'?text='+encodeURIComponent('Hola, le envío receta magistral del Dr. Luis Muratori para preparación. DNI paciente: '+(DATOS.paciente&&DATOS.paciente.dni||''))+'" target="_blank">📲 WhatsApp farmacia</a>'+
         '<a class="btn btn-mail" href="mailto:'+f.mail+'?subject=Receta Magistral — Dr. Muratori&body='+encodeURIComponent('Estimados, adjunto receta magistral del Dr. Luis Alberto Muratori. DNI del paciente: '+(DATOS.paciente&&DATOS.paciente.dni||''))+'" target="_blank">📧 Email farmacia</a>'+
       '</div>'+
     '</div>';
@@ -544,7 +544,7 @@ function verificarViernes(){
   banner.className='viernes-banner';
   banner.innerHTML='<div style="font-size:13px;font-weight:600;color:#92400e;margin-bottom:8px">📊 Es viernes — enviá tu resumen semanal al Dr. Muratori</div>'+
     '<div style="font-size:11px;color:#92400e;margin-bottom:10px">Dolor promedio: <strong>'+avgDolor+'/10</strong> · Efecto farmacológico: <strong>'+avgEfecto+'/10</strong> · Días registrados: <strong>'+semana.length+'</strong></div>'+
-    '<a class="btn btn-wa" href="https://wa.me/'+DOCTOR_WA+'?text='+encodeURIComponent(msg)+'" target="_blank" style="display:inline-flex">📲 Enviar resumen al Dr. Muratori</a>';
+    '<a class="btn btn-mail" href="mailto:'+DOCTOR_MAIL+'?subject='+encodeURIComponent('Resumen semanal — Recomendaciones')+'&body='+encodeURIComponent(msg)+'" target="_blank" style="display:inline-flex">📧 Enviar resumen al Dr. Muratori</a>';
   document.getElementById('page-content').prepend(banner);
 }
 
@@ -567,8 +567,8 @@ function renderDirectorio(){
         '<div class="dir-det">'+c.dir+'<br>'+(c.tel&&c.tel!=='—'?'📞 '+c.tel:'')+' '+c.tit+'</div>'+
       '</div>'+
       '<div class="dir-btns">'+
-        (c.wsp?'<a class="btn btn-turno" href="https://wa.me/'+c.wsp+'?text='+encodeURIComponent('Hola, quisiera pedir turno con el Dr. Muratori. Soy '+nombre+'.')+'" target="_blank" style="font-size:11px">📅 Turno</a>':'')+
-        (c.wsp?'<a class="btn btn-wa" href="https://wa.me/'+DOCTOR_WA+'?text='+encodeURIComponent('Dr. Muratori, confirmo asistencia al turno en '+c.label+'. Soy '+nombre+'.')+'" target="_blank" style="font-size:11px">✅ Confirmar</a>':'')+
+        (c.mail?'<a class="btn btn-turno" href="mailto:'+c.mail+'?subject='+encodeURIComponent('Solicitud de turno — Dr. Muratori')+'&body='+encodeURIComponent('Hola, quisiera pedir turno con el Dr. Muratori. Soy '+nombre+'.')+'" target="_blank" style="font-size:11px">📅 Turno</a>':'')+
+        (c.mail?'<a class="btn btn-mail" href="mailto:'+DOCTOR_MAIL+'?subject='+encodeURIComponent('Confirmación de turno — '+c.label)+'&body='+encodeURIComponent('Dr. Muratori, confirmo asistencia al turno en '+c.label+'. Soy '+nombre+'.')+'" target="_blank" style="font-size:11px">✅ Confirmar</a>':'')+
       '</div>'+
     '</div>';
   });
@@ -581,7 +581,6 @@ function renderDirectorio(){
         '<div class="dir-name">'+g.nombre+'</div>'+
         '<div class="dir-det">📍 '+g.dir+(g.tel?'<br>📞 '+g.tel:'')+'</div>'+
       '</div>'+
-      (g.wa?'<div class="dir-btns"><a class="btn btn-wa" href="https://wa.me/'+g.wa+'" target="_blank" style="font-size:11px">📲 Contactar</a></div>':'')+
     '</div>';
   });
   html += '</div>';
@@ -638,7 +637,7 @@ function renderConsultaOnline(){
         </div>`;
       }).join('')+
     '</div>'+
-    '<div style="margin-top:12px;text-align:center;font-size:11px;color:var(--text-muted)">Urgencias: <a href="https://wa.me/'+DOCTOR_WA+'" style="color:var(--blue);font-weight:600">📞 +54 9 261 658-6234</a></div>'+
+    '<div style="margin-top:12px;text-align:center;font-size:11px;color:var(--text-muted)">Urgencias: <a href="tel:+5492616586234" style="color:var(--blue);font-weight:600">📞 +54 9 261 658-6234</a></div>'+
     // Modal de solicitud (oculto)
     '<div id="modal-solicitar" style="display:none;margin-top:14px;background:#f8fafc;border:1.5px solid var(--blue);border-radius:10px;padding:14px">'+
       '<div style="font-size:13px;font-weight:600;color:var(--navy);margin-bottom:10px" id="modal-tipo-lbl">Solicitar consulta</div>'+
@@ -680,9 +679,9 @@ async function enviarSolicitudConsulta(){
   const nombre = (pac.apellido||'')+', '+(pac.nombre||'');
   const precio = tar.precio?`$${Number(tar.precio).toLocaleString('es-AR')}`:'a convenir';
   const texto = `Hola Dr. Muratori, quiero solicitar una ${tar.label||TIPO_CONSULTA_ACTIVO} (${precio}).\n\nMi consulta:\n"${pregunta}"\n\nSoy ${nombre}. DNI: ${pac.dni||DNI||'—'}.`;
-  window.open(`https://wa.me/${DOCTOR_WA}?text=${encodeURIComponent(texto)}`,'_blank');
+  window.open(`mailto:${DOCTOR_MAIL}?subject=${encodeURIComponent('Solicitud de consulta — '+(tar.label||TIPO_CONSULTA_ACTIVO))}&body=${encodeURIComponent(texto)}`,'_blank');
   const m = document.getElementById('modal-solicitar');
-  if(m) m.innerHTML=`<div style="text-align:center;padding:16px"><div style="font-size:24px;margin-bottom:8px">✅</div><div style="font-size:13px;font-weight:600;color:#166534;margin-bottom:6px">¡Solicitud enviada!</div><div style="font-size:12px;color:#475569;line-height:1.6">El Dr. Muratori recibió su consulta por WhatsApp.<br>Le enviará el link de pago a la brevedad.<br>Una vez confirmado el pago, recibirá su respuesta.</div></div>`;
+  if(m) m.innerHTML=`<div style="text-align:center;padding:16px"><div style="font-size:24px;margin-bottom:8px">✅</div><div style="font-size:13px;font-weight:600;color:#166534;margin-bottom:6px">¡Solicitud enviada!</div><div style="font-size:12px;color:#475569;line-height:1.6">El Dr. Muratori recibió su consulta por mail.<br>Le enviará el link de pago a la brevedad.<br>Una vez confirmado el pago, recibirá su respuesta.</div></div>`;
 }
 
 // ── ENVÍO POR MAIL (PDF automático al paciente) ──────────────────
