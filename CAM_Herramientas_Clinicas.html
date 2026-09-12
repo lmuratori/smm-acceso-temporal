@@ -43,6 +43,9 @@
   .fg1,.fg2{display:flex;flex-direction:column;gap:3px}
   .fg2{grid-column:1/-1}
   .form-grid label,.field-label{font-size:10.5px;font-weight:600;color:var(--azul)}
+  .lbl-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .btn-mic{flex:none;padding:3px 8px;border:1px solid var(--violeta);border-radius:20px;background:#faf5ff;color:var(--violeta);font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap}
+  .btn-mic.mic-activo{background:#dc2626;border-color:#dc2626;color:#fff}
   input[type=text],input[type=number],input[type=date],select,textarea{
     width:100%;border:1px solid var(--border2);border-radius:6px;padding:7px;font-size:12px;font-family:inherit;outline:none}
   textarea{resize:vertical}
@@ -128,7 +131,7 @@
     </div>
 
     <div class="sm-grp-lbl" style="margin-top:14px">Motivo de consulta</div>
-    <div class="fg2"><label>¿Qué le sucede?</label>
+    <div class="fg2"><div class="lbl-row"><label>¿Qué le sucede?</label><button type="button" class="btn-mic" onclick="dictarEnCampo('interr-motivo', this)">🎤 Dictar</button></div>
       <textarea id="interr-motivo" rows="2" placeholder="Síntomas y signos presentes, en las palabras del paciente…"></textarea>
     </div>
 
@@ -158,7 +161,7 @@
     <div id="interr-agudeza-badge" style="display:none;margin-top:10px;padding:10px 14px;border-radius:8px;font-size:12.5px;font-weight:700;text-align:center"></div>
 
     <div class="sm-grp-lbl" style="margin-top:16px">Desarrollo del interrogatorio</div>
-    <div class="fg2"><label>Mecanismo — ¿cómo le ocurrió?</label>
+    <div class="fg2"><div class="lbl-row"><label>Mecanismo — ¿cómo le ocurrió?</label><button type="button" class="btn-mic" onclick="dictarEnCampo('interr-mecanismo', this)">🎤 Dictar</button></div>
       <textarea id="interr-mecanismo" rows="3" placeholder="Mecanismo efector: caída, torsión, sobreuso, esfuerzo, golpe directo…"></textarea>
     </div>
 
@@ -192,7 +195,7 @@
     <!-- 1. PLANTILLAS -->
     <div class="abrev-sub" id="abrev-plantillas" style="display:none;margin-top:12px">
       <div class="panel-desc" style="margin-top:0">Examen físico breve de pie + podoscopio. La indicación de plantillas se termina de generar en OCM.</div>
-      <div class="fg2"><label>Hallazgos del examen físico del pie</label><textarea id="abrev-plant-examen" rows="2" placeholder="Ej: apoyo plantar, retropié, antepié…"></textarea></div>
+      <div class="fg2"><div class="lbl-row"><label>Hallazgos del examen físico del pie</label><button type="button" class="btn-mic" onclick="dictarEnCampo('abrev-plant-examen', this)">🎤 Dictar</button></div><textarea id="abrev-plant-examen" rows="2" placeholder="Ej: apoyo plantar, retropié, antepié…"></textarea></div>
       <div class="fg2" style="margin-top:8px"><label>Estudios de apoyo (si corresponde)</label>
         <input id="abrev-plant-estudios" type="text" placeholder="Ej: escanograma, espinograma…"></div>
       <div class="row-btns" style="margin-top:8px">
@@ -208,17 +211,17 @@
 
     <!-- 3. RENOVACIÓN DE ESTUDIOS -->
     <div class="abrev-sub" id="abrev-estudios" style="display:none;margin-top:12px">
-      <div class="fg2"><label>Estudios a renovar (vencidos por tiempo)</label><textarea id="abrev-estudios-cuales" rows="2" placeholder="Ej: laboratorio pre-quirúrgico, vencido a los 30 días…"></textarea></div>
+      <div class="fg2"><div class="lbl-row"><label>Estudios a renovar (vencidos por tiempo)</label><button type="button" class="btn-mic" onclick="dictarEnCampo('abrev-estudios-cuales', this)">🎤 Dictar</button></div><textarea id="abrev-estudios-cuales" rows="2" placeholder="Ej: laboratorio pre-quirúrgico, vencido a los 30 días…"></textarea></div>
     </div>
 
     <!-- 4. CURACIÓN -->
     <div class="abrev-sub" id="abrev-curacion" style="display:none;margin-top:12px">
-      <div class="fg2"><label>Características de la herida</label><textarea id="abrev-cur-herida" rows="2" placeholder="Ej: bordes afrontados, sin signos de infección…"></textarea></div>
+      <div class="fg2"><div class="lbl-row"><label>Características de la herida</label><button type="button" class="btn-mic" onclick="dictarEnCampo('abrev-cur-herida', this)">🎤 Dictar</button></div><textarea id="abrev-cur-herida" rows="2" placeholder="Ej: bordes afrontados, sin signos de infección…"></textarea></div>
     </div>
 
     <!-- 5. RETIRO DE YESO -->
     <div class="abrev-sub" id="abrev-retiroyeso" style="display:none;margin-top:12px">
-      <div class="fg2"><label>Redacción breve</label><textarea id="abrev-yeso-texto" rows="2" placeholder="Ej: se retira yeso, buena consolidación clínica…"></textarea></div>
+      <div class="fg2"><div class="lbl-row"><label>Redacción breve</label><button type="button" class="btn-mic" onclick="dictarEnCampo('abrev-yeso-texto', this)">🎤 Dictar</button></div><textarea id="abrev-yeso-texto" rows="2" placeholder="Ej: se retira yeso, buena consolidación clínica…"></textarea></div>
     </div>
 
     <!-- 6. PLANTILLA — CONTROL o RECAMBIO (mismo formulario para las dos: se
@@ -228,7 +231,7 @@
         <div class="fg1"><label>¿Son las correctas?</label><select id="abrev-plr-correctas"><option>Sí</option><option>No</option></select></div>
         <div class="fg1"><label>¿Se adaptan bien al pie?</label><select id="abrev-plr-adaptan"><option>Sí, correctamente</option><option>Parcialmente — requiere ajuste</option><option>No se adaptan</option></select></div>
       </div>
-      <div class="fg2" style="margin-top:8px"><label>Indicaciones de cuidado e higiene</label><textarea id="abrev-plr-cuidado" rows="2" placeholder="Ej: lavado diario con agua y jabón neutro, secado completo antes de calzar…"></textarea></div>
+      <div class="fg2" style="margin-top:8px"><div class="lbl-row"><label>Indicaciones de cuidado e higiene</label><button type="button" class="btn-mic" onclick="dictarEnCampo('abrev-plr-cuidado', this)">🎤 Dictar</button></div><textarea id="abrev-plr-cuidado" rows="2" placeholder="Ej: lavado diario con agua y jabón neutro, secado completo antes de calzar…"></textarea></div>
 
       <div class="panel-desc" style="margin-top:12px;background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;border-radius:8px;padding:8px 10px">📈 Seguimiento evolutivo: estos datos quedan guardados en la historia clínica y alimentan el seguimiento profesional del paciente (independiente de si esta plantilla se encarga a la fábrica o no — esto se registra siempre).</div>
       <div class="form-grid" style="margin-top:8px">
@@ -282,7 +285,7 @@
       <button class="btn btn-primary" onclick="agregarSindromeAExamen()">➕ Agregar esta nota al examen del paciente</button>
       <button class="btn btn-ghost" onclick="agregarSindromePersonalizado()">⭐ Agregar síndrome nuevo a mi diccionario</button>
     </div>
-    <div class="fg2" style="margin-top:14px"><label>Notas del examen (se van acumulando)</label>
+    <div class="fg2" style="margin-top:14px"><div class="lbl-row"><label>Notas del examen (se van acumulando)</label><button type="button" class="btn-mic" onclick="dictarEnCampo('sind-notas', this)">🎤 Dictar</button></div>
       <textarea id="sind-notas" rows="4" placeholder="Acá se agregan las notas de síndromes que vayas eligiendo…"></textarea>
     </div>
     <div class="row-btns">
@@ -522,7 +525,7 @@
       <div class="fg1"><label>Arch Index (Cavanagh-Rodgers)</label><input id="podo-archindex" type="number" step="0.01" placeholder="0.00 a 1.00"></div>
     </div>
 
-    <div class="fg2" style="margin-top:8px"><label>Observaciones adicionales</label><textarea id="podo-obs" rows="2"></textarea></div>
+    <div class="fg2" style="margin-top:8px"><div class="lbl-row"><label>Observaciones adicionales</label><button type="button" class="btn-mic" onclick="dictarEnCampo('podo-obs', this)">🎤 Dictar</button></div><textarea id="podo-obs" rows="2"></textarea></div>
 
     <div class="row-btns">
       <button class="btn btn-primary" onclick="generarInformePodoscopia()">📄 Generar informe de podoscopía</button>
@@ -669,7 +672,7 @@
       </div>
     </div>
 
-    <div class="fg2" style="margin-top:8px"><label>Observaciones adicionales</label><textarea id="esco-obs" rows="2"></textarea></div>
+    <div class="fg2" style="margin-top:8px"><div class="lbl-row"><label>Observaciones adicionales</label><button type="button" class="btn-mic" onclick="dictarEnCampo('esco-obs', this)">🎤 Dictar</button></div><textarea id="esco-obs" rows="2"></textarea></div>
 
     <div class="row-btns">
       <button class="btn btn-primary" onclick="generarInformeEscoliosis()">📄 Generar informe de escoliosis y balance sagital</button>
@@ -951,6 +954,7 @@ function agregarEstudio(){
         <option value="Pendiente de resultado">Pendiente de resultado</option>
       </select>
     </div>
+    <div style="display:flex;justify-content:flex-end;margin-bottom:3px"><button type="button" class="btn-mic" onclick="dictarEnCampo('estudio-desc-${i}', this)">🎤 Dictar</button></div>
     <textarea id="estudio-desc-${i}" rows="2" placeholder="Descripción del hallazgo / resumen del informe…" style="width:100%"></textarea>
     <div style="text-align:right;margin-top:4px"><span style="cursor:pointer;color:#dc2626;font-size:11px" onclick="document.getElementById('estudio-fila-${i}').remove()">✕ Quitar</span></div>`;
   cont.appendChild(fila);
@@ -1163,6 +1167,92 @@ function toast(msg,tipo){
   t.textContent=msg;
   box.appendChild(t);
   setTimeout(()=>t.remove(),4000);
+}
+
+// ══════════════════════════════════════════════════════════════════
+// DICTADO POR VOZ — botón 🎤 al lado de los campos de texto libre.
+// Usa la Web Speech API propia del navegador (anda en Chrome/Edge,
+// desktop y Android). No reemplaza al campo de texto: es un atajo
+// opcional. Si el lugar no tiene micrófono, no hay permiso, o el
+// navegador no lo soporta, el botón avisa con un toast y el campo
+// sigue funcionando normal escribiendo a mano, como siempre. ──
+// ══════════════════════════════════════════════════════════════════
+let _dictadoActivo = null;
+let _dictadoCampoId = null;
+let _dictadoSeguir = false;
+
+function dictarEnCampo(campoId, btnEl){
+  const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SpeechRecognitionAPI){
+    toast('⚠️ Este dispositivo/navegador no permite dictado por voz acá — escribí manualmente','error');
+    return;
+  }
+  // Un segundo click sobre el mismo botón mientras escucha, lo detiene
+  if(_dictadoActivo && _dictadoCampoId === campoId){
+    _dictadoSeguir = false;
+    _dictadoActivo.stop();
+    return;
+  }
+  if(_dictadoActivo){ _dictadoSeguir = false; _dictadoActivo.stop(); }
+
+  const campo = document.getElementById(campoId);
+  if(!campo) return;
+  _dictadoCampoId = campoId;
+  _dictadoSeguir = true;
+  if(btnEl){ btnEl.classList.add('mic-activo'); btnEl.textContent = '🔴 Escuchando… (tocar para parar)'; }
+  _iniciarSesionDictado(campoId, btnEl, campo);
+}
+
+// Arranca una sesión CORTA de reconocimiento (continuous:false) y, si
+// sigue activo, la vuelve a arrancar sola al terminar cada frase. Esto
+// es a propósito y reemplaza un intento anterior con continuous:true:
+// en varios celulares (sobre todo Android) el modo continuo repetía el
+// mismo resultado 2 o 3 veces cuando se decían pocas palabras (el motor
+// de voz reenvía resultados ya finalizados). Con sesiones cortas cada
+// frase se entrega una sola vez, sin perder la sensación de "queda
+// escuchando" para el que dicta. ──
+function _iniciarSesionDictado(campoId, btnEl, campo){
+  const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const rec = new SpeechRecognitionAPI();
+  rec.lang = 'es-AR';
+  rec.continuous = false;
+  rec.interimResults = false;
+  _dictadoActivo = rec;
+
+  rec.onresult = (ev) => {
+    const ultimo = ev.results[ev.results.length - 1];
+    const textoNuevo = (ultimo && ultimo[0] ? ultimo[0].transcript : '').trim();
+    if(textoNuevo){
+      const previo = campo.value;
+      const necesitaEspacio = previo && !previo.endsWith(' ') && !previo.endsWith('\n');
+      campo.value = previo + (necesitaEspacio ? ' ' : '') + textoNuevo;
+    }
+  };
+  rec.onerror = (ev) => {
+    if(ev.error === 'not-allowed' || ev.error === 'service-not-allowed'){
+      toast('⚠️ No se pudo usar el micrófono (permiso denegado) — escribí manualmente','error');
+      _dictadoSeguir = false;
+    } else if(ev.error !== 'no-speech' && ev.error !== 'aborted'){
+      toast('⚠️ Dictado interrumpido — podés seguir escribiendo a mano','error');
+    }
+  };
+  rec.onend = () => {
+    if(_dictadoSeguir && _dictadoCampoId === campoId){
+      _iniciarSesionDictado(campoId, btnEl, campo);
+    } else {
+      if(btnEl){ btnEl.classList.remove('mic-activo'); btnEl.textContent = '🎤 Dictar'; }
+      _dictadoActivo = null; _dictadoCampoId = null;
+    }
+  };
+
+  try{
+    rec.start();
+  }catch(e){
+    toast('⚠️ No se pudo iniciar el dictado — escribí manualmente','error');
+    _dictadoSeguir = false;
+    if(btnEl){ btnEl.classList.remove('mic-activo'); btnEl.textContent = '🎤 Dictar'; }
+    _dictadoActivo = null; _dictadoCampoId = null;
+  }
 }
 
 // ══════════════════════════════════════════════════════════════════
