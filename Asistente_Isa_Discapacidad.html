@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Isa — Asistente de Discapacidad</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--navy:#0b1f3a;--pink:#ec4899;--green:#22c55e;--blue:#2563eb;--border:#e2e8f0}
+body{font-family:'Inter',Arial,sans-serif;background:#f5f0f7;min-height:100vh;color:#1e293b;display:flex;flex-direction:column}
+.header{background:linear-gradient(135deg,#831843,#be185d);color:#fff;padding:18px 20px;text-align:center}
+.header .avatar{width:64px;height:64px;border-radius:50%;margin:0 auto 8px;overflow:hidden;display:block}
+.header .avatar img{width:100%;height:100%;object-fit:cover}
+.header h1{font-size:17px;font-weight:700}
+.header p{font-size:12px;opacity:.9;margin-top:2px}
+.chat-area{flex:1;max-width:640px;margin:0 auto;width:100%;padding:16px;display:flex;flex-direction:column;gap:10px;overflow-y:auto}
+.msg{max-width:85%;padding:10px 14px;border-radius:14px;font-size:13.5px;line-height:1.5}
+.msg.isa{background:#fff;border:1px solid #f3d4e6;align-self:flex-start;border-bottom-left-radius:4px}
+.msg.user{background:var(--pink);color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
+.msg.sistema{background:#fef3c7;color:#92400e;align-self:center;font-size:12px;text-align:center;max-width:95%}
+.zona-input{max-width:640px;margin:0 auto;width:100%;padding:12px 16px;background:#fff;border-top:1px solid var(--border)}
+.fila-input{display:flex;gap:8px}
+textarea#input-usuario{flex:1;padding:10px 12px;border:1px solid #cbd5e1;border-radius:20px;font-size:13.5px;resize:none;font-family:inherit;max-height:90px}
+.btn-enviar{background:var(--pink);color:#fff;border:none;width:42px;height:42px;border-radius:50%;font-size:16px;cursor:pointer;flex-shrink:0}
+.acciones{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.chip{background:#fdf2f8;border:1px solid #f3d4e6;color:#9d174d;border-radius:16px;padding:6px 12px;font-size:11.5px;cursor:pointer}
+.chip:hover{background:#fce7f3}
+.zona-documentos{background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px;max-width:640px;margin:0 auto 10px;width:100%}
+.zona-documentos h3{font-size:12.5px;font-weight:700;color:var(--navy);margin-bottom:8px}
+.lista-adjuntos{margin:8px 0}
+.adjunto-item{display:flex;justify-content:space-between;align-items:center;font-size:12px;padding:4px 0;border-bottom:1px solid #f1f5f9}
+.btn{background:var(--blue);color:#fff;border:none;padding:9px 16px;border-radius:8px;font-size:12.5px;font-weight:600;cursor:pointer;margin-top:6px}
+.btn.verde{background:var(--green)}
+.btn:disabled{background:#cbd5e1;cursor:not-allowed}
+.msg-envio{font-size:12px;margin-top:6px}
+.msg-ok{color:#166534}.msg-error{color:#dc2626}
+#modal-config{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center;padding:16px}
+.config-box{background:#fff;border-radius:12px;padding:20px;max-width:400px;width:100%}
+.config-box input{width:100%;padding:9px 10px;border:1px solid #cbd5e1;border-radius:8px;font-size:13px;margin:8px 0}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="avatar"><img src="avatar_isa.svg" alt="Isa"></div>
+  <h1>Isa — tu asistente para el trámite de discapacidad</h1>
+  <p>Te acompaño a entender el trámite y te ayudo a mandar la documentación</p>
+</div>
+
+<div style="max-width:640px;margin:10px auto 0;padding:0 16px;width:100%">
+  <div style="background:#fef3c7;border:1px solid #fde68a;border-radius:10px;padding:10px 14px;font-size:12px;color:#92400e;line-height:1.5">
+    ⚠️ <b>Isa es un asistente orientativo.</b> No reemplaza la consulta con tu médico ni garantiza el resultado
+    de ningún trámite — las decisiones finales las toma la Junta Evaluadora, ANSES o ANDIS. Ante dudas sobre
+    tu diagnóstico o tu caso puntual, consultá siempre con el Dr. Muratori.
+  </div>
+</div>
+
+<div class="chat-area" id="chat-area"></div>
+
+<div class="zona-documentos">
+  <h3>📎 Adjuntar documentación para enviar</h3>
+  <input type="file" id="input-archivo" accept="image/*,application/pdf" multiple>
+  <div class="lista-adjuntos" id="lista-adjuntos"></div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px">
+    <input type="text" id="nombre-paciente" placeholder="Tu nombre completo" style="flex:1;min-width:140px;padding:8px 10px;border:1px solid #cbd5e1;border-radius:8px;font-size:13px">
+    <input type="text" id="dni-paciente" placeholder="Tu DNI" inputmode="numeric" style="flex:1;min-width:100px;padding:8px 10px;border:1px solid #cbd5e1;border-radius:8px;font-size:13px">
+  </div>
+  <button class="btn verde" id="btn-enviar-docs">📧 Enviar documentación al hospital</button>
+  <div class="msg-envio" id="msg-envio"></div>
+</div>
+
+<div class="zona-input">
+  <div class="acciones">
+    <div class="chip" onclick="enviarSugerencia('¿Qué es el CUD y para qué me sirve?')">¿Qué es el CUD?</div>
+    <div class="chip" onclick="enviarSugerencia('¿Qué documentos necesito para tramitar la Pensión No Contributiva?')">Documentos PNC</div>
+    <div class="chip" onclick="enviarSugerencia('¿Qué es la discapacidad contributiva y cómo se tramita?')">Discapacidad Contributiva</div>
+    <div class="chip" onclick="enviarSugerencia('Estoy agobiado/a con este trámite, ¿me podés ayudar a entenderlo paso a paso?')">Me siento agobiado/a</div>
+  </div>
+  <div class="fila-input">
+    <textarea id="input-usuario" rows="1" placeholder="Escribile a Isa..."></textarea>
+    <button class="btn-enviar" onclick="enviarMensaje()">➤</button>
+  </div>
+</div>
+
+<script>
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbwYdoFuU8mQL4YKqufSBQ9AD_yqWEEesLtGzYQjNw2JG1BZIQF7ug80mHB5sLMXhaUpvQ/exec';
+
+const SYSTEM_PROMPT = `Sos "Isa", una asistente virtual cálida y paciente que ayuda a personas con discapacidad
+y sus familias en Argentina a entender y avanzar en sus trámites: el Certificado Único de Discapacidad (CUD),
+la Pensión No Contributiva (PNC) por Invalidez Laboral, y la Discapacidad Contributiva (Retiro por Invalidez).
+
+REGLAS IMPORTANTES QUE DEBÉS SEGUIR SIEMPRE:
+- Nunca prometas que un trámite va a ser aprobado — eso lo decide la Junta Evaluadora o ANSES, no vos ni el sistema.
+- Nunca reemplaces el criterio médico del Dr. Muratori — si preguntan algo clínico específico de su caso
+  (su diagnóstico, su porcentaje de discapacidad, si califican o no), decí que eso lo define el médico tratante
+  o la Junta, y que lo consulten en la próxima consulta.
+- Explicá los trámites en lenguaje simple y humano, sin jerga innecesaria, con calidez y paciencia — muchas
+  personas que te consultan están angustiadas o agotadas por la burocracia.
+- Si preguntan qué documentos necesitan, explicá según el trámite (CUD: formulario + planilla médica según
+  patología; PNC: CMO Digital + Solicitud de Prestación; Contributiva: formulario PS.6.18 + evaluación de
+  incapacidad laboral + historia clínica).
+- Si quieren mandar documentación, decile que la pueden subir con el botón de "Adjuntar documentación" de esta
+  misma pantalla, y que vos les avisás cuando esté todo listo para enviar.
+- Sé breve (2-4 oraciones por respuesta), cálida, y terminá casi siempre con una pregunta o un paso concreto
+  a seguir, para que la persona no se sienta perdida.
+- Nunca dés consejos legales definitivos ni cites artículos de ley de memoria con precisión que no puedas
+  garantizar — si preguntan por una ley específica, orientalos a consultar con el equipo del hospital.`;
+
+let historialChat = [];
+
+function agregarMensaje(texto, tipo){
+  const area = document.getElementById('chat-area');
+  const div = document.createElement('div');
+  div.className = 'msg ' + tipo;
+  div.textContent = texto;
+  area.appendChild(div);
+  area.scrollTop = area.scrollHeight;
+}
+
+function iniciarConversacion(){
+  agregarMensaje('¡Hola! Soy Isa 💜 Estoy acá para acompañarte en el trámite de discapacidad — CUD, Pensión No Contributiva, o Discapacidad Contributiva. Contame, ¿en qué te puedo ayudar hoy?', 'isa');
+}
+
+async function llamarIsa(mensajeUsuario){
+  historialChat.push({role:'user', parts:[{text: mensajeUsuario}]});
+  agregarMensaje(mensajeUsuario, 'user');
+  agregarMensaje('Isa está escribiendo...', 'isa');
+
+  try{
+    const resp = await fetch(GAS_URL, {
+      method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({ action:'chat_isa', system_prompt: SYSTEM_PROMPT, historial: historialChat })
+    });
+    const data = await resp.json();
+    document.getElementById('chat-area').lastChild.remove();
+    if (data.success && data.texto){
+      agregarMensaje(data.texto, 'isa');
+      historialChat.push({role:'model', parts:[{text: data.texto}]});
+    } else {
+      agregarMensaje('Isa todavía no está configurada del todo (falta la clave de Gemini en el servidor). Avisale al Dr. Muratori.', 'sistema');
+    }
+  }catch(e){
+    document.getElementById('chat-area').lastChild.remove();
+    agregarMensaje('No me pude conectar en este momento. Probá de nuevo en un ratito, o contactá directo al hospital.', 'sistema');
+  }
+}
+
+function enviarMensaje(){
+  const input = document.getElementById('input-usuario');
+  const texto = input.value.trim();
+  if (!texto) return;
+  input.value = '';
+  llamarIsa(texto);
+}
+function enviarSugerencia(texto){ llamarIsa(texto); }
+
+document.getElementById('input-usuario').addEventListener('keydown', function(e){
+  if (e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); enviarMensaje(); }
+});
+
+// ── Adjuntar y enviar documentación ──
+let archivosAdjuntos = [];
+document.getElementById('input-archivo').addEventListener('change', async function(){
+  for (const file of this.files){
+    const dataURL = await new Promise((res)=>{
+      const r = new FileReader();
+      r.onload = e => res(e.target.result);
+      r.readAsDataURL(file);
+    });
+    archivosAdjuntos.push({nombre: file.name, base64: dataURL});
+  }
+  renderAdjuntos();
+  this.value = '';
+});
+function renderAdjuntos(){
+  const cont = document.getElementById('lista-adjuntos');
+  cont.innerHTML = archivosAdjuntos.map((a,i) =>
+    `<div class="adjunto-item"><span>📄 ${a.nombre}</span><span style="cursor:pointer;color:#dc2626" onclick="quitarAdjunto(${i})">✕</span></div>`
+  ).join('');
+}
+function quitarAdjunto(i){ archivosAdjuntos.splice(i,1); renderAdjuntos(); }
+
+document.getElementById('btn-enviar-docs').addEventListener('click', async function(){
+  const nombre = document.getElementById('nombre-paciente').value.trim();
+  const dni = document.getElementById('dni-paciente').value.trim();
+  const msg = document.getElementById('msg-envio');
+  if (!nombre || !dni){ msg.className='msg-envio msg-error'; msg.textContent='⚠️ Completá tu nombre y DNI'; return; }
+  if (!archivosAdjuntos.length){ msg.className='msg-envio msg-error'; msg.textContent='⚠️ Adjuntá al menos un documento'; return; }
+  this.disabled = true; this.textContent = 'Enviando...';
+  msg.className=''; msg.textContent='';
+
+  const resumen = historialChat.filter(m=>m.role==='user').map(m=>'- '+m.parts[0].text).join('\n') || '(sin consulta previa a Isa)';
+
+  try{
+    const resp = await fetch(GAS_URL, {
+      method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({
+        action:'enviar_documentacion_discapacidad',
+        nombre_paciente: nombre, dni: dni,
+        resumen_conversacion: resumen,
+        archivos: archivosAdjuntos
+      })
+    });
+    const data = await resp.json();
+    if (data.success){
+      msg.className='msg-envio msg-ok';
+      msg.textContent='✅ Documentación enviada al hospital. Te van a contactar en breve.';
+      archivosAdjuntos = []; renderAdjuntos();
+      agregarMensaje('¡Listo! Ya mandé tu documentación al hospital. En breve te van a contactar. ¿Necesitás algo más?', 'isa');
+    } else {
+      msg.className='msg-envio msg-error'; msg.textContent='❌ Error al enviar: '+(data.error||'desconocido');
+    }
+  }catch(e){
+    msg.className='msg-envio msg-error'; msg.textContent='❌ No se pudo conectar con el servidor';
+  }
+  this.disabled=false; this.textContent='📧 Enviar documentación al hospital';
+});
+
+// Iniciar
+iniciarConversacion();
+</script>
+
+</body>
+</html>
