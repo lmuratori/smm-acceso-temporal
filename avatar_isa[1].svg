@@ -1,0 +1,37 @@
+<svg width="200" height="200" viewBox="0 0 680 680" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<radialGradient id="bgGlow" cx="50%" cy="45%" r="60%">
+<stop offset="0%" stop-color="#fdf2f8"/>
+<stop offset="100%" stop-color="#fce7f3"/>
+</radialGradient>
+<radialGradient id="faceGrad" cx="42%" cy="35%" r="72%">
+<stop offset="0%" stop-color="#ffe4c9"/>
+<stop offset="100%" stop-color="#f3c9a0"/>
+</radialGradient>
+<linearGradient id="hairGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+<stop offset="0%" stop-color="#f4d477"/>
+<stop offset="100%" stop-color="#e0b84f"/>
+</linearGradient>
+<radialGradient id="eyeGrad" cx="32%" cy="28%" r="75%">
+<stop offset="0%" stop-color="#a3e6ac"/>
+<stop offset="100%" stop-color="#2e7d3f"/>
+</radialGradient>
+</defs>
+<circle cx="340" cy="340" r="320" fill="url(#bgGlow)"/>
+<ellipse cx="340" cy="345" rx="130" ry="132" fill="url(#hairGrad)"/>
+<ellipse cx="340" cy="355" rx="108" ry="110" fill="url(#faceGrad)"/>
+<ellipse cx="300" cy="320" rx="26" ry="16" fill="#fff" opacity="0.3"/>
+<path d="M 262 328 Q 296 310 328 324" fill="none" stroke="#c99a3f" stroke-width="6" stroke-linecap="round"/>
+<path d="M 368 324 Q 400 310 434 328" fill="none" stroke="#c99a3f" stroke-width="6" stroke-linecap="round"/>
+<circle cx="288" cy="358" r="34" fill="#fff"/>
+<circle cx="404" cy="358" r="34" fill="#fff"/>
+<circle cx="290" cy="365" r="19" fill="url(#eyeGrad)"/>
+<circle cx="406" cy="365" r="19" fill="url(#eyeGrad)"/>
+<circle cx="290" cy="365" r="9" fill="#1a2e1e"/>
+<circle cx="406" cy="365" r="9" fill="#1a2e1e"/>
+<circle cx="297" cy="357" r="6" fill="#fff"/>
+<circle cx="413" cy="357" r="6" fill="#fff"/>
+<ellipse cx="268" cy="398" rx="20" ry="12" fill="#f4877a" opacity="0.5"/>
+<ellipse cx="428" cy="398" rx="20" ry="12" fill="#f4877a" opacity="0.5"/>
+<path d="M 312 406 Q 340 428 368 406" fill="none" stroke="#c9765a" stroke-width="6" stroke-linecap="round"/>
+</svg>

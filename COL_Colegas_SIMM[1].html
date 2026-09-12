@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>COL — Colegas S.I.M-M</title>
+<style>
+  :root{
+    --azul:#0369a1; --azul-osc:#0c4a6e; --verde:#16a34a; --ambar:#b45309;
+    --rojo:#dc2626; --muted:#64748b; --border:#e2e8f0; --bg:#f8fafc; --surface:#fff;
+  }
+  *{box-sizing:border-box}
+  body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--bg);margin:0;color:#0f172a;line-height:1.5}
+  .topbar{background:linear-gradient(135deg,var(--azul),var(--azul-osc));color:#fff;padding:22px 20px;text-align:center}
+  .topbar h1{font-size:20px;margin:0 0 4px;font-weight:800}
+  .topbar p{font-size:12.5px;margin:0;opacity:.9}
+  .wrap{max-width:820px;margin:0 auto;padding:18px}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:16px}
+  .card h2{font-size:15px;margin:0 0 12px;color:var(--azul-osc);display:flex;align-items:center;gap:8px}
+  label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin:10px 0 4px}
+  input[type=text],input[type=number],input[type=date],select,textarea{
+    width:100%;padding:9px 10px;border:1px solid var(--border);border-radius:7px;font-size:13.5px;font-family:inherit;background:#fff}
+  textarea{min-height:70px;resize:vertical}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  button{cursor:pointer;border:none;border-radius:7px;padding:10px 16px;font-size:13.5px;font-weight:700}
+  .btn-primary{background:var(--azul);color:#fff}
+  .btn-primary:hover{background:var(--azul-osc)}
+  .btn-secundario{background:#f1f5f9;color:#334155}
+  .resultado-item{padding:9px 10px;border:1px solid var(--border);border-radius:7px;margin-bottom:6px;cursor:pointer;font-size:13px}
+  .resultado-item:hover{background:#eff6ff;border-color:var(--azul)}
+  .paciente-activo{background:#eff6ff;border:2px solid var(--azul);border-radius:10px;padding:14px;margin-bottom:14px}
+  .paciente-activo b{color:var(--azul-osc)}
+  .evolucion-item{border:1px solid var(--border);border-radius:7px;padding:10px 12px;margin-bottom:8px;font-size:12.5px}
+  .evolucion-item .meta{color:var(--muted);font-size:11px;margin-bottom:4px}
+  .badge{display:inline-block;padding:2px 8px;border-radius:9px;font-size:10px;font-weight:700}
+  .badge-pend{background:#fef3c7;color:var(--ambar)}
+  .badge-ok{background:#eff6ff;color:var(--azul)}
+  .oculto{display:none}
+  .muted{color:var(--muted);font-size:12px}
+  .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#0f172a;color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:99}
+  .toast.show{opacity:1}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>🩺 COL — Programa de Colegas S.I.M-M</h1>
+  <p>Acceso a datos compartidos del consultorio del Dr. Luis Alberto Muratori — módulo por módulo, solo lo que el médico autoriza</p>
+  <p style="margin-top:6px"><a href="#" style="color:#fff;text-decoration:underline;font-size:12px" onclick="document.getElementById('cardConfig').classList.remove('oculto');document.getElementById('sheetsUrlInput').value=SHEETS_URL||'';document.getElementById('appTokenInput').value=APP_TOKEN||'';return false;">⚙️ Configuración / token de acceso</a></p>
+</div>
+
+<div class="wrap">
+
+  <!-- Identificación del colega (una sola vez por dispositivo) -->
+  <div class="card oculto" id="cardProfesional">
+    <h2>👤 Especialista a cargo</h2>
+    <div class="row">
+      <div><label>Nombre y apellido</label><input type="text" id="profNombre" placeholder="Ej: Dr. Juan Pérez"></div>
+      <div><label>Matrícula</label><input type="text" id="profMatricula" placeholder="Ej: M.P. 5678"></div>
+    </div>
+    <label>Especialidad</label>
+    <input type="text" id="profEspecialidad" placeholder="Ej: Traumatología, Nutrición, Fonoaudiología…">
+    <label>Mail (para identificarte y que el médico pueda responderte directo)</label>
+    <input type="text" id="profEmail" placeholder="tu-mail@ejemplo.com">
+    <div class="alerta" style="border-left:4px solid var(--ambar);background:#fffbeb;color:#78350f;padding:10px 14px;border-radius:0 6px 6px 0;font-size:12.5px;margin-top:12px" id="cajaConsentimiento">
+      <label style="display:flex;align-items:flex-start;gap:8px;font-weight:400;color:#78350f;margin:0">
+        <input type="checkbox" id="aceptaPeaje" style="width:auto;margin-top:3px">
+        <span>Acepto que <b id="peajePctTexto">5%</b> de lo que facture a través de una eventual integración futura con el sistema se destine al desarrollo continuo de SIM-M (mantenimiento, IA y demás costos operativos). Por ahora el sistema NO cobra ni gestiona tu facturación — esto solo deja la posibilidad abierta para una futura versión. El acceso a los módulos de datos compartidos es gratuito y no depende de que factures nada a través del sistema.</span>
+      </label>
+    </div>
+    <div style="margin-top:10px"><button class="btn-primary" onclick="guardarProfesional()">Guardar y continuar</button></div>
+    <p class="muted" id="profActualTexto" style="margin-top:8px"></p>
+  </div>
+
+  <!-- Configuración de conexión al backend (una sola vez) -->
+  <div class="card oculto" id="cardConfig">
+    <h2>⚙️ Conexión con el sistema</h2>
+    <p class="muted">Pegá acá la misma URL de implementación que usa OCM (Apps Script → Implementar → Web App).</p>
+    <input type="text" id="sheetsUrlInput" placeholder="https://script.google.com/macros/s/.../exec">
+    <div style="margin-top:8px"><button class="btn-primary" onclick="guardarSheetsUrl()">Guardar</button></div>
+    <p class="muted" style="margin-top:14px">Token de acceso (solo si el médico ya lo activó — te lo pasa él por mail o directamente).</p>
+    <input type="text" id="appTokenInput" placeholder="Token (dejar vacío si el médico no lo activó todavía)">
+    <div style="margin-top:8px"><button class="btn-secundario" onclick="guardarAppToken()">Guardar token</button></div>
+  </div>
+
+  <!-- Módulos habilitados por el médico. Podoscopía NUNCA aparece acá: es
+       de uso exclusivo del médico, no es un módulo compartible. -->
+  <div class="card oculto" id="cardEntorno">
+    <h2>🔐 Mis módulos habilitados</h2>
+    <p class="muted">Esto lo autoriza el médico desde su Panel de Especialistas, módulo por módulo. Si te falta alguno que necesitás, pedíselo directamente a él.</p>
+    <div id="listaModulosHabilitados" class="muted">Cargando...</div>
+  </div>
+
+  <!-- Búsqueda de paciente -->
+  <div class="card oculto" id="cardBusqueda">
+    <h2>🔍 Buscar paciente</h2>
+    <div class="row" style="grid-template-columns:1fr auto">
+      <input type="text" id="buscarInput" placeholder="Nombre, apellido o DNI" onkeydown="if(event.key==='Enter')buscarPaciente()">
+      <button class="btn-primary" onclick="buscarPaciente()">Buscar</button>
+    </div>
+    <div id="resultadosBusqueda" style="margin-top:10px"></div>
+  </div>
+
+  <!-- Paciente seleccionado -->
+  <div id="panelPaciente" class="oculto"></div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════════════════════════
+// Conexión con el backend de S.I.M-M (misma implementación que OCM/KSM).
+// Se guarda una sola vez en localStorage de este dispositivo.
+// ══════════════════════════════════════════════════════════════════
+let SHEETS_URL = localStorage.getItem('col_sheets_url') || 'https://script.google.com/macros/s/AKfycbwYdoFuU8mQL4YKqufSBQ9AD_yqWEEesLtGzYQjNw2JG1BZIQF7ug80mHB5sLMXhaUpvQ/exec';
+// Token compartido (opcional hasta que el médico corra configurarAppToken()
+// en el backend) — si el médico ya lo activó, hace falta pegarlo acá una
+// vez para que este programa pueda seguir leyendo datos protegidos.
+let APP_TOKEN = localStorage.getItem('col_app_token') || '';
+let pacienteActivo = null;
+let peajePctVigente = 5;
+// Lo que autorizó el médico para este mail, traído del backend.
+// { autorizado:false, modulos:[], registrado:false }
+let permisosVigentes = { autorizado:false, modulos:[], registrado:false };
+const ETIQUETAS_MODULOS_ = { cud:'Discapacidad / CUD', grafica:'Gráfica de evolución del dolor', investigacion:'Cruce con Investigación (OIT)', plantillas:'Seguimiento de Plantillas' };
+
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2600);
+}
+
+function guardarSheetsUrl(){
+  const v = document.getElementById('sheetsUrlInput').value.trim();
+  if(!v){ toast('Pegá la URL primero'); return; }
+  localStorage.setItem('col_sheets_url', v);
+  SHEETS_URL = v;
+  document.getElementById('cardConfig').classList.add('oculto');
+  toast('Conexión guardada');
+  mostrarCardProfesional();
+}
+
+// Trae el % de peaje vigente del sistema y recién ahí muestra la tarjeta
+// del profesional (necesita SHEETS_URL para poder consultarlo).
+function mostrarCardProfesional(){
+  apiGet({action:'get_peaje_sistema_pct'}).then(res=>{
+    peajePctVigente = (res && res.success) ? res.porcentaje : 5;
+    continuarMostrarProfesional();
+  }).catch(()=>{
+    peajePctVigente = 5;
+    continuarMostrarProfesional();
+  });
+}
+function continuarMostrarProfesional(){
+  document.getElementById('peajePctTexto').textContent = peajePctVigente + '%';
+  document.getElementById('cardProfesional').classList.remove('oculto');
+  mostrarProfesionalActual();
+  // Si ya había aceptado en este dispositivo, pasa directo a buscar pacientes.
+  if(localStorage.getItem('col_prof_nombre') && localStorage.getItem('col_prof_aceptado')==='1'){
+    document.getElementById('cardBusqueda').classList.remove('oculto');
+    document.getElementById('cardEntorno').classList.remove('oculto');
+    cargarPermisosBackend();
+  }
+}
+
+function guardarProfesional(){
+  const nombre = document.getElementById('profNombre').value.trim();
+  const matricula = document.getElementById('profMatricula').value.trim();
+  const especialidad = document.getElementById('profEspecialidad').value.trim();
+  const email = document.getElementById('profEmail').value.trim();
+  if(!nombre || !matricula || !especialidad || !email){ toast('Completá nombre, matrícula, especialidad y mail'); return; }
+  if(!/^\S+@\S+\.\S+$/.test(email)){ toast('El mail no parece válido'); return; }
+  if(!document.getElementById('aceptaPeaje').checked){
+    toast('Para usar este programa hace falta aceptar la condición del sistema'); return;
+  }
+  localStorage.setItem('col_prof_nombre', nombre);
+  localStorage.setItem('col_prof_matricula', matricula);
+  localStorage.setItem('col_prof_especialidad', especialidad);
+  localStorage.setItem('col_prof_email', email);
+  localStorage.setItem('col_prof_aceptado', '1');
+  mostrarProfesionalActual();
+  apiPost({action:'registrar_aceptacion_ksm', nombre, matricula, email, porcentaje:peajePctVigente, tipo:especialidad}).catch(()=>{});
+  document.getElementById('cardBusqueda').classList.remove('oculto');
+  document.getElementById('cardEntorno').classList.remove('oculto');
+  cargarPermisosBackend();
+  toast('¡Listo! Ya podés buscar pacientes');
+}
+
+// ── Módulos habilitados: se leen del backend (lo que el médico autorizó
+//    para este mail desde su Panel de Especialistas). Podoscopía nunca
+//    puede aparecer acá — el backend la filtra siempre.
+function cargarPermisosBackend(){
+  const email = localStorage.getItem('col_prof_email')||'';
+  if(!email) return;
+  apiGet({action:'get_permisos_especialista', email}).then(res=>{
+    if(!res || !res.success){ permisosVigentes = {autorizado:false, modulos:[], registrado:false}; renderListaModulosHabilitados_(); return; }
+    permisosVigentes = res;
+    renderListaModulosHabilitados_();
+    if(pacienteActivo) cargarPanelPaciente();
+  }).catch(()=>{
+    permisosVigentes = {autorizado:false, modulos:[], registrado:false};
+    renderListaModulosHabilitados_();
+  });
+}
+function renderListaModulosHabilitados_(){
+  const cont = document.getElementById('listaModulosHabilitados');
+  if(!cont) return;
+  if(!permisosVigentes.autorizado){
+    cont.innerHTML = '<span class="badge badge-pend">Pendiente</span> Todavía no tenés ningún módulo habilitado por el médico. La búsqueda de pacientes funciona igual — pero no vas a ver datos clínicos compartidos hasta que te autorice al menos un módulo.';
+    return;
+  }
+  const modulos = permisosVigentes.modulos||[];
+  if(!modulos.length){ cont.innerHTML = 'El médico te autorizó, pero todavía no te habilitó ningún módulo.'; return; }
+  cont.innerHTML = modulos.map(m=> '<span class="badge badge-ok" style="margin-right:6px;margin-bottom:4px;display:inline-block">' + (ETIQUETAS_MODULOS_[m]||m) + '</span>').join('');
+}
+function tieneModulo_(m){ return !!(permisosVigentes.autorizado && (permisosVigentes.modulos||[]).indexOf(m)>-1); }
+
+function mostrarProfesionalActual(){
+  const nombre = localStorage.getItem('col_prof_nombre');
+  const matricula = localStorage.getItem('col_prof_matricula');
+  const especialidad = localStorage.getItem('col_prof_especialidad');
+  const email = localStorage.getItem('col_prof_email');
+  if(nombre && matricula && email){
+    document.getElementById('profActualTexto').textContent = 'Sesión actual: ' + nombre + ' — ' + matricula + ' — ' + (especialidad||'') + ' — ' + email + ' (para cambiar, solo sobreescribí los campos y guardá de nuevo)';
+    document.getElementById('profNombre').value = nombre;
+    document.getElementById('profMatricula').value = matricula;
+    document.getElementById('profEspecialidad').value = especialidad||'';
+    document.getElementById('profEmail').value = email;
+  }
+}
+
+// ── Helpers de red: GET vía querystring, POST con text/plain (evita el
+//    preflight CORS que Apps Script Web Apps no siempre maneja bien) ──
+function apiGet(params){
+  const qs = new URLSearchParams(Object.assign({}, params, APP_TOKEN?{token:APP_TOKEN}:{})).toString();
+  return fetch(SHEETS_URL + '?' + qs).then(r=>r.json());
+}
+function guardarAppToken(){
+  const v = document.getElementById('appTokenInput').value.trim();
+  localStorage.setItem('col_app_token', v);
+  APP_TOKEN = v;
+  toast(v ? 'Token guardado' : 'Token borrado');
+}
+function apiPost(payload){
+  return fetch(SHEETS_URL, {
+    method:'POST',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify(Object.assign({}, payload, APP_TOKEN?{token:APP_TOKEN}:{}))
+  }).then(r=>r.json());
+}
+
+function buscarPaciente(){
+  const q = document.getElementById('buscarInput').value.trim();
+  if(!q){ return; }
+  apiGet({action:'search', query:q}).then(res=>{
+    const cont = document.getElementById('resultadosBusqueda');
+    cont.innerHTML = '';
+    if(!res.success || !res.data.length){ cont.innerHTML = '<p class="muted">Sin resultados.</p>'; return; }
+    res.data.forEach(p=>{
+      const div = document.createElement('div');
+      div.className = 'resultado-item';
+      div.textContent = (p.Apellido||'') + ', ' + (p.Nombre||'') + ' — DNI ' + (p.DNI||'');
+      div.onclick = ()=> seleccionarPaciente(p);
+      cont.appendChild(div);
+    });
+  }).catch(()=> toast('Error de conexión — revisá la URL configurada'));
+}
+
+function seleccionarPaciente(p){
+  pacienteActivo = p;
+  document.getElementById('resultadosBusqueda').innerHTML = '';
+  document.getElementById('buscarInput').value = '';
+  cargarPanelPaciente();
+}
+
+function cargarPanelPaciente(){
+  const panel = document.getElementById('panelPaciente');
+  panel.classList.remove('oculto');
+  panel.innerHTML = '<div class="paciente-activo"><b>' + (pacienteActivo.Apellido||'') + ', ' + (pacienteActivo.Nombre||'') +
+    '</b> — DNI ' + (pacienteActivo.DNI||'') + '<br><span class="muted">' + (pacienteActivo.Diagnostico_Principal||'Sin diagnóstico cargado') + '</span></div>' +
+    renderModulosOpcionales_();
+
+  if(!permisosVigentes.autorizado){
+    if(!document.getElementById('cardDiscapacidadPac') && !document.getElementById('cardInvestigacionPac') && !document.getElementById('cardPlantillasPac')){
+      panel.innerHTML += '<p class="muted">Todavía no tenés ningún módulo de datos compartidos habilitado por el médico para este paciente.</p>';
+    }
+    return;
+  }
+  const emailProfActual = localStorage.getItem('col_prof_email')||'';
+  if(tieneModulo_('cud')){
+    apiGet({action:'get_discapacidad_paciente', dni: pacienteActivo.DNI, profesionalEmail: emailProfActual}).then(res=>{
+      renderDiscapacidad_(res);
+    }).catch(()=>{});
+  }
+  if(tieneModulo_('investigacion')){
+    apiGet({action:'get_investigacion_paciente', dni: pacienteActivo.DNI, profesionalEmail: emailProfActual}).then(res=>{
+      renderInvestigacion_(res);
+    }).catch(()=>{});
+  }
+  if(tieneModulo_('plantillas')){
+    apiGet({action:'get_plantillas_paciente', dni: pacienteActivo.DNI, profesionalEmail: emailProfActual}).then(res=>{
+      renderPlantillas_(res);
+    }).catch(()=>{});
+  }
+  if(tieneModulo_('grafica')){
+    apiGet({action:'get_historial', dni: pacienteActivo.DNI}).then(res=>{
+      if(res && res.success) dibujarGraficaDolor_(res.kinesiologia||[]);
+    }).catch(()=>{});
+  }
+}
+
+// ── Módulos habilitados por el médico — construye las tarjetas según lo
+//    que devolvió el backend (permisosVigentes.modulos), no una elección
+//    local. Podoscopía nunca tiene tarjeta acá: no es un módulo compartible.
+function renderModulosOpcionales_(){
+  let html = '';
+  if(tieneModulo_('cud')) html += '<div class="card" id="cardDiscapacidadPac"><h2>🦽 Discapacidad / CUD</h2><div class="muted">Cargando...</div></div>';
+  if(tieneModulo_('grafica')) html += '<div class="card"><h2>📊 Evolución del dolor (kinesiología)</h2><canvas id="graficaDolor" height="140"></canvas></div>';
+  if(tieneModulo_('investigacion')) html += '<div class="card" id="cardInvestigacionPac"><h2>🔬 Investigación (cruce OIT)</h2><div class="muted">Cargando...</div></div>';
+  if(tieneModulo_('plantillas')) html += '<div class="card" id="cardPlantillasPac"><h2>👟 Plantillas</h2><div class="muted">Cargando...</div></div>';
+  return html;
+}
+function renderDiscapacidad_(res){
+  const cont = document.getElementById('cardDiscapacidadPac');
+  if(!cont) return;
+  if(!res || !res.success){ cont.querySelector('div').innerHTML = 'No autorizado o sin datos todavía.'; return; }
+  const discapacidad = res.discapacidad||[];
+  if(!discapacidad.length){
+    cont.querySelector('div').innerHTML = 'Sin registros de discapacidad/CUD sincronizados todavía para este paciente.';
+    return;
+  }
+  cont.querySelector('div').innerHTML = discapacidad.map(d=>
+    '<div class="evolucion-item">' + (d.tipo||'') + (d.subtipo?(' — '+d.subtipo):'') + '<br>' +
+    '<span class="muted">' + (d.diagnostico||'') + (d.codigos_cif?(' — CIF: '+d.codigos_cif):'') + '</span></div>'
+  ).join('');
+}
+function renderInvestigacion_(res){
+  const cont = document.getElementById('cardInvestigacionPac');
+  if(!cont) return;
+  if(!res || !res.success){ cont.querySelector('div').innerHTML = 'No autorizado o sin datos todavía.'; return; }
+  if(res.mensaje){ cont.querySelector('div').innerHTML = '<span class="muted">' + res.mensaje + '</span>'; return; }
+  const hallazgos = res.hallazgos||[];
+  const hidricos = res.hallazgos_hidricos||[];
+  if(!hallazgos.length && !hidricos.length){
+    cont.querySelector('div').innerHTML = '<span class="muted">Sin coincidencias por localidad ni por afluente/canal de riego para este paciente.</span>';
+    return;
+  }
+  let html = '<p class="muted" style="margin-bottom:8px">Cruce por reglas — alerta para revisar, no confirma relación causal.</p>';
+  html += hallazgos.map(h=>
+    '<div class="evolucion-item"><b>' + h.categoria + '</b> — ' + h.diagnostico + '<br>' +
+    '<span class="muted">Empresa: ' + h.empresa + ' · Agentes: ' + h.agentes.join(', ') + '</span></div>'
+  ).join('');
+  if(hidricos.length){
+    html += '<div class="meta" style="margin-top:8px">💧 Vía hídrica/riego (afluente: ' + (res.afluente||'') + ')</div>';
+    html += hidricos.map(h=>
+      '<div class="evolucion-item"><b>' + h.categoria + '</b><br>' +
+      '<span class="muted">Empresa: ' + h.empresa + ' · Canal: ' + h.afluente + '</span></div>'
+    ).join('');
+  }
+  cont.querySelector('div').innerHTML = html;
+}
+function renderPlantillas_(res){
+  const cont = document.getElementById('cardPlantillasPac');
+  if(!cont) return;
+  if(!res || !res.success){ cont.querySelector('div').innerHTML = 'No autorizado o sin datos todavía.'; return; }
+  const plantillas = res.plantillas||[];
+  if(!plantillas.length){ cont.querySelector('div').innerHTML = '<span class="muted">Sin pedidos de plantillas para este paciente.</span>'; return; }
+  cont.querySelector('div').innerHTML = plantillas.map(p=>
+    '<div class="evolucion-item">N° ' + (p.nSerie||'') + ' — <b>' + (p.estado||'') + '</b><br>' +
+    '<span class="muted">' + (p.detalle||'') + '</span></div>'
+  ).join('');
+}
+function dibujarGraficaDolor_(evoluciones){
+  const canvas = document.getElementById('graficaDolor');
+  if(!canvas || typeof Chart==='undefined') return;
+  const ordenadas = evoluciones.map(e=>{
+    let v={}; try{ v = JSON.parse(e.Valores_JSON||e.Vals_JSON||'{}'); }catch(_){}
+    return {fecha: e.Timestamp, pre: v.dolorPre, post: v.dolorPost};
+  }).filter(e=> e.pre!==undefined).sort((a,b)=> new Date(a.fecha)-new Date(b.fecha));
+  if(!ordenadas.length) return;
+  new Chart(canvas, {
+    type:'line',
+    data:{
+      labels: ordenadas.map(e=> new Date(e.fecha).toLocaleDateString('es-AR')),
+      datasets:[
+        {label:'Dolor antes de la sesión', data: ordenadas.map(e=>e.pre), borderColor:'#dc2626', tension:.3},
+        {label:'Dolor después de la sesión', data: ordenadas.map(e=>e.post), borderColor:'#16a34a', tension:.3}
+      ]
+    },
+    options:{scales:{y:{min:0,max:10}}, plugins:{legend:{position:'bottom'}}}
+  });
+}
+
+// Inicio
+if(!SHEETS_URL){
+  document.getElementById('cardConfig').classList.remove('oculto');
+} else {
+  mostrarCardProfesional();
+}
+</script>
+
+<!-- ══ TRIAL: bloqueo si venció el período de prueba (ver configurarTrial() en Codigo.gs) ══ -->
+<div id="trial-lock-overlay" style="display:none;position:fixed;inset:0;background:#0b1f3a;color:#fff;z-index:999999;align-items:center;justify-content:center;text-align:center;padding:24px;font-family:system-ui,-apple-system,sans-serif">
+  <div style="max-width:420px">
+    <div style="font-size:40px;margin-bottom:12px">🔒</div>
+    <div style="font-size:18px;font-weight:700;margin-bottom:8px">Período de prueba finalizado</div>
+    <div style="font-size:13px;opacity:.85">Para seguir usando el sistema, contactá al Dr. Luis Alberto Muratori.</div>
+  </div>
+</div>
+<style>body.trial-vencido>*:not(#trial-lock-overlay){display:none!important} body.trial-vencido{overflow:hidden!important}</style>
+<script>
+(function(){
+  try{
+    fetch(SHEETS_URL+'?action=check_trial',{signal:AbortSignal.timeout(6000)})
+      .then(function(r){return r.json();}).then(function(d){
+        if(d && d.vencido){
+          document.body.classList.add('trial-vencido');
+          var ov=document.getElementById('trial-lock-overlay'); if(ov) ov.style.display='flex';
+        }
+      }).catch(function(){});
+  }catch(e){}
+})();
+</script>
+</body>
+</html>

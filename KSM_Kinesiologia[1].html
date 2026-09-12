@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KSM — Kinesiología Sistema Muratori</title>
+<style>
+  :root{
+    --verde:#16a34a; --verde-osc:#166534; --azul:#0369a1; --ambar:#b45309;
+    --rojo:#dc2626; --muted:#64748b; --border:#e2e8f0; --bg:#f8fafc; --surface:#fff;
+  }
+  *{box-sizing:border-box}
+  body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--bg);margin:0;color:#0f172a;line-height:1.5}
+  .topbar{background:linear-gradient(135deg,var(--verde),var(--verde-osc));color:#fff;padding:22px 20px;text-align:center}
+  .topbar h1{font-size:20px;margin:0 0 4px;font-weight:800}
+  .topbar p{font-size:12.5px;margin:0;opacity:.9}
+  .wrap{max-width:820px;margin:0 auto;padding:18px}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:16px}
+  .card h2{font-size:15px;margin:0 0 12px;color:var(--verde-osc);display:flex;align-items:center;gap:8px}
+  label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin:10px 0 4px}
+  input[type=text],input[type=number],input[type=date],select,textarea{
+    width:100%;padding:9px 10px;border:1px solid var(--border);border-radius:7px;font-size:13.5px;font-family:inherit;background:#fff}
+  textarea{min-height:70px;resize:vertical}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  button{cursor:pointer;border:none;border-radius:7px;padding:10px 16px;font-size:13.5px;font-weight:700}
+  .btn-primary{background:var(--verde);color:#fff}
+  .btn-primary:hover{background:var(--verde-osc)}
+  .btn-secundario{background:#f1f5f9;color:#334155}
+  .resultado-item{padding:9px 10px;border:1px solid var(--border);border-radius:7px;margin-bottom:6px;cursor:pointer;font-size:13px}
+  .resultado-item:hover{background:#f0fdf4;border-color:var(--verde)}
+  .paciente-activo{background:#f0fdf4;border:2px solid var(--verde);border-radius:10px;padding:14px;margin-bottom:14px}
+  .paciente-activo b{color:var(--verde-osc)}
+  .alerta{background:#fef2f2;border-left:4px solid var(--rojo);padding:10px 14px;border-radius:0 6px 6px 0;font-size:12.5px;margin-bottom:10px;color:#7f1d1d}
+  .evolucion-item{border:1px solid var(--border);border-radius:7px;padding:10px 12px;margin-bottom:8px;font-size:12.5px}
+  .evolucion-item .meta{color:var(--muted);font-size:11px;margin-bottom:4px}
+  .pregunta-item{border:1px solid var(--ambar);background:#fffbeb;border-radius:7px;padding:10px 12px;margin-bottom:8px;font-size:12.5px}
+  .badge{display:inline-block;padding:2px 8px;border-radius:9px;font-size:10px;font-weight:700}
+  .badge-pend{background:#fef3c7;color:var(--ambar)}
+  .badge-ok{background:#f0fdf4;color:var(--verde)}
+  .oculto{display:none}
+  .muted{color:var(--muted);font-size:12px}
+  .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#0f172a;color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:99}
+  .toast.show{opacity:1}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>🦵 KSM — Kinesiología Sistema Muratori</h1>
+  <p>Seguimiento kinésico conectado con el consultorio del Dr. Luis Alberto Muratori</p>
+  <p style="margin-top:6px"><a href="#" style="color:#fff;text-decoration:underline;font-size:12px" onclick="document.getElementById('cardConfig').classList.remove('oculto');document.getElementById('sheetsUrlInput').value=SHEETS_URL||'';document.getElementById('appTokenInput').value=APP_TOKEN||'';return false;">⚙️ Configuración / token de acceso</a></p>
+</div>
+
+<div class="wrap">
+
+  <!-- Identificación del kinesiólogo (una sola vez por dispositivo) -->
+  <div class="card oculto" id="cardProfesional">
+    <h2>👤 Kinesiólogo/a a cargo</h2>
+    <div class="row">
+      <div><label>Nombre y apellido</label><input type="text" id="profNombre" placeholder="Ej: Lic. Ana Gómez"></div>
+      <div><label>Matrícula</label><input type="text" id="profMatricula" placeholder="Ej: M.P. 1234"></div>
+    </div>
+    <label>Mail (para identificarte en las evoluciones y que el médico pueda responderte directo)</label>
+    <input type="text" id="profEmail" placeholder="tu-mail@ejemplo.com" value="lmuratori@gmail.com">
+    <p class="muted">Este mail viene precargado con el tuyo (Dr. Muratori) solo para las pruebas de hoy. Cuando un kinesiólogo real instale/abra KSM en su propia computadora, va a borrar esto y poner el suyo — a partir de ahí, ese dispositivo va a usar SIEMPRE su propio mail (queda guardado localmente en ese equipo, no se comparte entre dispositivos).</p>
+    <div class="alerta" style="border-left-color:var(--ambar);background:#fffbeb;color:#78350f" id="cajaConsentimiento">
+      <label style="display:flex;align-items:flex-start;gap:8px;font-weight:400;color:#78350f;margin:0">
+        <input type="checkbox" id="aceptaPeaje" style="width:auto;margin-top:3px">
+        <span>Acepto que <b id="peajePctTexto">5%</b> de lo que facture por sesiones cobradas a través del sistema se destina al desarrollo continuo de SIM-M (mantenimiento, IA y demás costos operativos). Si no acepto, no puedo usar KSM.</span>
+      </label>
+    </div>
+    <div style="margin-top:10px"><button class="btn-primary" onclick="guardarProfesional()">Guardar y continuar</button></div>
+    <p class="muted" id="profActualTexto" style="margin-top:8px"></p>
+  </div>
+
+  <!-- Configuración de conexión al backend (una sola vez) -->
+  <div class="card oculto" id="cardConfig">
+    <h2>⚙️ Conexión con el sistema</h2>
+    <p class="muted">Pegá acá la misma URL de implementación que usa OCM (Apps Script → Implementar → Web App).</p>
+    <input type="text" id="sheetsUrlInput" placeholder="https://script.google.com/macros/s/.../exec">
+    <div style="margin-top:8px"><button class="btn-primary" onclick="guardarSheetsUrl()">Guardar</button></div>
+    <p class="muted" style="margin-top:14px">Token de acceso (solo si el médico ya lo activó — te lo pasa él por mail o directamente).</p>
+    <input type="text" id="appTokenInput" placeholder="Token (dejar vacío si el médico no lo activó todavía)">
+    <div style="margin-top:8px"><button class="btn-secundario" onclick="guardarAppToken()">Guardar token</button></div>
+  </div>
+
+  <!-- Módulos habilitados por el médico. Antes esto lo elegía cada
+       kinesiólogo/a solo, en su propio dispositivo (localStorage) — ahora
+       lo autoriza el médico desde su Panel de Especialistas, módulo por
+       módulo, y esta tarjeta es de solo lectura. Podoscopía NUNCA aparece
+       acá: es de uso exclusivo del médico, no es un módulo compartible. -->
+  <div class="card oculto" id="cardEntorno">
+    <h2>🔐 Mis módulos habilitados</h2>
+    <p class="muted">Esto ya no lo elegís vos desde acá: lo autoriza el médico desde su Panel de Especialistas, módulo por módulo. Si te falta alguno que necesitás, pedíselo directamente a él.</p>
+    <div id="listaModulosHabilitados" class="muted">Cargando...</div>
+  </div>
+
+  <!-- Facturación del mes (peaje del sistema) -->
+  <div class="card oculto" id="cardFacturacion">
+    <h2>💰 Mi facturación del mes</h2>
+    <div id="resumenFacturacion" class="muted">Cargando...</div>
+    <div style="margin-top:8px"><button class="btn-secundario" onclick="enviarResumenFacturacion()">Enviar resumen al consultorio</button></div>
+  </div>
+
+  <!-- Búsqueda de paciente -->
+  <div class="card oculto" id="cardBusqueda">
+    <h2>🔍 Buscar paciente</h2>
+    <div class="row" style="grid-template-columns:1fr auto">
+      <input type="text" id="buscarInput" placeholder="Nombre, apellido o DNI" onkeydown="if(event.key==='Enter')buscarPaciente()">
+      <button class="btn-primary" onclick="buscarPaciente()">Buscar</button>
+    </div>
+    <div id="resultadosBusqueda" style="margin-top:10px"></div>
+  </div>
+
+  <!-- Paciente seleccionado -->
+  <div id="panelPaciente" class="oculto"></div>
+
+  <!-- Nueva evolución -->
+  <div class="card oculto" id="cardEvolucion">
+    <h2>📝 Nueva evolución de sesión</h2>
+    <label>Región tratada</label>
+    <select id="evoRegion">
+      <option>Cervical</option><option>Hombro</option><option>Codo</option>
+      <option>Muñeca / Mano</option><option>Columna dorsal</option>
+      <option>Columna lumbar</option><option>Cadera</option>
+      <option>Rodilla</option><option>Tobillo / Pie</option><option>Otra</option>
+    </select>
+    <label>Técnica aplicada</label>
+    <input type="text" id="evoTecnica" placeholder="Ej: Movilización + ejercicios de fuerza">
+    <div class="row">
+      <div><label>EVA dolor — antes de la sesión (0-10)</label><input type="number" id="evoDolorPre" min="0" max="10"></div>
+      <div><label>EVA dolor — después de la sesión (0-10)</label><input type="number" id="evoDolorPost" min="0" max="10"></div>
+    </div>
+    <div class="row">
+      <div><label>Rango de movimiento</label>
+        <select id="evoRom"><option>Mejoró</option><option>Igual</option><option>Empeoró</option></select>
+      </div>
+      <div><label>Tolerancia al ejercicio</label>
+        <select id="evoTolerancia"><option>Buena</option><option>Regular</option><option>Baja / no toleró</option></select>
+      </div>
+    </div>
+    <label>Observaciones</label>
+    <textarea id="evoObservaciones" placeholder="Notas de la sesión..."></textarea>
+    <label>Próxima sesión sugerida</label>
+    <input type="date" id="evoProxima">
+    <label style="display:flex;align-items:center;gap:8px;margin-top:14px">
+      <input type="checkbox" id="evoEsPaga" style="width:auto" onchange="document.getElementById('evoMontoWrap').style.display=this.checked?'block':'none'">
+      ¿Esta sesión fue paga?
+    </label>
+    <div id="evoMontoWrap" style="display:none">
+      <label>Monto cobrado ($)</label>
+      <input type="number" id="evoMonto" min="0" step="100">
+      <p class="muted" id="evoComisionPreview"></p>
+    </div>
+    <div style="margin-top:12px"><button class="btn-primary" onclick="guardarEvolucion()">Guardar evolución</button></div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════════════════════════
+// Conexión con el backend de S.M.I-M (misma implementación que OCM).
+// Se guarda una sola vez en localStorage de este dispositivo.
+// ══════════════════════════════════════════════════════════════════
+let SHEETS_URL = localStorage.getItem('ksm_sheets_url') || 'https://script.google.com/macros/s/AKfycbwYdoFuU8mQL4YKqufSBQ9AD_yqWEEesLtGzYQjNw2JG1BZIQF7ug80mHB5sLMXhaUpvQ/exec';
+// Token compartido (opcional hasta que el médico corra configurarAppToken()
+// en el backend) — si el médico ya lo activó, hace falta pegarlo acá una
+// vez para que KSM pueda seguir leyendo datos protegidos.
+let APP_TOKEN = localStorage.getItem('ksm_app_token') || '';
+let pacienteActivo = null;
+let ultimoHistorial = null;
+let ultimaVista = null;
+let peajePctVigente = 5;
+// Lo que autorizó el médico para este mail, traído del backend — ya no se
+// arma en este dispositivo. { autorizado:false, modulos:[], registrado:false }
+let permisosVigentes = { autorizado:false, modulos:[], registrado:false };
+const ETIQUETAS_MODULOS_ = { cud:'Discapacidad / CUD', grafica:'Gráfica de evolución del dolor', investigacion:'Cruce con Investigación (OIT)', plantillas:'Seguimiento de Plantillas' };
+
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2600);
+}
+
+function guardarSheetsUrl(){
+  const v = document.getElementById('sheetsUrlInput').value.trim();
+  if(!v){ toast('Pegá la URL primero'); return; }
+  localStorage.setItem('ksm_sheets_url', v);
+  SHEETS_URL = v;
+  document.getElementById('cardConfig').classList.add('oculto');
+  toast('Conexión guardada');
+  mostrarCardProfesional();
+}
+
+// Trae el % de peaje vigente del sistema y recién ahí muestra la tarjeta
+// del profesional (necesita SHEETS_URL para poder consultarlo).
+function mostrarCardProfesional(){
+  apiGet({action:'get_peaje_sistema_pct'}).then(res=>{
+    peajePctVigente = (res && res.success) ? res.porcentaje : 5;
+    continuarMostrarProfesional();
+  }).catch(()=>{
+    peajePctVigente = 5;
+    continuarMostrarProfesional();
+  });
+}
+function continuarMostrarProfesional(){
+  document.getElementById('peajePctTexto').textContent = peajePctVigente + '%';
+  document.getElementById('cardProfesional').classList.remove('oculto');
+  mostrarProfesionalActual();
+  // Si ya había aceptado exactamente este % en este dispositivo, no lo
+  // hacemos tildar de nuevo — pasa directo a buscar pacientes.
+  const pctAceptado = localStorage.getItem('ksm_prof_pct_aceptado');
+  if(localStorage.getItem('ksm_prof_nombre') && Number(pctAceptado)===Number(peajePctVigente)){
+    document.getElementById('cardBusqueda').classList.remove('oculto');
+    document.getElementById('cardFacturacion').classList.remove('oculto');
+    document.getElementById('cardEntorno').classList.remove('oculto');
+    cargarPermisosBackend();
+    cargarResumenFacturacion();
+  }
+}
+
+function guardarProfesional(){
+  const nombre = document.getElementById('profNombre').value.trim();
+  const matricula = document.getElementById('profMatricula').value.trim();
+  const email = document.getElementById('profEmail').value.trim();
+  if(!nombre || !matricula || !email){ toast('Completá nombre, matrícula y mail'); return; }
+  if(!/^\S+@\S+\.\S+$/.test(email)){ toast('El mail no parece válido'); return; }
+  if(!document.getElementById('aceptaPeaje').checked){
+    toast('Para usar KSM hace falta aceptar el % del sistema'); return;
+  }
+  localStorage.setItem('ksm_prof_nombre', nombre);
+  localStorage.setItem('ksm_prof_matricula', matricula);
+  localStorage.setItem('ksm_prof_email', email);
+  localStorage.setItem('ksm_prof_pct_aceptado', peajePctVigente);
+  mostrarProfesionalActual();
+  apiPost({action:'registrar_aceptacion_ksm', nombre, matricula, email, porcentaje:peajePctVigente, tipo:'kinesiologia'}).catch(()=>{});
+  document.getElementById('cardBusqueda').classList.remove('oculto');
+  document.getElementById('cardFacturacion').classList.remove('oculto');
+  document.getElementById('cardEntorno').classList.remove('oculto');
+  cargarPermisosBackend();
+  cargarResumenFacturacion();
+  toast('¡Listo! Ya podés buscar pacientes');
+}
+
+// ── Módulos habilitados: ya NO se eligen en este dispositivo. Se leen del
+//    backend (lo que el médico autorizó para este mail desde su Panel de
+//    Especialistas). Podoscopía nunca puede aparecer acá — el backend la
+//    filtra siempre, aunque alguien la mande a mano.
+function cargarPermisosBackend(){
+  const email = localStorage.getItem('ksm_prof_email')||'';
+  if(!email) return;
+  apiGet({action:'get_permisos_especialista', email}).then(res=>{
+    if(!res || !res.success){ permisosVigentes = {autorizado:false, modulos:[], registrado:false}; renderListaModulosHabilitados_(); return; }
+    permisosVigentes = res;
+    renderListaModulosHabilitados_();
+    if(pacienteActivo) cargarPanelPaciente();
+  }).catch(()=>{
+    permisosVigentes = {autorizado:false, modulos:[], registrado:false};
+    renderListaModulosHabilitados_();
+  });
+}
+function renderListaModulosHabilitados_(){
+  const cont = document.getElementById('listaModulosHabilitados');
+  if(!cont) return;
+  if(!permisosVigentes.autorizado){
+    cont.innerHTML = '<span class="badge badge-pend">Pendiente</span> Todavía no tenés ningún módulo extra habilitado por el médico (esto no afecta la búsqueda de pacientes, evoluciones ni preguntas, que siempre funcionan).';
+    return;
+  }
+  const modulos = permisosVigentes.modulos||[];
+  if(!modulos.length){ cont.innerHTML = 'El médico te autorizó, pero todavía no te habilitó ningún módulo extra.'; return; }
+  cont.innerHTML = modulos.map(m=> '<span class="badge badge-ok" style="margin-right:6px;margin-bottom:4px;display:inline-block">' + (ETIQUETAS_MODULOS_[m]||m) + '</span>').join('');
+}
+function modulosActivos_(){
+  const modulos = (permisosVigentes.modulos||[]).map(m=>ETIQUETAS_MODULOS_[m]||m);
+  return modulos.length ? modulos.join(', ') : 'ninguno';
+}
+function tieneModulo_(m){ return !!(permisosVigentes.autorizado && (permisosVigentes.modulos||[]).indexOf(m)>-1); }
+
+function mostrarProfesionalActual(){
+  const nombre = localStorage.getItem('ksm_prof_nombre');
+  const matricula = localStorage.getItem('ksm_prof_matricula');
+  const email = localStorage.getItem('ksm_prof_email');
+  if(nombre && matricula && email){
+    document.getElementById('profActualTexto').textContent = 'Sesión actual: ' + nombre + ' — ' + matricula + ' — ' + email + ' (para cambiar, solo sobreescribí los campos y guardá de nuevo)';
+    document.getElementById('profNombre').value = nombre;
+    document.getElementById('profMatricula').value = matricula;
+    document.getElementById('profEmail').value = email;
+  }
+}
+
+// ── Helpers de red: GET vía querystring, POST con text/plain (evita el
+//    preflight CORS que Apps Script Web Apps no siempre maneja bien) ──
+function apiGet(params){
+  const qs = new URLSearchParams(Object.assign({}, params, APP_TOKEN?{token:APP_TOKEN}:{})).toString();
+  return fetch(SHEETS_URL + '?' + qs).then(r=>r.json());
+}
+function guardarAppToken(){
+  const v = document.getElementById('appTokenInput').value.trim();
+  localStorage.setItem('ksm_app_token', v);
+  APP_TOKEN = v;
+  toast(v ? 'Token guardado' : 'Token borrado');
+}
+function apiPost(payload){
+  return fetch(SHEETS_URL, {
+    method:'POST',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify(Object.assign({}, payload, APP_TOKEN?{token:APP_TOKEN}:{}))
+  }).then(r=>r.json());
+}
+
+function buscarPaciente(){
+  const q = document.getElementById('buscarInput').value.trim();
+  if(!q){ return; }
+  apiGet({action:'search', query:q}).then(res=>{
+    const cont = document.getElementById('resultadosBusqueda');
+    cont.innerHTML = '';
+    if(!res.success || !res.data.length){ cont.innerHTML = '<p class="muted">Sin resultados.</p>'; return; }
+    res.data.forEach(p=>{
+      const div = document.createElement('div');
+      div.className = 'resultado-item';
+      div.textContent = (p.Apellido||'') + ', ' + (p.Nombre||'') + ' — DNI ' + (p.DNI||'');
+      div.onclick = ()=> seleccionarPaciente(p);
+      cont.appendChild(div);
+    });
+  }).catch(()=> toast('Error de conexión — revisá la URL configurada'));
+}
+
+function seleccionarPaciente(p){
+  pacienteActivo = p;
+  document.getElementById('resultadosBusqueda').innerHTML = '';
+  document.getElementById('buscarInput').value = '';
+  document.getElementById('cardEvolucion').classList.remove('oculto');
+  cargarPanelPaciente();
+}
+
+function cargarPanelPaciente(){
+  const panel = document.getElementById('panelPaciente');
+  panel.classList.remove('oculto');
+  panel.innerHTML = '<div class="paciente-activo"><b>' + (pacienteActivo.Apellido||'') + ', ' + (pacienteActivo.Nombre||'') +
+    '</b> — DNI ' + (pacienteActivo.DNI||'') + '<br><span class="muted">' + (pacienteActivo.Diagnostico_Principal||'Sin diagnóstico cargado') + '</span></div>' +
+    '<div id="alertasKine"></div>' +
+    '<div class="card"><h2>📈 Evoluciones previas</h2><div id="listaEvoluciones" class="muted">Cargando...</div></div>' +
+    '<div class="card"><h2>💬 Preguntas del paciente</h2><div id="listaPreguntas" class="muted">Cargando...</div></div>' +
+    '<div class="card"><h2>🎥 Videollamada de seguimiento</h2>' +
+    '<div class="row"><div><label>Fecha y hora</label><input type="text" id="meetFechaHora" placeholder="AAAA-MM-DDTHH:MM" value="' + proximaMediaHora_() + '"></div>' +
+    '<div><label>Duración (min)</label><input type="number" id="meetDuracion" value="15" min="5" max="60"></div></div>' +
+    '<label>Mail del paciente para la invitación (opcional)</label>' +
+    '<input type="text" id="meetMailPaciente" value="' + (pacienteActivo.Email||'') + '">' +
+    '<div style="margin-top:10px"><button class="btn-primary" onclick="generarVideollamada()">Generar videollamada</button></div>' +
+    '<div id="meetResultado" class="muted" style="margin-top:8px"></div></div>' +
+    '<div class="card"><h2>📤 Informe de adherencia y progreso — para el médico</h2>' +
+    '<p class="muted">Junta las evoluciones y las autoevaluaciones del paciente en un resumen y lo manda por mail al Dr. Muratori, con tu mail como respuesta directa.</p>' +
+    '<div id="previewInforme" class="muted" style="margin:10px 0"></div>' +
+    '<button class="btn-secundario" onclick="previsualizarInforme()">Generar resumen</button> ' +
+    '<button class="btn-primary" onclick="enviarInforme()">Enviar informe al médico</button></div>' +
+    renderModulosOpcionales_();
+
+  apiGet({action:'get_historial', dni: pacienteActivo.DNI}).then(res=>{
+    if(!res.success) return;
+    ultimoHistorial = res;
+    renderEvoluciones(res.kinesiologia||[]);
+    renderAlerta(res.evaluaciones||[]);
+    if(tieneModulo_('grafica')) dibujarGraficaDolor_(res.kinesiologia||[]);
+  });
+  apiGet({action:'get_preguntas_kine', dni: pacienteActivo.DNI}).then(res=>{
+    renderPreguntas(res.preguntas||[]);
+  }).catch(()=>{
+    document.getElementById('listaPreguntas').innerHTML = '<p class="muted">Todavía no se aplicó el patch del canal de preguntas en el backend.</p>';
+  });
+  const emailProfActual = localStorage.getItem('ksm_prof_email')||'';
+  if(tieneModulo_('cud')){
+    apiGet({action:'get_discapacidad_paciente', dni: pacienteActivo.DNI, profesionalEmail: emailProfActual}).then(res=>{
+      renderDiscapacidad_(res);
+    }).catch(()=>{});
+  }
+  if(tieneModulo_('investigacion')){
+    apiGet({action:'get_investigacion_paciente', dni: pacienteActivo.DNI, profesionalEmail: emailProfActual}).then(res=>{
+      renderInvestigacion_(res);
+    }).catch(()=>{});
+  }
+  if(tieneModulo_('plantillas')){
+    apiGet({action:'get_plantillas_paciente', dni: pacienteActivo.DNI, profesionalEmail: emailProfActual}).then(res=>{
+      renderPlantillas_(res);
+    }).catch(()=>{});
+  }
+}
+
+// ── Módulos habilitados por el médico — construye las tarjetas según lo
+//    que devolvió el backend (permisosVigentes.modulos), no una elección
+//    local. Podoscopía nunca tiene tarjeta acá: no es un módulo compartible.
+function renderModulosOpcionales_(){
+  let html = '';
+  if(tieneModulo_('cud')) html += '<div class="card" id="cardDiscapacidadPac"><h2>🦽 Discapacidad / CUD</h2><div class="muted">Cargando...</div></div>';
+  if(tieneModulo_('grafica')) html += '<div class="card"><h2>📊 Evolución del dolor</h2><canvas id="graficaDolor" height="140"></canvas></div>';
+  if(tieneModulo_('investigacion')) html += '<div class="card" id="cardInvestigacionPac"><h2>🔬 Investigación (cruce OIT)</h2><div class="muted">Cargando...</div></div>';
+  if(tieneModulo_('plantillas')) html += '<div class="card" id="cardPlantillasPac"><h2>👟 Plantillas</h2><div class="muted">Cargando...</div></div>';
+  return html;
+}
+function renderDiscapacidad_(res){
+  const cont = document.getElementById('cardDiscapacidadPac');
+  if(!cont) return;
+  if(!res || !res.success){ cont.querySelector('div').innerHTML = 'No autorizado o sin datos todavía.'; return; }
+  const discapacidad = res.discapacidad||[];
+  if(!discapacidad.length){
+    cont.querySelector('div').innerHTML = 'Sin registros de discapacidad/CUD sincronizados todavía para este paciente.';
+    return;
+  }
+  cont.querySelector('div').innerHTML = discapacidad.map(d=>
+    '<div class="evolucion-item">' + (d.tipo||'') + (d.subtipo?(' — '+d.subtipo):'') + '<br>' +
+    '<span class="muted">' + (d.diagnostico||'') + (d.codigos_cif?(' — CIF: '+d.codigos_cif):'') + '</span></div>'
+  ).join('');
+}
+function renderInvestigacion_(res){
+  const cont = document.getElementById('cardInvestigacionPac');
+  if(!cont) return;
+  if(!res || !res.success){ cont.querySelector('div').innerHTML = 'No autorizado o sin datos todavía.'; return; }
+  if(res.mensaje){ cont.querySelector('div').innerHTML = '<span class="muted">' + res.mensaje + '</span>'; return; }
+  const hallazgos = res.hallazgos||[];
+  const hidricos = res.hallazgos_hidricos||[];
+  if(!hallazgos.length && !hidricos.length){
+    cont.querySelector('div').innerHTML = '<span class="muted">Sin coincidencias por localidad ni por afluente/canal de riego para este paciente.</span>';
+    return;
+  }
+  let html = '<p class="muted" style="margin-bottom:8px">Cruce por reglas — alerta para revisar, no confirma relación causal.</p>';
+  html += hallazgos.map(h=>
+    '<div class="evolucion-item"><b>' + h.categoria + '</b> — ' + h.diagnostico + '<br>' +
+    '<span class="muted">Empresa: ' + h.empresa + ' · Agentes: ' + h.agentes.join(', ') + '</span></div>'
+  ).join('');
+  if(hidricos.length){
+    html += '<div class="meta" style="margin-top:8px">💧 Vía hídrica/riego (afluente: ' + (res.afluente||'') + ')</div>';
+    html += hidricos.map(h=>
+      '<div class="evolucion-item"><b>' + h.categoria + '</b><br>' +
+      '<span class="muted">Empresa: ' + h.empresa + ' · Canal: ' + h.afluente + '</span></div>'
+    ).join('');
+  }
+  cont.querySelector('div').innerHTML = html;
+}
+function renderPlantillas_(res){
+  const cont = document.getElementById('cardPlantillasPac');
+  if(!cont) return;
+  if(!res || !res.success){ cont.querySelector('div').innerHTML = 'No autorizado o sin datos todavía.'; return; }
+  const plantillas = res.plantillas||[];
+  if(!plantillas.length){ cont.querySelector('div').innerHTML = '<span class="muted">Sin pedidos de plantillas para este paciente.</span>'; return; }
+  cont.querySelector('div').innerHTML = plantillas.map(p=>
+    '<div class="evolucion-item">N° ' + (p.nSerie||'') + ' — <b>' + (p.estado||'') + '</b><br>' +
+    '<span class="muted">' + (p.detalle||'') + '</span></div>'
+  ).join('');
+}
+function dibujarGraficaDolor_(evoluciones){
+  const canvas = document.getElementById('graficaDolor');
+  if(!canvas || typeof Chart==='undefined') return;
+  const ordenadas = evoluciones.map(e=>{
+    let v={}; try{ v = JSON.parse(e.Valores_JSON||e.Vals_JSON||'{}'); }catch(_){}
+    return {fecha: e.Timestamp, pre: v.dolorPre, post: v.dolorPost};
+  }).filter(e=> e.pre!==undefined).sort((a,b)=> new Date(a.fecha)-new Date(b.fecha));
+  if(!ordenadas.length) return;
+  new Chart(canvas, {
+    type:'line',
+    data:{
+      labels: ordenadas.map(e=> new Date(e.fecha).toLocaleDateString('es-AR')),
+      datasets:[
+        {label:'Dolor antes de la sesión', data: ordenadas.map(e=>e.pre), borderColor:'#dc2626', tension:.3},
+        {label:'Dolor después de la sesión', data: ordenadas.map(e=>e.post), borderColor:'#16a34a', tension:.3}
+      ]
+    },
+    options:{scales:{y:{min:0,max:10}}, plugins:{legend:{position:'bottom'}}}
+  });
+}
+
+function renderEvoluciones(lista){
+  const cont = document.getElementById('listaEvoluciones');
+  if(!lista.length){ cont.innerHTML = '<p class="muted">Sin evoluciones cargadas todavía.</p>'; return; }
+  lista.sort((a,b)=> new Date(b.Timestamp) - new Date(a.Timestamp));
+  cont.innerHTML = lista.map(e=>{
+    let vals = {};
+    try{ vals = JSON.parse(e.Valores_JSON || e.Vals_JSON || '{}'); }catch(_){}
+    return '<div class="evolucion-item"><div class="meta">' + new Date(e.Timestamp).toLocaleString('es-AR') + ' — ' + (e.Region||'') + '</div>' +
+      (vals.tecnica ? ('Técnica: ' + vals.tecnica + '<br>') : '') +
+      (vals.dolorPre!==undefined ? ('Dolor: ' + vals.dolorPre + ' → ' + vals.dolorPost + '<br>') : '') +
+      (vals.observaciones ? vals.observaciones : '') + '</div>';
+  }).join('');
+}
+
+function renderAlerta(evaluaciones){
+  const cont = document.getElementById('alertasKine');
+  const propias = evaluaciones.filter(e=> e.Profesional==='kinesiologo')
+    .sort((a,b)=> new Date(b.Timestamp) - new Date(a.Timestamp));
+  if(propias.length < 2){ cont.innerHTML=''; return; }
+  let v1={}, v0={};
+  try{ v1 = JSON.parse(propias[0].Valores_JSON||'{}'); v0 = JSON.parse(propias[1].Valores_JSON||'{}'); }catch(_){}
+  if(v1.dolor!==undefined && v0.dolor!==undefined && (v1.dolor - v0.dolor) >= 3){
+    cont.innerHTML = '<div class="alerta">🔴 El dolor autoinformado por el paciente subió ' + (v1.dolor - v0.dolor) + ' puntos desde la última autoevaluación. Revisar antes de continuar el plan.</div>';
+  } else {
+    cont.innerHTML = '';
+  }
+}
+
+function renderPreguntas(lista){
+  const cont = document.getElementById('listaPreguntas');
+  const pendientes = lista.filter(p=>p.Estado!=='respondida');
+  if(!pendientes.length){ cont.innerHTML = '<p class="muted">Sin preguntas pendientes.</p>'; return; }
+  cont.innerHTML = pendientes.map(p=>
+    '<div class="pregunta-item"><span class="badge badge-pend">Pendiente</span><br>' +
+    '<b>' + new Date(p.Timestamp).toLocaleDateString('es-AR') + ':</b> ' + p.Pregunta + '<br>' +
+    '<textarea id="resp_' + p._row + '" placeholder="Escribí la respuesta..."></textarea>' +
+    '<button class="btn-primary" style="margin-top:6px" onclick="responderPregunta(' + p._row + ')">Enviar respuesta por mail</button></div>'
+  ).join('');
+}
+
+function responderPregunta(fila){
+  const texto = document.getElementById('resp_' + fila).value.trim();
+  if(!texto){ toast('Escribí una respuesta primero'); return; }
+  const kinesiologoEmail = localStorage.getItem('ksm_prof_email')||'';
+  const kinesiologoNombre = localStorage.getItem('ksm_prof_nombre')||'';
+  apiPost({action:'kine_pregunta_responder', fila: fila, respuesta: texto, kinesiologoEmail: kinesiologoEmail, kinesiologoNombre: kinesiologoNombre}).then(res=>{
+    if(res.success){ toast('Respuesta enviada por mail'); cargarPanelPaciente(); }
+    else toast('Error: ' + (res.error||'desconocido'));
+  });
+}
+
+function guardarEvolucion(){
+  if(!pacienteActivo){ toast('Seleccioná un paciente primero'); return; }
+  const nombreProf = localStorage.getItem('ksm_prof_nombre')||'';
+  const matriculaProf = localStorage.getItem('ksm_prof_matricula')||'';
+  const emailProf = localStorage.getItem('ksm_prof_email')||'';
+  const vals = {
+    kinesiologo: nombreProf + ' — ' + matriculaProf,
+    kinesiologoEmail: emailProf,
+    tecnica: document.getElementById('evoTecnica').value.trim(),
+    dolorPre: Number(document.getElementById('evoDolorPre').value)||0,
+    dolorPost: Number(document.getElementById('evoDolorPost').value)||0,
+    rom: document.getElementById('evoRom').value,
+    tolerancia: document.getElementById('evoTolerancia').value,
+    observaciones: document.getElementById('evoObservaciones').value.trim(),
+    proximaSesion: document.getElementById('evoProxima').value
+  };
+  apiPost({
+    action:'kine_evolucion',
+    dni: pacienteActivo.DNI,
+    paciente: (pacienteActivo.Apellido||'') + ', ' + (pacienteActivo.Nombre||''),
+    region: document.getElementById('evoRegion').value,
+    vals: vals
+  }).then(res=>{
+    if(res.success){
+      toast('Evolución guardada');
+      const esPaga = document.getElementById('evoEsPaga').checked;
+      const monto = Number(document.getElementById('evoMonto').value)||0;
+      const cerrar = ()=>{
+        ['evoTecnica','evoDolorPre','evoDolorPost','evoObservaciones','evoProxima','evoMonto'].forEach(id=>document.getElementById(id).value='');
+        document.getElementById('evoEsPaga').checked = false;
+        document.getElementById('evoMontoWrap').style.display = 'none';
+        cargarPanelPaciente();
+        cargarResumenFacturacion();
+      };
+      if(esPaga && monto>0){
+        apiPost({
+          action:'registrar_facturacion_sistema',
+          dni: pacienteActivo.DNI,
+          paciente: (pacienteActivo.Apellido||'') + ', ' + (pacienteActivo.Nombre||''),
+          profesionalNombre: nombreProf,
+          profesionalEmail: emailProf,
+          monto: monto
+        }).then(r2=>{
+          if(r2.success) toast('Sesión guardada — peaje del sistema: $' + r2.comision + ' (' + r2.porcentaje + '%)');
+          cerrar();
+        }).catch(cerrar);
+      } else {
+        cerrar();
+      }
+    } else {
+      toast('Error al guardar: ' + (res.error||'desconocido'));
+    }
+  }).catch(()=> toast('Error de conexión'));
+}
+
+// ── Facturación del mes (peaje del sistema) ──
+function cargarResumenFacturacion(){
+  const email = localStorage.getItem('ksm_prof_email')||'';
+  if(!email) return;
+  apiGet({action:'get_resumen_facturacion_sistema', profesionalEmail: email}).then(res=>{
+    const cont = document.getElementById('resumenFacturacion');
+    if(!res.success){ cont.textContent = 'Todavía no se aplicó el patch de facturación en el backend.'; return; }
+    cont.innerHTML =
+      'Sesiones facturadas este mes: ' + res.filas.length + '<br>' +
+      'Total facturado: $' + res.totalFacturado.toLocaleString('es-AR') + '<br>' +
+      'Peaje del sistema (' + peajePctVigente + '%): $' + res.totalComision.toLocaleString('es-AR') + '<br>' +
+      'Neto para vos: $' + res.totalNeto.toLocaleString('es-AR');
+  }).catch(()=>{
+    document.getElementById('resumenFacturacion').textContent = 'Todavía no se aplicó el patch de facturación en el backend.';
+  });
+}
+
+function enviarResumenFacturacion(){
+  const email = localStorage.getItem('ksm_prof_email')||'';
+  const nombre = localStorage.getItem('ksm_prof_nombre')||'';
+  if(!email){ toast('Falta tu mail'); return; }
+  apiPost({action:'enviar_resumen_facturacion_sistema', profesionalEmail: email, profesionalNombre: nombre}).then(res=>{
+    if(res.success) toast('Resumen enviado al consultorio');
+    else toast('Error: ' + (res.error||'desconocido'));
+  }).catch(()=> toast('Error de conexión'));
+}
+
+// ── Videollamada de seguimiento (reutiliza generarLinkMeet, ya existente
+//    en el backend — la misma función que usa el médico) ──
+function proximaMediaHora_(){
+  const d = new Date(Date.now() + 30*60000);
+  d.setSeconds(0,0);
+  return d.toISOString().slice(0,16);
+}
+function generarVideollamada(){
+  if(!pacienteActivo){ toast('Seleccioná un paciente primero'); return; }
+  const nombreProf = localStorage.getItem('ksm_prof_nombre')||'';
+  apiPost({
+    action:'generarLinkMeet',
+    fechaHoraISO: document.getElementById('meetFechaHora').value,
+    duracionMin: Number(document.getElementById('meetDuracion').value)||15,
+    titulo: 'Seguimiento kinésico — ' + (pacienteActivo.Apellido||'') + ', ' + (pacienteActivo.Nombre||''),
+    descripcion: 'A cargo de ' + nombreProf,
+    mailPaciente: document.getElementById('meetMailPaciente').value.trim()
+  }).then(res=>{
+    if(res.success){
+      document.getElementById('meetResultado').innerHTML = '✅ Evento creado. Link: <a href="' + res.link + '" target="_blank">' + res.link + '</a>' +
+        (document.getElementById('meetMailPaciente').value.trim() ? '<br>Se le mandó la invitación por mail al paciente.' : '<br>No se mandó invitación (no había mail cargado).');
+    } else {
+      toast('Error al generar la videollamada: ' + (res.error||'desconocido'));
+    }
+  }).catch(()=> toast('Error de conexión'));
+}
+
+// ── Informe de adherencia y progreso (kinesiólogo → médico) ──
+function armarResumenInforme_(){
+  if(!ultimoHistorial) return null;
+  const evoluciones = (ultimoHistorial.kinesiologia||[]).map(e=>{
+    let v={}; try{ v = JSON.parse(e.Valores_JSON || e.Vals_JSON || '{}'); }catch(_){}
+    return Object.assign({Timestamp:e.Timestamp, Region:e.Region}, v);
+  }).sort((a,b)=> new Date(a.Timestamp) - new Date(b.Timestamp));
+
+  const evaluaciones = (ultimoHistorial.evaluaciones||[])
+    .filter(e=> e.Profesional==='kinesiologo')
+    .map(e=>{
+      let v={}; try{ v = JSON.parse(e.Valores_JSON||'{}'); }catch(_){}
+      return Object.assign({Timestamp:e.Timestamp}, v);
+    }).sort((a,b)=> new Date(a.Timestamp) - new Date(b.Timestamp));
+
+  const totalSesiones = evoluciones.length;
+  const primeraDolor = evoluciones.length ? evoluciones[0].dolorPre : null;
+  const ultimaDolor = evoluciones.length ? evoluciones[evoluciones.length-1].dolorPost : null;
+
+  const totalAutoevals = evaluaciones.length;
+  const cumplioCompleto = evaluaciones.filter(e=> e.cumplimiento==='Completo').length;
+  const adherenciaPct = totalAutoevals ? Math.round((cumplioCompleto/totalAutoevals)*100) : null;
+
+  let tendencia = 'sin datos suficientes';
+  if(primeraDolor!==null && ultimaDolor!==null){
+    if(ultimaDolor < primeraDolor) tendencia = 'mejoría (dolor bajó de ' + primeraDolor + ' a ' + ultimaDolor + ')';
+    else if(ultimaDolor > primeraDolor) tendencia = 'empeoramiento (dolor subió de ' + primeraDolor + ' a ' + ultimaDolor + ')';
+    else tendencia = 'sin cambios (dolor se mantiene en ' + ultimaDolor + ')';
+  }
+
+  const nombreProf = localStorage.getItem('ksm_prof_nombre')||'';
+  const matriculaProf = localStorage.getItem('ksm_prof_matricula')||'';
+  const emailProf = localStorage.getItem('ksm_prof_email')||'';
+
+  const texto =
+    'Informe de seguimiento kinésico\n' +
+    'Paciente: ' + ((pacienteActivo.Apellido||'')+', '+(pacienteActivo.Nombre||'')) + ' — DNI ' + pacienteActivo.DNI + '\n' +
+    'Kinesiólogo/a: ' + nombreProf + ' (' + matriculaProf + ') — ' + emailProf + '\n' +
+    'Módulos opcionales activos: ' + modulosActivos_() + '\n\n' +
+    'Sesiones registradas: ' + totalSesiones + '\n' +
+    'Tendencia del dolor: ' + tendencia + '\n' +
+    'Autoevaluaciones del paciente recibidas: ' + totalAutoevals +
+    (adherenciaPct!==null ? ('\nAdherencia al plan de ejercicios (autoinformada): ' + adherenciaPct + '%') : '') +
+    '\n\nÚltimas observaciones de sesión: ' + (evoluciones.length ? evoluciones[evoluciones.length-1].observaciones||'(sin observaciones)' : '(sin evoluciones cargadas)');
+
+  return {texto, nombreProf, emailProf};
+}
+
+function previsualizarInforme(){
+  const r = armarResumenInforme_();
+  if(!r){ toast('Todavía no hay datos cargados de este paciente'); return; }
+  document.getElementById('previewInforme').innerHTML = '<pre style="white-space:pre-wrap;font-family:inherit;font-size:12px;background:#f8fafc;border:1px solid var(--border);border-radius:7px;padding:10px">' + r.texto + '</pre>';
+}
+
+function enviarInforme(){
+  const r = armarResumenInforme_();
+  if(!r){ toast('Todavía no hay datos cargados de este paciente'); return; }
+  if(!r.emailProf){ toast('Falta tu mail — completalo arriba en "Kinesiólogo a cargo"'); return; }
+  apiPost({
+    action:'kine_informe_enviar',
+    dni: pacienteActivo.DNI,
+    paciente: (pacienteActivo.Apellido||'') + ', ' + (pacienteActivo.Nombre||''),
+    kinesiologoNombre: r.nombreProf,
+    kinesiologoEmail: r.emailProf,
+    resumen: r.texto
+  }).then(res=>{
+    if(res.success) toast('Informe enviado al médico — puede responderte directo a tu mail');
+    else toast('Error al enviar: ' + (res.error||'desconocido'));
+  }).catch(()=> toast('Error de conexión'));
+}
+
+// Inicio
+if(!SHEETS_URL){
+  document.getElementById('cardConfig').classList.remove('oculto');
+} else {
+  mostrarCardProfesional();
+}
+</script>
+
+<!-- ══ TRIAL: bloqueo si venció el período de prueba (ver configurarTrial() en Codigo.gs) ══ -->
+<div id="trial-lock-overlay" style="display:none;position:fixed;inset:0;background:#0b1f3a;color:#fff;z-index:999999;align-items:center;justify-content:center;text-align:center;padding:24px;font-family:system-ui,-apple-system,sans-serif">
+  <div style="max-width:420px">
+    <div style="font-size:40px;margin-bottom:12px">🔒</div>
+    <div style="font-size:18px;font-weight:700;margin-bottom:8px">Período de prueba finalizado</div>
+    <div style="font-size:13px;opacity:.85">Para seguir usando el sistema, contactá al Dr. Luis Alberto Muratori.</div>
+  </div>
+</div>
+<style>body.trial-vencido>*:not(#trial-lock-overlay){display:none!important} body.trial-vencido{overflow:hidden!important}</style>
+<script>
+(function(){
+  try{
+    fetch(SHEETS_URL+'?action=check_trial',{signal:AbortSignal.timeout(6000)})
+      .then(function(r){return r.json();}).then(function(d){
+        if(d && d.vencido){
+          document.body.classList.add('trial-vencido');
+          var ov=document.getElementById('trial-lock-overlay'); if(ov) ov.style.display='flex';
+        }
+      }).catch(function(){});
+  }catch(e){}
+})();
+</script>
+</body>
+</html>

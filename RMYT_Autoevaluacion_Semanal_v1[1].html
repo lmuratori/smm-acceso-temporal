@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RMYT — Autoevaluación Semanal de Recuperación</title>
+<style>
+  :root{
+    --azul:#0369a1; --azul-osc:#0c4a6e; --verde:#16a34a; --amarillo:#d97706;
+    --naranja:#ea580c; --rojo:#dc2626; --muted:#64748b; --border:#e2e8f0;
+    --bg:#f4fbfd; --surface:#ffffff;
+  }
+  *{box-sizing:border-box}
+  body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--bg);margin:0;color:#0f172a;padding-bottom:60px}
+  .topbar{background:linear-gradient(135deg,var(--azul),var(--azul-osc));color:#fff;padding:18px 16px;text-align:center}
+  .topbar h1{font-size:17px;margin:0 0 3px;font-weight:800}
+  .topbar p{font-size:11.5px;margin:0;opacity:.9}
+  .wrap{max-width:520px;margin:0 auto;padding:14px}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+  .card h2{font-size:14px;margin:0 0 4px;color:var(--azul-osc);display:flex;align-items:center;gap:6px}
+  .card .sub{font-size:11px;color:var(--muted);margin:0 0 12px;line-height:1.4}
+  .q{margin-bottom:16px}
+  .q:last-child{margin-bottom:0}
+  .q-txt{font-size:12.5px;font-weight:600;margin-bottom:8px;line-height:1.4}
+  .q-help{font-size:10.5px;color:var(--muted);margin-bottom:8px;font-style:italic}
+  /* Slider EVA / porcentaje */
+  .slider-wrap{display:flex;align-items:center;gap:10px}
+  input[type=range]{flex:1;height:8px;border-radius:5px;-webkit-appearance:none;background:linear-gradient(90deg,#16a34a,#facc15,#ea580c,#dc2626)}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:#fff;border:3px solid var(--azul);cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.3)}
+  .slider-val{min-width:44px;text-align:center;font-weight:800;font-size:15px;border-radius:8px;padding:4px 6px;background:#f1f5f9}
+  /* Opciones tipo radio-card */
+  .opts{display:flex;flex-direction:column;gap:6px}
+  .opt{display:flex;align-items:flex-start;gap:8px;padding:9px 11px;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;font-size:12px;line-height:1.4;transition:.12s}
+  .opt input{margin-top:2px;flex-shrink:0}
+  .opt.sel{border-color:var(--azul);background:#f0f9ff}
+  .neuro-freq{display:flex;gap:6px}
+  .neuro-freq .opt{flex:1;text-align:center;justify-content:center}
+  .video-box{width:100%;border-radius:8px;overflow:hidden;margin-bottom:10px;background:#000;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:11px}
+  .btn-submit{width:100%;background:var(--verde);color:#fff;border:none;border-radius:10px;padding:14px;font-size:14px;font-weight:800;cursor:pointer;margin-top:6px}
+  .btn-submit:disabled{background:#94a3b8;cursor:not-allowed}
+  .msg{text-align:center;font-size:12px;margin-top:10px;padding:10px;border-radius:8px}
+  .msg.ok{background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0}
+  .msg.err{background:#fef2f2;color:#dc2626;border:1px solid #fecaca}
+  .progreso{display:flex;gap:4px;padding:0 14px;margin-top:10px}
+  .progreso div{flex:1;height:4px;border-radius:2px;background:rgba(255,255,255,.3)}
+  .progreso div.done{background:#fff}
+  .loading{text-align:center;padding:60px 20px;color:var(--muted)}
+  .hide{display:none !important}
+  .deporte-fila{border:1.5px solid var(--border);border-radius:8px;padding:10px;margin-bottom:8px;background:#f8fafc}
+  .deporte-fila input[type=text]{width:100%;border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:12.5px;font-family:inherit;margin-bottom:8px}
+  .deporte-sens{display:flex;flex-direction:column;gap:5px}
+  .deporte-sens label{display:flex;align-items:center;gap:7px;font-size:11.5px;padding:6px 8px;border:1px solid var(--border);border-radius:6px;cursor:pointer}
+  .deporte-sens label.sel{border-color:var(--azul);background:#f0f9ff}
+  .deporte-quitar{text-align:right;font-size:10.5px;color:#dc2626;cursor:pointer;margin-top:4px}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>📋 RMYT — Autoevaluación Semanal</h1>
+  <p id="topbar-sub">Dr. Luis Alberto Muratori · M.N. 100.540 / M.P. 9943</p>
+  <div class="progreso" id="progreso"></div>
+</div>
+
+<div class="wrap" id="loading" >
+  <div class="loading">Cargando tu formulario…</div>
+</div>
+
+<div class="wrap hide" id="form-root">
+
+  <!-- ═══ MÓDULO GENERAL (obligatorio para todos) ═══ -->
+  <div class="card">
+    <h2>✅ Cumplimiento del plan</h2>
+    <p class="sub">Durante la última semana, ¿cuánto cumpliste con cada indicación? (0 = nada, 10 = al 100%)</p>
+    <div class="q">
+      <div class="q-txt">💊 Medicamentos / Analgesia</div>
+      <div class="slider-wrap"><input type="range" min="0" max="10" value="5" id="cump-med" oninput="syncVal('cump-med')"><span class="slider-val" id="cump-med-val">5</span></div>
+    </div>
+    <div class="q">
+      <div class="q-txt">🏋️ Ejercicios en casa (isométricos / calistenia)</div>
+      <div class="slider-wrap"><input type="range" min="0" max="10" value="5" id="cump-ejer" oninput="syncVal('cump-ejer')"><span class="slider-val" id="cump-ejer-val">5</span></div>
+    </div>
+    <div class="q">
+      <div class="q-txt">🧑‍⚕️ Sesiones de kinesiología / fisioterapia</div>
+      <div class="slider-wrap"><input type="range" min="0" max="10" value="5" id="cump-kine" oninput="syncVal('cump-kine')"><span class="slider-val" id="cump-kine-val">5</span></div>
+    </div>
+    <div class="q">
+      <div class="q-txt">🧘 Actividad guiada (yoga / pilates / natación)</div>
+      <div class="slider-wrap"><input type="range" min="0" max="10" value="5" id="cump-act" oninput="syncVal('cump-act')"><span class="slider-val" id="cump-act-val">5</span></div>
+      <label style="display:flex;align-items:center;gap:6px;font-size:11px;margin-top:6px;color:var(--muted)"><input type="checkbox" id="cump-act-na" onchange="document.getElementById('cump-act').disabled=this.checked"> No aplica en mi caso</label>
+    </div>
+  </div>
+
+  <!-- ═══ EVALUACIÓN DE DESEMPEÑO — cómo la sintomatología afecta la vida
+       deportiva, del hogar y laboral. Esta es la visión global: no solo si
+       duele, sino DÓNDE te está afectando de verdad (el trabajo, el deporte
+       o la casa). ═══ -->
+  <div class="card">
+    <h2>🎯 Desempeño — Actividad Deportiva</h2>
+    <p class="sub">Qué deporte o actividad física hacés, y cómo te afectó esta semana.</p>
+    <div id="deporte-lista"></div>
+    <button type="button" onclick="agregarFilaActividad('deporte')" style="margin-top:4px;background:none;border:1.5px dashed var(--azul);color:var(--azul);border-radius:8px;padding:8px;font-size:11.5px;font-weight:700;cursor:pointer;width:100%">+ Agregar otra actividad deportiva</button>
+  </div>
+
+  <div class="card">
+    <h2>🏠 Desempeño — Actividad del Hogar</h2>
+    <p class="sub">Tareas diarias de la casa (cocinar, limpiar, cargar cosas, cuidar chicos, etc.) y cómo te afectaron.</p>
+    <div id="hogar-lista"></div>
+    <button type="button" onclick="agregarFilaActividad('hogar')" style="margin-top:4px;background:none;border:1.5px dashed var(--azul);color:var(--azul);border-radius:8px;padding:8px;font-size:11.5px;font-weight:700;cursor:pointer;width:100%">+ Agregar otra actividad del hogar</button>
+  </div>
+
+  <div class="card">
+    <h2>💼 Desempeño — Trabajo</h2>
+    <p class="sub">Tu ocupación laboral y cómo te afectó esta semana. Si tenés más de un trabajo, agregá el segundo abajo.</p>
+    <div id="trabajo-lista"></div>
+    <button type="button" onclick="agregarFilaActividad('trabajo')" style="margin-top:4px;background:none;border:1.5px dashed var(--azul);color:var(--azul);border-radius:8px;padding:8px;font-size:11.5px;font-weight:700;cursor:pointer;width:100%">+ Agregar otro trabajo</button>
+  </div>
+
+  <div class="card">
+    <h2>👥 Desempeño — Vida Social</h2>
+    <p class="sub">Salidas, reuniones, actividades con amigos o familia, y cómo te afectaron esta semana.</p>
+    <div id="social-lista"></div>
+    <button type="button" onclick="agregarFilaActividad('social')" style="margin-top:4px;background:none;border:1.5px dashed var(--azul);color:var(--azul);border-radius:8px;padding:8px;font-size:11.5px;font-weight:700;cursor:pointer;width:100%">+ Agregar otra actividad social</button>
+  </div>
+
+  <div class="card">
+    <h2>🌡️ Dolor (Escala EVA)</h2>
+    <p class="sub">0 = nada de dolor, 10 = el peor dolor que te obligaría a ir a urgencias.</p>
+    <div class="q">
+      <div class="q-txt">En reposo (quieto o sentado)</div>
+      <div class="slider-wrap"><input type="range" min="0" max="10" value="0" id="eva-reposo" oninput="syncVal('eva-reposo')"><span class="slider-val" id="eva-reposo-val">0</span></div>
+    </div>
+    <div class="q">
+      <div class="q-txt">En movimiento (al hacer tus actividades o ejercicios)</div>
+      <div class="slider-wrap"><input type="range" min="0" max="10" value="0" id="eva-mov" oninput="syncVal('eva-mov')"><span class="slider-val" id="eva-mov-val">0</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>⚡ Sensaciones raras (alertas nerviosas)</h2>
+    <p class="sub">¿Sentís corrientes eléctricas, hormigueo, adormecimiento, quemazón o pinchazos en la zona, o que viajen hacia un brazo o una pierna?</p>
+    <div class="neuro-freq" id="neuro-opts">
+      <label class="opt"><input type="radio" name="neuro" value="0" checked> Nunca</label>
+      <label class="opt"><input type="radio" name="neuro" value="1"> A veces</label>
+      <label class="opt"><input type="radio" name="neuro" value="2"> Todo el tiempo</label>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>📊 Cómo te sentís hoy</h2>
+    <div class="q">
+      <div class="q-txt">¿Qué tan incapaz te sentís de usar esta zona hoy, comparado con antes de lesionarte?</div>
+      <div class="q-help">0% = igual que antes, no me limita · 100% = no puedo usarla en absoluto</div>
+      <div class="slider-wrap"><input type="range" min="0" max="100" step="10" value="50" id="incapacidad" oninput="syncVal('incapacidad')"><span class="slider-val" id="incapacidad-val">50%</span></div>
+    </div>
+    <div class="q">
+      <div class="q-txt">Desde que empezaste el tratamiento, ¿qué porcentaje de tu salud y función creés que ya recuperaste?</div>
+      <div class="q-help">0% = no mejoré nada · 100% = estoy completamente recuperado</div>
+      <div class="slider-wrap"><input type="range" min="0" max="100" step="10" value="0" id="recuperacion" oninput="syncVal('recuperacion')"><span class="slider-val" id="recuperacion-val">0%</span></div>
+    </div>
+  </div>
+
+  <!-- ═══ MÓDULO ESPECÍFICO DEL SEGMENTO ═══ -->
+  <div id="modulo-especifico"></div>
+
+  <button class="btn-submit" id="btn-enviar" onclick="enviarAutoevaluacion()">📤 Enviar mi autoevaluación al Dr. Muratori</button>
+  <div id="msg-resultado"></div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════════
+// MÓDULOS ESPECÍFICOS — 16 regiones, con Movilidad/Fuerza/Sensibilidad
+// y la Escala Funcional validada de cada zona. El puntaje de cada
+// pregunta es la posición de la opción elegida (0 = mejor, más alto = peor),
+// salvo la escala funcional que usa el puntaje real documentado
+// (Oswestry/DASH/UEFI/LEFS/NDI simplificados).
+// ══════════════════════════════════════════════════════════════════
+const SEGMENTOS_RMYT = {
+  cervical: { titulo:'Columna Cervical (Cuello)', bloque:'Columna y Pelvis',
+    rom:{ txt:'¿Podés tocar tu pecho con el mentón, mirar al techo completamente y girar la cabeza para alinear el mentón con tus hombros?',
+      op:['Sí, sin dolor','Con dificultad o dolor','No puedo hacerlo']},
+    fuerza:{ txt:'Al empujar tu cabeza con tu propia mano hacia adelante, atrás y los lados, ¿el cuello sostiene la postura con fuerza firme?',
+      op:['Fuerza normal (5/5)','Fuerza intermedia, me vence (3-4/5)','No tengo fuerza o me duele al empujar (0-2/5)']},
+    sens:{ txt:'Cerrá los ojos y girá la cabeza. ¿Sentís con precisión dónde está tu cabeza en el espacio, o sentís mareo/inestabilidad?',
+      op:['Todo normal','Siento menos sensibilidad en la piel','Siento mareo o desorientación al mover el cuello']},
+    escala:{ nombre:'NDI — Neck Disability Index (simplificado)',
+      txt:'¿El dolor de cuello te impide realizar actividades como leer, concentrarte, conducir o dormir?',
+      op:[{t:'No me limita',p:0},{t:'Me limita moderadamente',p:3},{t:'No puedo realizar estas actividades',p:5}]}
+  },
+  dorsal: { titulo:'Columna Dorsal (Espalda Alta)', bloque:'Columna y Pelvis',
+    rom:{ txt:'Al cruzar los brazos sobre el pecho y girar el tronco hacia la derecha y la izquierda, ¿el movimiento es simétrico y libre?',
+      op:['Movimiento completo','Bloqueado o rígido','Dolor agudo al girar']},
+    fuerza:{ txt:'Al intentar poner la espalda completamente erguida o juntar las escápulas (omóplatos) atrás, ¿podés mantener la postura por más de 30 segundos?',
+      op:['Sí, sin problema','Siento fatiga y debilidad rápida','No puedo mantenerlo por dolor']},
+    sens:{ txt:'Al rozar la piel de tu espalda alta, ¿la sensación es igual en ambos lados?',
+      op:['Sí, simétrica','Siento zonas adormecidas','Siento hipersensibilidad (el roce molesta)']},
+    escala:{ nombre:'Escala Funcional Dorsal',
+      txt:'¿El dolor en la espalda alta aparece al respirar profundo, toser o mantenerte sentado trabajando?',
+      op:[{t:'Nunca',p:0},{t:'A veces',p:3},{t:'Constantemente',p:5}]}
+  },
+  lumbar: { titulo:'Columna Lumbar (Espalda Baja)', bloque:'Columna y Pelvis',
+    rom:{ txt:'Estando de pie, intentá agacharte a tocar la punta de tus pies sin doblar las rodillas. ¿Hasta dónde llegás?',
+      op:['Toco mis pies o tobillos','Llego a las rodillas','No puedo agacharme casi nada']},
+    fuerza:{ txt:'Acostado boca arriba con las rodillas dobladas, elevá la pelvis de la cama (puente glúteo). ¿Podés sostenerlo 10 segundos con firmeza?',
+      op:['Sí, fácil','Siento debilidad y tiemblo','Imposible de realizar']},
+    sens:{ txt:'¿Sentís alguna alteración de sensibilidad en tus piernas o pérdida de control en la postura al estar de pie?',
+      op:['Todo bien','Siento piernas pesadas o adormecidas','Me cuesta mantener el equilibrio']},
+    escala:{ nombre:'Oswestry Disability Index (simplificado)',
+      txt:'¿Cómo afecta el dolor lumbar tu vida diaria?',
+      op:[{t:'Puedo levantar cosas y caminar sin dolor',p:0},{t:'El dolor me impide estar sentado o parado más de 30 min',p:3},{t:'Estoy postrado o requiero ayuda para vestirme',p:5}]}
+  },
+  sacrocoxigea: { titulo:'Columna Sacrocoxígea (Coxis)', bloque:'Columna y Pelvis',
+    rom:{ txt:'Al pasar de estar sentado a estar de pie, ¿aparece un pinchazo agudo en la zona final de la columna?',
+      op:['Sin dolor','Dolor tolerable','Dolor severo que me hace apoyar los brazos']},
+    fuerza:{ txt:'Al contraer firmemente los glúteos y el suelo pélvico en posición sentada, ¿podés amortiguar la presión en el coxis?',
+      op:['Sí, controlo la presión','Débil','Imposible por dolor']},
+    sens:{ txt:'¿Sentís adormecimiento en la zona de apoyo de la pelvis (zona de la silla)?',
+      op:['No','Sí, a veces','Sí, entumecido']},
+    escala:{ nombre:'Escala Funcional Sacrocoxígea',
+      txt:'¿Cuánto tiempo máximo podés permanecer sentado en una silla normal antes de que el dolor sea insoportable?',
+      op:[{t:'Más de 1 hora',p:0},{t:'Entre 15 y 30 minutos',p:3},{t:'Menos de 10 minutos o no puedo sentarme',p:5}]}
+  },
+  sacroiliaca: { titulo:'Articulación Sacroilíaca y Pelvis', bloque:'Columna y Pelvis',
+    rom:{ txt:'Acostado boca arriba, llevá una rodilla al pecho mientras la otra pierna se queda estirada en la cama.',
+      op:['Lo hago libremente','Siento un tirón o bloqueo en la pelvis trasera','Dolor agudo insoportable']},
+    fuerza:{ txt:'Acostado de lado, intentá levantar la pierna de arriba hacia el techo. ¿Sostenés la pierna arriba contra la gravedad?',
+      op:['Fuerza normal','Vence la gravedad pero se cae con mínima presión','No puedo levantar la pierna']},
+    sens:{ txt:'Al apoyar el peso de tu cuerpo en una sola pierna estando de pie, ¿la pelvis se mantiene estable o sentís que la cadera "se sale" o duele atrás?',
+      op:['Estable','Inestable con dolor','No puedo apoyarme en un solo pie']},
+    escala:{ nombre:'Escala Funcional Sacroilíaca',
+      txt:'¿El dolor en la pelvis o articulación sacroilíaca te impide dar pasos largos, subir escaleras o darte la vuelta en la cama?',
+      op:[{t:'No me limita',p:0},{t:'Me limita moderadamente',p:3},{t:'No puedo caminar ni darme la vuelta',p:5}]}
+  },
+  hombro: { titulo:'Hombro', bloque:'Miembro Superior',
+    rom:{ txt:'Levantá ambos brazos hacia el frente y hacia los lados intentando tocar tus orejas. Luego intentá tocar tu espalda baja por detrás.',
+      op:['Movimiento completo','No puedo levantar el brazo más arriba de los hombros','Brazo congelado / inmóvil']},
+    fuerza:{ txt:'Intentá sostener un objeto liviano (como una taza) con el brazo estirado al frente.',
+      op:['Sostengo firme (5)','Sostengo pero el brazo tiembla o cae rápido (3-4)','No puedo levantar ni el propio peso del brazo (0-2)']},
+    sens:{ txt:'Cerrá los ojos y levantá el brazo lesionado a la altura del hombro. Al abrirlos, ¿el brazo quedó donde creías?',
+      op:['Posición exacta','Siento el brazo desubicado o torpe','Adormecido']},
+    escala:{ nombre:'DASH/UEFI Hombro (simplificado)',
+      txt:'¿Qué tanta dificultad tenés para peinarte, vestirte (meter el brazo en una manga) o alcanzar un objeto en un estante alto?',
+      op:[{t:'Ninguna dificultad',p:0},{t:'Dificultad moderada',p:3},{t:'Imposible de realizar',p:5}]}
+  },
+  brazo: { titulo:'Brazo (Bíceps/Tríceps)', bloque:'Miembro Superior',
+    rom:{ txt:'¿Podés estirar el brazo por completo y luego doblarlo hasta tocar tu hombro con la mano sin dolor muscular?',
+      op:['Sí','Siento el músculo tenso, acortado o con dolor','Limitación severa']},
+    fuerza:{ txt:'Doblá el codo a 90 grados y generá resistencia con tu otra mano. Intentá hacer fuerza para doblar más (bíceps) y para estirar (tríceps).',
+      op:['Fuerza excelente y simétrica','Fuerza disminuida respecto al lado sano','El músculo no responde o duele al activarse']},
+    sens:{ txt:'Al palpar firmemente la masa muscular del brazo, ¿encontrás puntos de dolor muscular profundo ("nudos") o zonas sin sensibilidad?',
+      op:['Músculo normal','Puntos de dolor muy agudos al tocar','Piel adormecida']},
+    escala:{ nombre:'Escala Funcional del Brazo',
+      txt:'En general, ¿el dolor o la debilidad del brazo te limita para tareas de fuerza o de precisión con la mano?',
+      op:[{t:'No me limita',p:0},{t:'Me limita moderadamente',p:3},{t:'Me impide realizarlas',p:5}]}
+  },
+  codo: { titulo:'Codo', bloque:'Miembro Superior',
+    rom:{ txt:'Estirá el codo al 100% (línea recta) y doblalo por completo. Con el codo doblado, giren la palma hacia el techo y hacia el suelo.',
+      op:['Todos los movimientos completos','No estira o no dobla completo','Bloqueo al girar la palma']},
+    fuerza:{ txt:'Intentá levantar un objeto pesado del suelo (tipo un balde o mochila) manteniendo el codo flexionado.',
+      op:['Sostengo con fuerza','Siento debilidad o un pinchazo en el codo','No tengo fuerza']},
+    sens:{ txt:'¿Aparece electricidad o adormecimiento en el codo que se irradia hacia los dedos meñique o pulgar al apoyarlo en la mesa?',
+      op:['No','Sí, corriente eléctrica','Adormecimiento constante']},
+    escala:{ nombre:'DASH Codo (simplificado)',
+      txt:'¿Podés realizar actividades de fuerza como exprimir un trapo, abrir una puerta con llave o levantar una jarra de agua?',
+      op:[{t:'Sin problema',p:0},{t:'Con dolor o dificultad',p:3},{t:'Imposible',p:5}]}
+  },
+  antebrazo: { titulo:'Antebrazo', bloque:'Miembro Superior',
+    rom:{ txt:'Girá la muñeca en círculos manteniendo el antebrazo fijo. ¿Sentís tensión o dolor en los músculos del antebrazo?',
+      op:['Libre','Tensión muscular fuerte','Dolor limitante']},
+    fuerza:{ txt:'Apoyá el antebrazo en una mesa con la mano en el aire. Intentá levantar solo la muñeca contra la resistencia de tu otra mano.',
+      op:['Fuerza normal','Débil','Dolor severo en la musculatura']},
+    sens:{ txt:'Pasá un objeto suave por todo el antebrazo. ¿Sentís el roce igual en la cara interna que en la externa?',
+      op:['Sí, igual','Siento menos de un lado','Siento hormigueo constante']},
+    escala:{ nombre:'Escala Funcional del Antebrazo',
+      txt:'¿El dolor o la tensión del antebrazo te limita para actividades como escribir, cocinar o cargar objetos?',
+      op:[{t:'No me limita',p:0},{t:'Me limita moderadamente',p:3},{t:'Me impide realizarlas',p:5}]}
+  },
+  muñeca: { titulo:'Muñeca', bloque:'Miembro Superior',
+    rom:{ txt:'Moví la muñeca hacia arriba, hacia abajo y hacia los lados (como saludando).',
+      op:['Movimiento completo','Rango reducido','Dolor agudo al moverla al extremo']},
+    fuerza:{ txt:'¿Podés hacer el movimiento de extensión (llevar la muñeca hacia arriba) si alguien te frena el movimiento?',
+      op:['Sostengo con mucha fuerza','Me vence la mínima resistencia','No puedo moverla contra resistencia']},
+    sens:{ txt:'¿Sentís entumecida la muñeca o la palma de la mano al pasar horas frente a la computadora o al dormir?',
+      op:['No','Sí, amanece dormida','Pérdida de sensibilidad permanente']},
+    escala:{ nombre:'Escala Funcional de Muñeca',
+      txt:'¿Podés usar tu muñeca para apoyarte en la cama para levantarte, o escribir en el teclado/celular de forma normal?',
+      op:[{t:'Sí',p:0},{t:'Me genera dolor al cabo de unos minutos',p:3},{t:'Imposible usarla',p:5}]}
+  },
+  mano: { titulo:'Mano y Dedos de la Mano', bloque:'Miembro Superior',
+    rom:{ txt:'Cerrá el puño por completo (que las uñas toquen la palma) y luego estirá los dedos separándolos como una estrella.',
+      op:['Puño y apertura completos','No logro cerrar el puño por completo','Dedos rígidos o "se traban"']},
+    fuerza:{ txt:'Tomá una hoja de papel entre tu dedo pulgar e índice (pinza) e intentá que otra persona te la quite.',
+      op:['Retengo el papel con fuerza','El papel se desliza fácilmente','No puedo hacer la pinza']},
+    sens:{ txt:'Al tocar texturas (suave/áspero), ¿identificás el estímulo perfectamente con las yemas de todos los dedos?',
+      op:['Sí, perfectamente','Tengo dedos adormecidos','Siento las yemas acartonadas']},
+    escala:{ nombre:'Escala Funcional de Mano',
+      txt:'¿Podés abrocharte los botones de la camisa, usar una aguja, abrir un frasco con rosca o sostener un tenedor?',
+      op:[{t:'Sí, sin problemas',p:0},{t:'Hago las cosas muy lento o con dolor',p:3},{t:'No puedo manipular objetos pequeños',p:5}]}
+  },
+  cadera: { titulo:'Cadera y Muslo', bloque:'Miembro Inferior',
+    rom:{ txt:'Acostado boca arriba, cruzá la pierna lesionada sobre la rodilla sana (posición de un "4"). ¿La rodilla baja con facilidad hacia la cama?',
+      op:['Baja por completo','Se queda muy arriba por rigidez de cadera','Dolor agudo en la ingle o glúteo']},
+    fuerza:{ txt:'Sentado en una silla alta, estirá la rodilla hacia el frente pateando contra la resistencia de tu propia mano en el tobillo.',
+      op:['Fuerza excelente','Fuerza disminuida, la mano me gana','No puedo estirar la pierna contra resistencia']},
+    sens:{ txt:'Al caminar con los ojos cerrados (o en la oscuridad), ¿sentís que tu cadera y muslo sostienen tu cuerpo firmemente?',
+      op:['Seguro y firme','Siento el muslo débil o que "tiembla"','Siento la zona de la ingle/muslo adormecida']},
+    escala:{ nombre:'LEFS Cadera/Muslo (simplificado)',
+      txt:'¿Qué tanta dificultad tenés para entrar o salir de un auto, agacharte a recoger algo del suelo o permanecer de pie mucho tiempo?',
+      op:[{t:'Ninguna dificultad',p:0},{t:'Dificultad moderada',p:3},{t:'Imposible sin ayuda',p:5}]}
+  },
+  rodilla: { titulo:'Rodilla', bloque:'Miembro Inferior',
+    rom:{ txt:'Doblá la rodilla llevando el talón al glúteo y luego estirala por completo hasta que quede recta en el suelo.',
+      op:['Movimiento completo','No dobla o no estira por completo','Rodilla bloqueada o inflamada']},
+    fuerza:{ txt:'Intentá pararte de una silla usando únicamente la pierna lesionada (un solo pie apoyado).',
+      op:['Puedo pararme firme','Me cuesta mucho o uso las manos','Imposible por falta de fuerza o dolor']},
+    sens:{ txt:'Al caminar sobre terreno irregular (césped, arena o piedras), ¿sentís que tu rodilla se mantiene estable o que "se va" o falla?',
+      op:['Rodilla muy estable','Siento que la rodilla baila o "se falsea"','Siento la piel de la rodilla anestesiada']},
+    escala:{ nombre:'LEFS Rodilla (simplificado)',
+      txt:'¿Podés agacharte por completo (sentadilla), subir/bajar escaleras o arrodillarte?',
+      op:[{t:'Sí, sin problemas',p:0},{t:'Con dolor moderado o dificultad',p:3},{t:'Absolutamente imposible',p:5}]}
+  },
+  pierna: { titulo:'Pierna (Gemelos / Tibial)', bloque:'Miembro Inferior',
+    rom:{ txt:'De pie, llevá la punta del pie hacia arriba apuntando al techo manteniendo el talón en el suelo. ¿Sentís dolor o un tirón insoportable en la pantorrilla?',
+      op:['Rango normal','Tensión muscular severa','Dolor limitante']},
+    fuerza:{ txt:'Ponete de pie y elevate apoyándote únicamente en la punta del pie de la pierna lesionada.',
+      op:['Puedo levantar mi peso varias veces','Me elevo muy poco o con temblor','No puedo despegar el talón del suelo']},
+    sens:{ txt:'¿Sentís calambres nocturnos frecuentes en la pantorrilla, o zonas de la pierna donde no sentís el tacto?',
+      op:['No','Sí, calambres muy frecuentes','Pérdida de sensibilidad en la piel']},
+    escala:{ nombre:'Escala Funcional de Pierna',
+      txt:'¿La molestia de la pantorrilla/pierna te limita para caminar distancias o subir cuestas?',
+      op:[{t:'No me limita',p:0},{t:'Me limita moderadamente',p:3},{t:'Me impide caminar distancias',p:5}]}
+  },
+  tobillo: { titulo:'Tobillo', bloque:'Miembro Inferior',
+    rom:{ txt:'Dibujá un círculo imaginario en el aire con la punta del pie. ¿El movimiento es suave o se siente rígido y limitado en alguna dirección?',
+      op:['Movimiento fluido y completo','Círculo incompleto o rígido','Dolor agudo al moverlo']},
+    fuerza:{ txt:'Caminá 5 pasos apoyado únicamente sobre tus talones (puntas al aire) y luego 5 pasos solo en puntas de pie.',
+      op:['Lo hago perfectamente','Me cuesta mantener la posición o caigo rápido','Imposible realizar alguno de los dos']},
+    sens:{ txt:'Quedate parado en un solo pie sobre el tobillo lesionado y cerrá los ojos por 10 segundos.',
+      op:['Sostengo el equilibrio firme','Pierdo el equilibrio de inmediato','No puedo apoyarme por dolor']},
+    escala:{ nombre:'LEFS Tobillo (simplificado)',
+      txt:'¿El tobillo te permite caminar rápido, realizar giros o correr sin cruzarse o doler?',
+      op:[{t:'Sí',p:0},{t:'Me limita al caminar distancias o terrenos irregulares',p:3},{t:'No puedo apoyar el pie para dar pasos',p:5}]}
+  },
+  pie: { titulo:'Pie y Dedos del Pie', bloque:'Miembro Inferior',
+    rom:{ txt:'Intentá abrir los dedos del pie en abanico y luego arrugar una toalla en el suelo usando solo tus dedos.',
+      op:['Muevo los dedos libremente','Dedos rígidos o no responden al movimiento','Dolor en la planta del pie']},
+    fuerza:{ txt:'Intentá ponerte en puntas de pie ejerciendo presión únicamente con el dedo gordo del pie.',
+      op:['Sostengo firme','El dedo gordo no tiene fuerza para empujar','Dolor punzante en la base del pie']},
+    sens:{ txt:'Al caminar descalzo en casa, ¿sentís las superficies con normalidad o sentís que pisás sobre algodón, corcho, o que quema la planta?',
+      op:['Sensación normal','Sensación de pisar sobre algo acolchado (anestesiado)','Ardor o hipersensibilidad en la planta']},
+    escala:{ nombre:'Escala Funcional de Pie',
+      txt:'¿El dolor en el pie o dedos te obliga a renguear o te impide usar tu calzado habitual?',
+      op:[{t:'Uso calzado y camino normal',p:0},{t:'Debo usar calzado muy blando o rengueo un poco',p:3},{t:'No puedo apoyar el pie en el suelo',p:5}]}
+  }
+};
+
+let segmentoActual = null;
+let pacienteDNI = null;
+let videoInterval = null;
+
+// ── Evaluación de desempeño a demanda: nombre de la actividad + barra 1-10
+// (qué tanto te afectó) + desplegable de CÓMO se comportó el dolor en
+// relación puntual a esa actividad. Mismo componente para Deporte, Hogar
+// y Trabajo — lo que cambia es dónde aparece cada bloque. ──
+const COMPORTAMIENTO_DOLOR_OPCIONES = [
+  'No me provoca dolor',
+  'No me modifica la intensidad del dolor',
+  'Molestia leve luego de la práctica',
+  'Ingresé con dolor y se me retiró el mismo',
+  'Se intensificó el dolor luego de la práctica'
+];
+const ACTIVIDAD_CONFIG = {
+  deporte: {placeholder:'Ej: fútbol, running, ciclismo, tenis…', slider:'¿Cuánto te afectó esta actividad esta semana?'},
+  hogar:   {placeholder:'Ej: cocinar, limpiar, cargar changuito, cuidar a los chicos…', slider:'¿Cuánto te afectó esta tarea esta semana?'},
+  trabajo: {placeholder:'Tu ocupación laboral (podés dejarlo cargado de la vez pasada)', slider:'¿Cuánto te afectó en tu trabajo esta semana?'},
+  social:  {placeholder:'Ej: salidas con amigos, reuniones familiares, cumpleaños…', slider:'¿Cuánto te afectó en esta actividad social esta semana?'}
+};
+let actividadCount = {deporte:0, hogar:0, trabajo:0, social:0};
+function agregarFilaActividad(tipo, nombrePrevio){
+  const cfg = ACTIVIDAD_CONFIG[tipo];
+  const i = actividadCount[tipo]++;
+  const idBase = tipo+'-'+i;
+  const cont = document.getElementById(tipo+'-lista');
+  const fila = document.createElement('div');
+  fila.className = 'deporte-fila';
+  fila.id = 'fila-'+idBase;
+  fila.innerHTML = `
+    <input type="text" id="nombre-${idBase}" placeholder="${cfg.placeholder}" value="${nombrePrevio||''}">
+    <div class="q-help" style="margin-bottom:4px">${cfg.slider}</div>
+    <div class="slider-wrap" style="margin-bottom:10px">
+      <input type="range" min="1" max="10" value="1" id="nivel-${idBase}" oninput="syncVal('nivel-${idBase}')">
+      <span class="slider-val" id="nivel-${idBase}-val">1</span>
+    </div>
+    <div class="q-help" style="margin-bottom:4px">¿Cómo se comportó el dolor en relación a esta actividad?</div>
+    <select id="comport-${idBase}" style="width:100%;border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:12px;font-family:inherit;background:#fff">
+      ${COMPORTAMIENTO_DOLOR_OPCIONES.map(o=>`<option value="${o}">${o}</option>`).join('')}
+    </select>
+    <div class="deporte-quitar" onclick="document.getElementById('fila-${idBase}').remove()">✕ Quitar</div>`;
+  cont.appendChild(fila);
+  syncVal('nivel-'+idBase);
+}
+function recolectarActividades(tipo){
+  const out = [];
+  document.querySelectorAll('#'+tipo+'-lista .deporte-fila').forEach(fila=>{
+    const idBase = fila.id.replace('fila-','');
+    const nombre = document.getElementById('nombre-'+idBase).value.trim();
+    if(!nombre) return; // fila vacía, se ignora
+    out.push({
+      actividad: nombre,
+      nivel_afectacion: parseInt(document.getElementById('nivel-'+idBase).value),
+      comportamiento_dolor: document.getElementById('comport-'+idBase).value
+    });
+  });
+  return out;
+}
+
+function syncVal(id){
+  const el = document.getElementById(id);
+  const out = document.getElementById(id+'-val');
+  if(id==='incapacidad' || id==='recuperacion'){ out.textContent = el.value + '%'; }
+  else { out.textContent = el.value; }
+  // color del slider según valor (verde→rojo)
+  const pct = el.max>0 ? (el.value/el.max) : 0;
+  out.style.color = pct<0.3 ? '#15803d' : pct<0.6 ? '#b45309' : '#dc2626';
+}
+
+function renderModuloEspecifico(seg){
+  const cont = document.getElementById('modulo-especifico');
+  const data = SEGMENTOS_RMYT[seg];
+  if(!data){ cont.innerHTML=''; return; }
+  const bloques = [
+    {k:'rom', icono:'🔄', titulo:'Movilidad (ROM)'},
+    {k:'fuerza', icono:'💪', titulo:'Fuerza'},
+    {k:'sens', icono:'✋', titulo:'Sensibilidad / Propiocepción'}
+  ];
+  let html = `<div class="card"><h2>🎯 ${data.titulo}</h2><p class="sub">Módulo específico de esta zona — ${data.bloque}</p>`;
+  bloques.forEach(b=>{
+    const blk = data[b.k];
+    html += `<div class="q">
+      <div class="q-txt">${b.icono} ${b.titulo}</div>
+      <div class="q-help">${blk.txt}</div>
+      <div class="opts">`;
+    blk.op.forEach((texto,i)=>{
+      html += `<label class="opt"><input type="radio" name="${b.k}" value="${i}" ${i===0?'checked':''}> ${texto}</label>`;
+    });
+    html += `</div></div>`;
+  });
+  // Escala funcional validada
+  html += `<div class="q">
+    <div class="q-txt">📐 ${data.escala.nombre}</div>
+    <div class="q-help">${data.escala.txt}</div>
+    <div class="opts">`;
+  data.escala.op.forEach((o,i)=>{
+    html += `<label class="opt"><input type="radio" name="escala" value="${o.p}" ${i===0?'checked':''}> ${o.t}</label>`;
+  });
+  html += `</div></div></div>`;
+  cont.innerHTML = html;
+
+  // resaltar opción elegida
+  cont.querySelectorAll('input[type=radio]').forEach(inp=>{
+    inp.addEventListener('change', ()=>{
+      inp.closest('.opts').querySelectorAll('.opt').forEach(o=>o.classList.remove('sel'));
+      inp.closest('.opt').classList.add('sel');
+    });
+    if(inp.checked) inp.closest('.opt').classList.add('sel');
+  });
+}
+
+function calcularResultados(){
+  const seg = segmentoActual;
+  const data = SEGMENTOS_RMYT[seg];
+  const g = id => document.getElementById(id).value;
+  const radioVal = name => (document.querySelector(`input[name="${name}"]:checked`)||{}).value;
+
+  const romPts = data ? parseInt(radioVal('rom')||0) : null;
+  const fuerzaPts = data ? parseInt(radioVal('fuerza')||0) : null;
+  const sensPts = data ? parseInt(radioVal('sens')||0) : null;
+  const escalaPts = data ? parseInt(radioVal('escala')||0) : null; // 0,3,5 → % de discapacidad directo (0-5 → 0-100%)
+  const escalaPct = escalaPts!==null ? Math.round(escalaPts/5*100) : null;
+
+  return {
+    fecha: new Date().toISOString(),
+    cumplimiento:{
+      medicacion: parseInt(g('cump-med')),
+      ejercicios: parseInt(g('cump-ejer')),
+      kinesio:    parseInt(g('cump-kine')),
+      actividad_guiada: document.getElementById('cump-act-na').checked ? null : parseInt(g('cump-act'))
+    },
+    dolor:{ eva_reposo: parseInt(g('eva-reposo')), eva_movimiento: parseInt(g('eva-mov')) },
+    desempeno:{
+      deportivo: recolectarActividades('deporte'),
+      hogar:     recolectarActividades('hogar'),
+      laboral:   recolectarActividades('trabajo'),
+      social:    recolectarActividades('social')
+    },
+    neurodinamico: parseInt(radioVal('neuro')),
+    incapacidad_relativa_pct: parseInt(g('incapacidad')),
+    recuperacion_percibida_pct: parseInt(g('recuperacion')),
+    segmento:{
+      codigo: seg,
+      titulo: data ? data.titulo : null,
+      rom_puntos: romPts,
+      fuerza_puntos: fuerzaPts,
+      sensibilidad_puntos: sensPts,
+      escala_nombre: data ? data.escala.nombre : null,
+      escala_puntos: escalaPts,
+      escala_pct_discapacidad: escalaPct
+    }
+  };
+}
+
+async function enviarAutoevaluacion(){
+  const btn = document.getElementById('btn-enviar');
+  const msgEl = document.getElementById('msg-resultado');
+  btn.disabled = true; btn.textContent = '⏳ Enviando…';
+  const resultados = calcularResultados();
+  const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbwYdoFuU8mQL4YKqufSBQ9AD_yqWEEesLtGzYQjNw2JG1BZIQF7ug80mHB5sLMXhaUpvQ/exec';
+  try{
+    const resp = await fetch(SHEETS_URL, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({action:'saveAutoevaluacionRMYT', dni: pacienteDNI, datos: resultados})});
+    const data = await resp.json();
+    if(!data.success) throw new Error(data.error || 'No se pudo guardar');
+    msgEl.innerHTML = '<div class="msg ok">✅ ¡Gracias! Tu autoevaluación quedó registrada. El Dr. Muratori la va a revisar antes de tu próxima consulta.</div>';
+    btn.textContent = '✅ Enviado';
+    try{ localStorage.removeItem('rmyt_autoeval_borrador_'+pacienteDNI); }catch(e){}
+  }catch(e){
+    msgEl.innerHTML = '<div class="msg err">⚠️ No se pudo enviar (revisá tu conexión) — tus respuestas quedaron guardadas en este celular, volvé a intentar en unos minutos.</div>';
+    try{ localStorage.setItem('rmyt_autoeval_borrador_'+pacienteDNI, JSON.stringify(resultados)); }catch(e2){}
+    btn.disabled = false; btn.textContent = '📤 Reintentar envío';
+  }
+}
+
+// ── Arranque: lee ?dni= y ?seg= de la URL (link mandado por mail) ──
+(function init(){
+  const params = new URLSearchParams(window.location.search);
+  pacienteDNI = params.get('dni') || '';
+  segmentoActual = params.get('seg') || '';
+
+  if(!SEGMENTOS_RMYT[segmentoActual]) segmentoActual = null; // sin módulo específico si no vino un código válido
+
+  document.getElementById('loading').classList.add('hide');
+  document.getElementById('form-root').classList.remove('hide');
+  renderModuloEspecifico(segmentoActual);
+  agregarFilaActividad('deporte'); // deporte arranca con 1 — "+ Agregar" suma más a demanda
+  agregarFilaActividad('hogar'); agregarFilaActividad('hogar');
+  agregarFilaActividad('trabajo'); // trabajo arranca con 1 — "+ Agregar otro trabajo" si tiene un segundo empleo
+  agregarFilaActividad('social'); agregarFilaActividad('social');
+
+  // progreso visual (5 bloques fijos + 1 si hay módulo específico)
+  const totalBloques = segmentoActual ? 8 : 7;
+  const prog = document.getElementById('progreso');
+  prog.innerHTML = Array.from({length:totalBloques}).map(()=>'<div class="done"></div>').join('');
+})();
+</script>
+</body>
+</html>
