@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Estadísticas — Sistema Médico Muratori</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" defer></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--navy:#0b1f3a;--green:#16a34a;--blue:#2563eb;--amber:#d97706;--border:#e2e8f0;--muted:#64748b}
+body{font-family:'Inter',sans-serif;background:#f0f4f8;min-height:100vh;color:#1e293b}
+.header{background:var(--navy);color:#fff;padding:16px 20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.header h1{font-size:16px;font-weight:600;flex:1}
+.header p{font-size:10px;opacity:.6}
+.hbtn{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:7px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.hbtn:hover{background:rgba(255,255,255,.22)}
+.main{max-width:1000px;margin:0 auto;padding:20px}
+.status{text-align:center;padding:40px;color:var(--muted);font-size:13px}
+.summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:20px}
+.summary-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center}
+.summary-card .num{font-size:24px;font-weight:700;color:var(--navy)}
+.summary-card .lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:2px}
+.chart-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:16px}
+.chart-card h2{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:4px}
+.chart-card .sub{font-size:11px;color:var(--muted);margin-bottom:12px}
+.chart-wrap{position:relative;height:280px}
+.empty{font-size:11px;color:var(--muted);text-align:center;padding:30px}
+</style>
+</head>
+<body>
+<div class="header">
+  <div>
+    <h1>📊 Estadísticas — Sistema Médico Muratori</h1>
+    <p>Dr. Luis Alberto Muratori · M.N. 100.540 · M.P. 9943</p>
+  </div>
+  <button class="hbtn" onclick="cargarDatos()">🔄 Actualizar</button>
+  <button class="hbtn" onclick="analizarConIA()">🤖 Buscar patrones con IA</button>
+  <button class="hbtn" onclick="exportarPDF()">📤 Exportar para presentación</button>
+</div>
+
+<div class="main">
+  <div id="status" class="status">⏳ Cargando datos consolidados...</div>
+  <div id="contenido" style="display:none">
+    <div class="summary-grid" id="summary-grid"></div>
+
+    <div class="chart-card">
+      <h2>Pacientes por localidad</h2>
+      <div class="sub">Distribución geográfica de la población atendida</div>
+      <div class="chart-wrap"><canvas id="chart-localidad"></canvas></div>
+    </div>
+
+    <div class="chart-card">
+      <h2>Fuente de exposición laboral (categorías OIT)</h2>
+      <div class="sub">Cuántos trabajos declarados están asociados a cada tipo de riesgo</div>
+      <div class="chart-wrap"><canvas id="chart-exposicion"></canvas></div>
+    </div>
+
+    <div class="chart-card">
+      <h2>Rubro / industria</h2>
+      <div class="sub">Sectores de actividad más frecuentes entre los pacientes</div>
+      <div class="chart-wrap"><canvas id="chart-rubro"></canvas></div>
+    </div>
+
+    <div class="chart-card">
+      <h2>Antecedentes psiquiátricos</h2>
+      <div class="sub">Ansiedad, depresión, TOC, psicosis, insomnio — frecuencia relevada en RIMP</div>
+      <div class="chart-wrap"><canvas id="chart-psiquiatricos"></canvas></div>
+    </div>
+
+    <div class="chart-card">
+      <h2>COVID-19 — exposición y secuelas</h2>
+      <div class="sub">Cuántos pacientes tuvieron COVID y qué secuelas persistentes refieren</div>
+      <div class="chart-wrap"><canvas id="chart-covid"></canvas></div>
+    </div>
+
+    <div class="chart-card">
+      <h2>Calefacción del hogar (riesgo de monóxido de carbono)</h2>
+      <div class="sub">Pacientes con calefacción a leña/gas, y si cuentan con ventilación adecuada</div>
+      <div class="chart-wrap"><canvas id="chart-vivienda"></canvas></div>
+    </div>
+    <div class="chart-card" id="panel-ia" style="display:none">
+      <h2>🤖 Análisis de patrones (IA)</h2>
+      <div class="sub">Lectura orientativa generada por Gemini a partir de los cruces de datos — no reemplaza el criterio clínico</div>
+      <div id="ia-contenido" style="font-size:13px;line-height:1.7;white-space:pre-wrap"></div>
+    </div>
+  </div>
+</div>
+
+<script defer>
+const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbwYdoFuU8mQL4YKqufSBQ9AD_yqWEEesLtGzYQjNw2JG1BZIQF7ug80mHB5sLMXhaUpvQ/exec';
+let VISTAS = [];
+const charts = {};
+const PALETA = ['#2563eb','#16a34a','#d97706','#dc2626','#7c3aed','#0891b2','#db2777','#65a30d','#64748b','#0b1f3a'];
+
+async function cargarDatos(){
+  document.getElementById('status').style.display='block';
+  document.getElementById('status').textContent='⏳ Cargando datos consolidados...';
+  document.getElementById('contenido').style.display='none';
+  try{
+    const resp = await fetch(SHEETS_URL+'?action=get_vista_consolidada_todos',{signal:AbortSignal.timeout(20000)});
+    const data = await resp.json();
+    if(!data.success) throw new Error(data.error||'Error del servidor');
+    VISTAS = data.vistas||[];
+    if(!VISTAS.length){
+      document.getElementById('status').textContent='No hay pacientes cargados todavía en el sistema.';
+      return;
+    }
+    document.getElementById('status').style.display='none';
+    document.getElementById('contenido').style.display='block';
+    renderTodo();
+  }catch(err){
+    document.getElementById('status').textContent = '❌ No se pudo cargar: '+(err&&err.message?err.message:err);
+  }
+}
+
+// ── Conteo genérico de valores separados por coma dentro de un campo ──
+function contarMultiValor(vistas, getter){
+  const conteo = {};
+  vistas.forEach(v=>{
+    const val = getter(v);
+    if(!val) return;
+    String(val).split(',').map(s=>s.trim()).filter(Boolean).forEach(item=>{
+      conteo[item] = (conteo[item]||0) + 1;
+    });
+  });
+  return conteo;
+}
+function contarSimple(vistas, getter){
+  const conteo = {};
+  vistas.forEach(v=>{
+    const val = getter(v);
+    if(!val) return;
+    conteo[val] = (conteo[val]||0) + 1;
+  });
+  return conteo;
+}
+function ordenarDesc(conteo){
+  return Object.entries(conteo).sort((a,b)=>b[1]-a[1]);
+}
+
+function pintarBarras(canvasId, conteo, horizontal){
+  const ctx = document.getElementById(canvasId);
+  if(charts[canvasId]) charts[canvasId].destroy();
+  const entradas = ordenarDesc(conteo);
+  if(!entradas.length){
+    ctx.parentElement.innerHTML = '<div class="empty">Todavía no hay datos suficientes para este gráfico.</div>';
+    return;
+  }
+  charts[canvasId] = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: entradas.map(e=>e[0]),
+      datasets: [{
+        data: entradas.map(e=>e[1]),
+        backgroundColor: entradas.map((_,i)=>PALETA[i%PALETA.length])
+      }]
+    },
+    options: {
+      indexAxis: horizontal ? 'y' : 'x',
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false} },
+      scales:{ x:{ beginAtZero:true, ticks:{precision:0} }, y:{ ticks:{autoSkip:false, font:{size:11}} } }
+    }
+  });
+}
+
+function renderTodo(){
+  if(typeof Chart === 'undefined'){
+    document.getElementById('contenido').innerHTML =
+      '<div class="empty">⚠️ La librería de gráficos todavía no cargó (conexión lenta). Recargá la página en unos segundos.</div>';
+    return;
+  }
+  // ── Resumen ──
+  const totalPac = VISTAS.length;
+  const conDiscapacidad = VISTAS.filter(v=>v.discapacidad && v.discapacidad.length).length;
+  const conExposicion = VISTAS.filter(v=>(v.trabajos||[]).some(t=>t.exposicion && t.exposicion!=='Ninguna en particular')).length;
+  const localidades = new Set(VISTAS.map(v=>v.localidad).filter(Boolean)).size;
+  document.getElementById('summary-grid').innerHTML = `
+    <div class="summary-card"><div class="num">${totalPac}</div><div class="lbl">Pacientes</div></div>
+    <div class="summary-card"><div class="num">${localidades}</div><div class="lbl">Localidades</div></div>
+    <div class="summary-card"><div class="num">${conExposicion}</div><div class="lbl">Con exposición laboral</div></div>
+    <div class="summary-card"><div class="num">${conDiscapacidad}</div><div class="lbl">Con CUD</div></div>
+  `;
+
+  // ── Localidad ──
+  pintarBarras('chart-localidad', contarSimple(VISTAS, v=>v.localidad), true);
+
+  // ── Exposición (categorías OIT) — viene de trabajos[].exposicion, cada uno separado por coma ──
+  const expConteo = {};
+  VISTAS.forEach(v=>{
+    (v.trabajos||[]).forEach(t=>{
+      if(!t.exposicion) return;
+      t.exposicion.split(',').map(s=>s.trim()).filter(Boolean).forEach(item=>{
+        if(item==='Ninguna en particular') return;
+        expConteo[item] = (expConteo[item]||0)+1;
+      });
+    });
+  });
+  pintarBarras('chart-exposicion', expConteo, true);
+
+  // ── Rubro ──
+  const rubroConteo = {};
+  VISTAS.forEach(v=>{ (v.trabajos||[]).forEach(t=>{ if(t.rubro){ rubroConteo[t.rubro]=(rubroConteo[t.rubro]||0)+1; } }); });
+  pintarBarras('chart-rubro', rubroConteo, true);
+
+  // ── Antecedentes psiquiátricos ──
+  const PSIQ = ['Ansiedad','Depresión','TOC','Psicosis','Insomnio'];
+  const psiqConteo = {};
+  PSIQ.forEach(p=>{ psiqConteo[p] = VISTAS.filter(v=> (v.antecedentes?.enfermedades||'').includes(p)).length; });
+  pintarBarras('chart-psiquiatricos', psiqConteo, false);
+
+  // ── COVID ──
+  const covidConteo = contarSimple(VISTAS, v=>v.antecedentes?.covid);
+  const secuelasConteo = contarMultiValor(VISTAS, v=>v.antecedentes?.covid_secuelas);
+  const covidTotal = {}; 
+  Object.entries(covidConteo).forEach(([k,val])=>covidTotal['Tuvo COVID: '+k]=val);
+  Object.entries(secuelasConteo).forEach(([k,val])=>{ if(k!=='Ninguna secuela') covidTotal['Secuela: '+k]=val; });
+  pintarBarras('chart-covid', covidTotal, true);
+
+  // ── Vivienda / calefacción (riesgo CO) ──
+  const viviendaConteo = {};
+  VISTAS.forEach(v=>{
+    const cal = v.vivienda?.calefaccion;
+    if(!cal) return;
+    const conRiesgo = (cal==='Leña'||cal==='Gas envasado (garrafa)'||cal==='Gas natural');
+    if(!conRiesgo) return;
+    const vent = v.vivienda?.ventilacion || 'Sin dato de ventilación';
+    const clave = `${cal} — ${vent}`;
+    viviendaConteo[clave] = (viviendaConteo[clave]||0)+1;
+  });
+  pintarBarras('chart-vivienda', viviendaConteo, true);
+}
+
+async function exportarPDF(){
+  if(typeof html2pdf === 'undefined'){
+    alert('⚠️ La librería para generar PDF todavía no cargó (puede ser por conexión lenta).\n\nEsperá unos segundos y probá de nuevo.');
+    return;
+  }
+  const el = document.getElementById('contenido');
+  await html2pdf().set({
+    margin:6,
+    filename:'Estadisticas_SMM_'+new Date().toISOString().slice(0,10)+'.pdf',
+    image:{type:'jpeg',quality:0.95},
+    html2canvas:{scale:2, useCORS:true, backgroundColor:'#ffffff'},
+    jsPDF:{unit:'mm', format:'a4', orientation:'portrait'},
+    pagebreak:{mode:['css','avoid-all']}
+  }).from(el).save();
+}
+
+// ── Análisis de patrones con IA (Gemini) — solo datos agregados/anonimizados, nunca nombres ni DNI ──
+function getGeminiConfig(){
+  try{
+    const cfg = JSON.parse(localStorage.getItem('lectorcud_config')||'{}');
+    return cfg && cfg.apiKey ? cfg : null;
+  }catch(_){ return null; }
+}
+
+function armarCrucesAnonimos(){
+  // Cruce rubro × exposición
+  const rubroExposicion = {};
+  // Cruce exposición × antecedentes psiquiátricos
+  const expPsiq = {};
+  // Cruce localidad × diagnóstico principal
+  const localidadDiag = {};
+
+  VISTAS.forEach(v=>{
+    const tienePsiq = ['Ansiedad','Depresión','TOC','Psicosis','Insomnio'].some(p=>(v.antecedentes?.enfermedades||'').includes(p));
+    (v.trabajos||[]).forEach(t=>{
+      const exposiciones = (t.exposicion||'').split(',').map(s=>s.trim()).filter(e=>e && e!=='Ninguna en particular');
+      exposiciones.forEach(exp=>{
+        if(t.rubro){
+          const clave = `${t.rubro} + ${exp}`;
+          rubroExposicion[clave] = (rubroExposicion[clave]||0)+1;
+        }
+        if(tienePsiq){
+          expPsiq[exp] = (expPsiq[exp]||0)+1;
+        }
+      });
+    });
+    const diagPrincipal = (v.diagnosticos||[])[0];
+    if(v.localidad && diagPrincipal){
+      const clave = `${v.localidad} + ${diagPrincipal}`;
+      localidadDiag[clave] = (localidadDiag[clave]||0)+1;
+    }
+  });
+
+  return {
+    total_pacientes: VISTAS.length,
+    rubro_x_exposicion: rubroExposicion,
+    exposicion_x_antecedente_psiquiatrico: expPsiq,
+    localidad_x_diagnostico: localidadDiag
+  };
+}
+
+async function analizarConIA(){
+  const cfg = getGeminiConfig();
+  if(!cfg){
+    alert('⚠️ Falta configurar la clave de Gemini.\n\nAbrí el Lector CUD → ⚙ Configuración, cargá tu clave de API una vez, y ya queda disponible acá también.');
+    return;
+  }
+  const panel = document.getElementById('panel-ia');
+  const cont = document.getElementById('ia-contenido');
+  panel.style.display = 'block';
+  cont.textContent = '⏳ Analizando patrones...';
+  panel.scrollIntoView({behavior:'smooth', block:'start'});
+
+  const cruces = armarCrucesAnonimos();
+  const prompt = `Sos un asistente de un médico especialista en medicina laboral y ortopedia. `+
+    `A continuación tenés datos AGREGADOS y ANONIMIZADOS (sin nombres ni DNI) de su consultorio, en formato de conteos y cruces:\n\n`+
+    JSON.stringify(cruces, null, 2) + `\n\n` +
+    `Analizá estos cruces y escribí en español, en un tono profesional y breve (máximo 250 palabras):\n`+
+    `1) Los 2-3 patrones o relaciones más relevantes que encuentres (ej: qué rubro se repite con qué tipo de exposición, si alguna exposición se repite junto con antecedentes psiquiátricos, si alguna localidad concentra algún diagnóstico).\n`+
+    `2) Alguna necesidad no observada o hipótesis que valga la pena investigar más (sin asegurar causalidad, solo como sugerencia a confirmar clínicamente).\n`+
+    `Si los datos son insuficientes para sacar conclusiones firmes, decilo con claridad en vez de inventar relaciones.`;
+
+  try{
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${cfg.model||'gemini-2.5-flash'}:generateContent?key=${encodeURIComponent(cfg.apiKey)}`;
+    const resp = await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{parts:[{text:prompt}]}]}), signal:AbortSignal.timeout(30000)});
+    const data = await resp.json();
+    const texto = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    if(!texto) throw new Error(data?.error?.message || 'Gemini no devolvió una respuesta');
+    cont.textContent = texto;
+  }catch(err){
+    cont.textContent = '❌ No se pudo completar el análisis: '+(err&&err.message?err.message:err);
+  }
+}
+
+cargarDatos();
+</script>
+</body>
+</html>

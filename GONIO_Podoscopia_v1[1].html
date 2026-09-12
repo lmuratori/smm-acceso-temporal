@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>GONIO — Podoscopia Digital · SMM</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--navy:#0b1f3a;--green:#22c55e;--blue:#2563eb;--red:#dc2626;--border:#e2e8f0}
+body{font-family:'Inter',Arial,sans-serif;background:#f0f4f8;min-height:100vh;color:#1e293b}
+.header{background:var(--navy);color:#fff;padding:16px 20px;display:flex;align-items:center;justify-content:space-between}
+.header h1{font-size:15px;font-weight:700}
+.header a{color:#93c5fd;font-size:12px;text-decoration:none}
+.main{max-width:720px;margin:0 auto;padding:16px}
+.card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px}
+.card h2{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:10px;text-transform:uppercase;letter-spacing:.04em}
+.card h3{font-size:12.5px;font-weight:700;color:#334155;margin:14px 0 6px}
+label{display:block;font-size:12px;font-weight:600;color:#475569;margin-bottom:4px;margin-top:10px}
+input[type=text],input[type=number],select,textarea{width:100%;padding:9px 10px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;font-family:inherit}
+textarea{resize:vertical;min-height:60px}
+.btn{display:inline-block;background:var(--blue);color:#fff;border:none;padding:10px 16px;border-radius:8px;
+font-size:13px;font-weight:600;cursor:pointer;margin-top:10px;margin-right:8px}
+.btn:hover{background:#1d4ed8}
+.btn.gris{background:#64748b}
+.btn.gris:hover{background:#475569}
+.btn.verde{background:var(--green)}
+.btn.verde:hover{background:#16a34a}
+.btn.chico{padding:8px 12px;font-size:12px}
+.btn:disabled{background:#cbd5e1;cursor:not-allowed}
+#file-input{display:none}
+.zona-foto{border:2px dashed #cbd5e1;border-radius:10px;padding:30px 16px;text-align:center;cursor:pointer;color:#64748b;font-size:13px}
+.zona-foto:hover{border-color:var(--blue);color:var(--blue)}
+#canvas-wrap{position:relative;width:100%;max-width:100%;touch-action:none}
+canvas{width:100%;border-radius:8px;display:block;background:#000;touch-action:none}
+.instructivo{background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px 12px;font-size:12.5px;color:#1e3a5f;margin-bottom:10px}
+.instructivo b{color:#1d4ed8}
+.modos{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.modo-btn{flex:1;min-width:100px;padding:8px 5px;border-radius:8px;border:1px solid #cbd5e1;background:#f8fafc;
+font-size:10.5px;font-weight:600;cursor:pointer;text-align:center;color:#475569}
+.modo-btn.activo{background:var(--blue);color:#fff;border-color:var(--blue)}
+.modo-btn.hecho{border-color:#16a34a;color:#16a34a}
+.modo-btn:disabled{opacity:.4;cursor:not-allowed}
+.resumen-med{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.resumen-med div{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px;text-align:center}
+.resumen-med .val{font-size:16px;font-weight:800;color:var(--navy)}
+.resumen-med .lbl{font-size:9.5px;color:#64748b;text-transform:uppercase;margin-top:2px;line-height:1.3}
+.msg-ok{color:#166534;font-size:13px;font-weight:600;margin-top:8px}
+.msg-error{color:var(--red);font-size:13px;font-weight:600;margin-top:8px}
+.caja-calib{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px;margin-top:8px}
+.caja-indices{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px;margin-bottom:14px}
+.indice-fila{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #dcfce7}
+.indice-fila:last-child{border-bottom:none}
+.indice-nombre{font-size:12px;color:#475569;font-weight:600}
+.indice-valor{font-size:15px;font-weight:800;color:#166534}
+.indice-clasif{font-size:11px;color:#64748b}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🦶 GONIO — Podoscopia Digital</h1>
+  <a href="INDEX_SIM.html">← Menú principal</a>
+</div>
+
+<div class="main">
+
+  <!-- DATOS DEL PACIENTE -->
+  <div class="card">
+    <h2>1 · Paciente</h2>
+    <label>DNI</label>
+    <input type="text" id="dni" placeholder="Ej: 12345678" inputmode="numeric">
+    <label>Pie evaluado</label>
+    <select id="pie">
+      <option value="Derecho">Derecho</option>
+      <option value="Izquierdo">Izquierdo</option>
+    </select>
+    <button class="btn gris chico" id="btn-buscar-referencia" style="margin-top:14px">🔎 Buscar radiografía de referencia (Costa-Bártani)</button>
+    <div id="msg-referencia" style="font-size:12px;margin-top:6px;color:#64748b"></div>
+  </div>
+
+  <!-- CARGA DE FOTO -->
+  <div class="card" id="card-foto">
+    <h2>2 · Imagen de la pisada</h2>
+    <div class="instructivo">
+      Elegí el origen de la imagen. En todos los casos podés marcar los puntos igual —
+      el sistema no distingue si la foto vino de la cámara del celular, de un escáner
+      (USB o Bluetooth) o de una cámara web conectada, solo necesita la imagen final.
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <div class="zona-foto" id="zona-foto-celular" style="flex:1;min-width:150px">📱 Foto con el celular</div>
+      <div class="zona-foto" id="zona-foto-podoscopio" style="flex:1;min-width:150px">🖨️ Podoscopio Digital</div>
+      <div class="zona-foto" id="zona-foto-webcam" style="flex:1;min-width:150px">🎥 Cámara Web HD</div>
+    </div>
+    <input type="file" id="file-input-celular" accept="image/*" capture="environment" style="display:none">
+    <input type="file" id="file-input-podoscopio" accept="image/*" style="display:none">
+  </div>
+
+  <!-- MODAL DE CAPTURA POR CÁMARA WEB -->
+  <div id="modal-webcam" style="display:none;position:fixed;inset:0;background:rgba(11,31,58,.85);z-index:9999;align-items:center;justify-content:center;padding:16px">
+    <div style="background:#fff;border-radius:12px;padding:16px;max-width:640px;width:100%">
+      <div style="font-size:13px;font-weight:700;color:#0b1f3a;margin-bottom:8px">🎥 Cámara Web HD — encuadrá la huella y capturá</div>
+      <video id="webcam-video" autoplay playsinline style="width:100%;border-radius:8px;background:#000"></video>
+      <div id="webcam-error" style="color:#dc2626;font-size:12px;margin-top:6px"></div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="btn verde" id="btn-capturar-webcam" style="flex:1">📸 Capturar foto</button>
+        <button class="btn gris" id="btn-cancelar-webcam">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CANVAS DE MEDICIÓN -->
+  <div class="card" id="card-canvas" style="display:none">
+    <h2>3 · Mediciones sobre la imagen</h2>
+    <div class="modos">
+      <button class="modo-btn activo" id="modo-largo" data-modo="largo">1️⃣ Largo (calibra)</button>
+      <button class="modo-btn" id="modo-anchoX" data-modo="anchoX" disabled>2️⃣ Ancho metatarso (X)</button>
+      <button class="modo-btn" id="modo-anchoY" data-modo="anchoY" disabled>3️⃣ Ancho istmo (Y)</button>
+      <button class="modo-btn" id="modo-superficie" data-modo="superficie" disabled>4️⃣ Superficie</button>
+    </div>
+    <div class="instructivo" id="txt-instructivo">
+      Marcá <b>2 puntos</b>: el más posterior del talón y la punta del dedo más largo.
+      Con esto se calibra la escala para las siguientes mediciones.
+    </div>
+    <div id="canvas-wrap"><canvas id="canvas"></canvas></div>
+
+    <!-- Calibración: pide el largo real medido con cinta métrica -->
+    <div class="caja-calib" id="caja-calib" style="display:none">
+      <label>Largo real del pie medido con cinta métrica (cm)</label>
+      <input type="number" id="largo-real-cm" step="0.1" placeholder="Ej: 26.5">
+      <button class="btn chico" id="btn-confirmar-largo">Confirmar largo y calibrar</button>
+    </div>
+
+    <button class="btn gris chico" id="btn-cerrar-poligono" style="display:none">✅ Cerrar figura y calcular superficie</button>
+    <button class="btn gris chico" id="btn-reiniciar-modo">↺ Rehacer esta medición</button>
+    <button class="btn gris chico" id="btn-otra-foto">🔄 Cambiar foto</button>
+
+    <div class="resumen-med">
+      <div><div class="val" id="res-largo">--</div><div class="lbl">Largo (cm)</div></div>
+      <div><div class="val" id="res-anchoX">--</div><div class="lbl">Ancho metatarso X (cm)</div></div>
+      <div><div class="val" id="res-anchoY">--</div><div class="lbl">Ancho istmo Y (cm)</div></div>
+      <div><div class="val" id="res-superficie">--</div><div class="lbl">Superficie (cm²)</div></div>
+      <div><div class="val" id="res-hc">--</div><div class="lbl">Índice Hernández-Corvo (%)</div></div>
+      <div><div class="val" id="res-cs">--</div><div class="lbl">Índice Chippaux-Smirak (%)</div></div>
+    </div>
+  </div>
+
+  <!-- ÍNDICES OBJETIVOS CALCULADOS -->
+  <div class="card" id="card-indices" style="display:none">
+    <h2>4 · Índices objetivos calculados</h2>
+    <div class="caja-indices">
+      <div class="indice-fila">
+        <div>
+          <div class="indice-nombre">Índice de Hernández-Corvo</div>
+          <div class="indice-clasif" id="hc-formula">% Arco = (X−Y)/X × 100</div>
+        </div>
+        <div style="text-align:right">
+          <div class="indice-valor" id="hc-valor">--%</div>
+          <div class="indice-clasif" id="hc-clasif">--</div>
+        </div>
+      </div>
+      <div class="indice-fila">
+        <div>
+          <div class="indice-nombre">Índice de Chippaux-Smirak</div>
+          <div class="indice-clasif">I = Y/X × 100</div>
+        </div>
+        <div style="text-align:right">
+          <div class="indice-valor" id="cs-valor">--%</div>
+          <div class="indice-clasif" id="cs-clasif">--</div>
+        </div>
+      </div>
+      <div class="indice-fila">
+        <div>
+          <div class="indice-nombre">Arch Index (Cavanagh) — adaptado</div>
+          <div class="indice-clasif" id="ai-fuente">Área mediopié / Área total</div>
+        </div>
+        <div style="text-align:right">
+          <div class="indice-valor" id="ai-valor">--</div>
+          <div class="indice-clasif" id="ai-clasif">--</div>
+        </div>
+      </div>
+    </div>
+    <div class="instructivo">⚠️ El Arch Index se calcula dividiendo la huella en tres zonas. Si hay una
+    radiografía de Costa-Bártani guardada para este DNI y pie, el corte retropié/mediopié usa la
+    posición real del vértice del arco (astrágalo-escafoides); si no, usa el método clásico de tercios
+    iguales como respaldo.</div>
+  </div>
+
+  <!-- PATRÓN DE APOYO (checklist estructurado) -->
+  <div class="card" id="card-patron" style="display:none">
+    <h2>5 · Patrón de apoyo (según tu criterio clínico)</h2>
+
+    <h3>Apoyo del talón</h3>
+    <select id="apoyo-talon">
+      <option>Completo</option>
+      <option>Predominio interno</option>
+      <option>Predominio externo</option>
+    </select>
+
+    <h3>Borde externo del arco</h3>
+    <select id="borde-arco">
+      <option>Normal</option>
+      <option>Adelgazado</option>
+      <option>Interrumpido (grado avanzado)</option>
+      <option>Ausente / contacto total (plano)</option>
+    </select>
+
+    <h3>Grado de pie plano (si aplica)</h3>
+    <select id="grado-plano">
+      <option>No aplica</option>
+      <option>Grado 1</option>
+      <option>Grado 2</option>
+      <option>Grado 3 (apoyo del escafoides)</option>
+    </select>
+
+    <h3>Apoyo del antepié</h3>
+    <select id="apoyo-antepie">
+      <option>Puntos definidos (1° y 5° metatarsiano)</option>
+      <option>Difuso / en banda completa</option>
+    </select>
+
+    <h3>Apoyo de los dedos</h3>
+    <select id="apoyo-dedos">
+      <option>Completo (todos los dedos)</option>
+      <option>En garra (solo puntas)</option>
+    </select>
+
+    <h3>Tendencia de apoyo</h3>
+    <select id="tendencia">
+      <option>Neutro</option>
+      <option>Tendencia a Valgo</option>
+      <option>Tendencia a Varo</option>
+    </select>
+
+    <h3>Patrón general (silueta) — sugerido según Hernández-Corvo, editable</h3>
+    <select id="patron-general">
+      <option>Normal</option>
+      <option>Cavo</option>
+      <option>Plano</option>
+      <option>Mixto</option>
+    </select>
+
+    <label>Comentario / observación adicional (opcional)</label>
+    <textarea id="comentario" placeholder="Detalles adicionales que quieras dejar registrados..."></textarea>
+
+    <button class="btn verde" id="btn-guardar">💾 Guardar en la carpeta del paciente</button>
+    <div id="msg-guardado"></div>
+  </div>
+
+</div>
+
+<script>
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbwYdoFuU8mQL4YKqufSBQ9AD_yqWEEesLtGzYQjNw2JG1BZIQF7ug80mHB5sLMXhaUpvQ/exec';
+
+const zonaFotoCelular = document.getElementById('zona-foto-celular');
+const zonaFotoPodoscopio = document.getElementById('zona-foto-podoscopio');
+const fileInputCelular = document.getElementById('file-input-celular');
+const fileInputPodoscopio = document.getElementById('file-input-podoscopio');
+const cardFoto   = document.getElementById('card-foto');
+const cardCanvas = document.getElementById('card-canvas');
+const cardIndices= document.getElementById('card-indices');
+const cardPatron = document.getElementById('card-patron');
+const canvas     = document.getElementById('canvas');
+const ctx        = canvas.getContext('2d');
+const txtInstr   = document.getElementById('txt-instructivo');
+const cajaCalib  = document.getElementById('caja-calib');
+const btnCerrarPoligono = document.getElementById('btn-cerrar-poligono');
+
+let img = new Image();
+let modoActual = 'largo';
+let pxPorCm = null;
+
+let puntosLargo = [];
+let puntosAnchoX = [];
+let puntosAnchoY = [];
+let puntosSuperficie = [];
+let poligonoCerrado = false;
+
+let resultado = { largo_cm:null, anchoX_cm:null, anchoY_cm:null, superficie_cm2:null, hc_pct:null, cs_pct:null, ai_valor:null };
+let proporcionVerticeXray = null; // % anatómico traído del Costa-Bártani, si existe
+let fuenteProporcion = 'clásico (tercios iguales)';
+
+document.getElementById('btn-buscar-referencia').addEventListener('click', async function(){
+  const dni = document.getElementById('dni').value.trim();
+  const pie = document.getElementById('pie').value;
+  const msg = document.getElementById('msg-referencia');
+  if (!dni){ msg.textContent = '⚠️ Ingresá el DNI primero.'; msg.style.color = '#dc2626'; return; }
+  msg.textContent = 'Buscando...'; msg.style.color = '#64748b';
+  try {
+    const resp = await fetch(GAS_URL + '?action=get_gonio_mediciones&dni=' + encodeURIComponent(dni));
+    const data = await resp.json();
+    if (!data.success || !data.data || !data.data.length){
+      msg.textContent = 'No se encontraron mediciones previas para este DNI.';
+      msg.style.color = '#d97706';
+      return;
+    }
+    const registros = data.data.filter(r => r.Tipo_Medicion === 'CostaBartani' && r.Pie === pie);
+    if (!registros.length){
+      msg.textContent = 'No hay Costa-Bártani guardado para el pie ' + pie + '. Se usará el método clásico (tercios iguales).';
+      msg.style.color = '#d97706';
+      proporcionVerticeXray = null;
+      fuenteProporcion = 'clásico (tercios iguales)';
+      return;
+    }
+    registros.sort((a,b) => new Date(b.Timestamp) - new Date(a.Timestamp));
+    const ultimo = registros[0];
+    const datosExtra = JSON.parse(ultimo.Datos_JSON || '{}');
+    if (datosExtra.proporcion_vertice_pct){
+      proporcionVerticeXray = parseFloat(datosExtra.proporcion_vertice_pct);
+      fuenteProporcion = 'anatómico (Costa-Bártani del ' + new Date(ultimo.Timestamp).toLocaleDateString('es-AR') + ')';
+      msg.textContent = '✅ Referencia encontrada — vértice del arco al ' + proporcionVerticeXray.toFixed(1) + '% (radiografía del ' + new Date(ultimo.Timestamp).toLocaleDateString('es-AR') + ').';
+      msg.style.color = '#166534';
+    } else {
+      msg.textContent = 'Se encontró un Costa-Bártani pero sin datos de proporción. Se usará el método clásico.';
+      msg.style.color = '#d97706';
+    }
+  } catch (err){
+    msg.textContent = '❌ No se pudo conectar con el backend.';
+    msg.style.color = '#dc2626';
+  }
+});
+
+zonaFotoCelular.addEventListener('click', () => fileInputCelular.click());
+zonaFotoPodoscopio.addEventListener('click', () => fileInputPodoscopio.click());
+
+function cargarImagenDesdeDataURL(dataURL){
+  img = new Image();
+  img.onload = function () {
+    dibujarImagenBase();
+    cardCanvas.style.display = 'block';
+    cardIndices.style.display = 'none';
+    cardPatron.style.display = 'none';
+    resetearTodo();
+    cardCanvas.scrollIntoView({behavior:'smooth', block:'start'});
+  };
+  img.src = dataURL;
+}
+
+function manejarArchivoCargado(file){
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => cargarImagenDesdeDataURL(e.target.result);
+  reader.readAsDataURL(file);
+}
+fileInputCelular.addEventListener('change', function(){ manejarArchivoCargado(this.files[0]); });
+fileInputPodoscopio.addEventListener('change', function(){ manejarArchivoCargado(this.files[0]); });
+
+// ══════════════════════════════════════════════════════════
+// CÁMARA WEB HD — funciona con cualquier cámara que Windows/Android
+// reconozca como dispositivo de video: USB, Bluetooth o inalámbrica
+// (todas aparecen igual ante el navegador mediante getUserMedia).
+// ══════════════════════════════════════════════════════════
+const modalWebcam = document.getElementById('modal-webcam');
+const videoWebcam = document.getElementById('webcam-video');
+const errorWebcam = document.getElementById('webcam-error');
+let streamWebcamActivo = null;
+
+document.getElementById('zona-foto-webcam').addEventListener('click', async () => {
+  errorWebcam.textContent = '';
+  modalWebcam.style.display = 'flex';
+  try {
+    streamWebcamActivo = await navigator.mediaDevices.getUserMedia({
+      video: { width: { ideal: 1920 }, height: { ideal: 1080 } }
+    });
+    videoWebcam.srcObject = streamWebcamActivo;
+  } catch (err) {
+    errorWebcam.textContent = '⚠️ No se pudo acceder a ninguna cámara conectada (' + err.message + '). Revisá que esté enchufada/emparejada y que el navegador tenga permiso.';
+  }
+});
+
+function cerrarModalWebcam(){
+  if (streamWebcamActivo){
+    streamWebcamActivo.getTracks().forEach(t => t.stop());
+    streamWebcamActivo = null;
+  }
+  modalWebcam.style.display = 'none';
+}
+document.getElementById('btn-cancelar-webcam').addEventListener('click', cerrarModalWebcam);
+
+document.getElementById('btn-capturar-webcam').addEventListener('click', () => {
+  if (!streamWebcamActivo) return;
+  const cnv = document.createElement('canvas');
+  cnv.width = videoWebcam.videoWidth;
+  cnv.height = videoWebcam.videoHeight;
+  cnv.getContext('2d').drawImage(videoWebcam, 0, 0, cnv.width, cnv.height);
+  const dataURL = cnv.toDataURL('image/jpeg', 0.92);
+  cerrarModalWebcam();
+  cargarImagenDesdeDataURL(dataURL);
+});
+
+function resetearTodo(){
+  pxPorCm = null;
+  puntosLargo = []; puntosAnchoX = []; puntosAnchoY = []; puntosSuperficie = [];
+  poligonoCerrado = false;
+  resultado = { largo_cm:null, anchoX_cm:null, anchoY_cm:null, superficie_cm2:null, hc_pct:null, cs_pct:null };
+  actualizarResumen();
+  cambiarModo('largo');
+  document.getElementById('modo-anchoX').disabled = true;
+  document.getElementById('modo-anchoY').disabled = true;
+  document.getElementById('modo-superficie').disabled = true;
+  document.querySelectorAll('.modo-btn').forEach(b=>b.classList.remove('hecho'));
+}
+
+function dibujarImagenBase(){
+  const anchoMax = Math.min(window.innerWidth - 40, 680);
+  window.__escala = anchoMax / img.width;
+  canvas.width = anchoMax;
+  canvas.height = img.height * window.__escala;
+  redibujar();
+}
+
+function redibujar(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+  if (puntosLargo.length >= 1) dibujarPuntos(puntosLargo, '#0ea5e9');
+  if (puntosLargo.length === 2) dibujarLinea(puntosLargo[0], puntosLargo[1], '#0ea5e9');
+
+  if (puntosAnchoX.length >= 1) dibujarPuntos(puntosAnchoX, '#f97316');
+  if (puntosAnchoX.length === 2) dibujarLinea(puntosAnchoX[0], puntosAnchoX[1], '#f97316');
+
+  if (puntosAnchoY.length >= 1) dibujarPuntos(puntosAnchoY, '#ec4899');
+  if (puntosAnchoY.length === 2) dibujarLinea(puntosAnchoY[0], puntosAnchoY[1], '#ec4899');
+
+  if (puntosSuperficie.length >= 1){
+    dibujarPuntos(puntosSuperficie, '#a855f7');
+    ctx.beginPath();
+    ctx.moveTo(puntosSuperficie[0].x, puntosSuperficie[0].y);
+    for (let i=1;i<puntosSuperficie.length;i++) ctx.lineTo(puntosSuperficie[i].x, puntosSuperficie[i].y);
+    if (poligonoCerrado) ctx.closePath();
+    ctx.strokeStyle = '#a855f7';
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+    if (poligonoCerrado){ ctx.fillStyle = 'rgba(168,85,247,0.18)'; ctx.fill(); }
+  }
+}
+
+function dibujarPuntos(lista, color){
+  lista.forEach(p=>{
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 6, 0, Math.PI*2);
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  });
+}
+function dibujarLinea(a,b,color){
+  ctx.beginPath();
+  ctx.moveTo(a.x,a.y);
+  ctx.lineTo(b.x,b.y);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 3;
+  ctx.stroke();
+}
+
+function coordsDesdeEvento(ev){
+  const rect = canvas.getBoundingClientRect();
+  const clientX = ev.touches ? ev.touches[0].clientX : ev.clientX;
+  const clientY = ev.touches ? ev.touches[0].clientY : ev.clientY;
+  return {
+    x: (clientX - rect.left) * (canvas.width / rect.width),
+    y: (clientY - rect.top) * (canvas.height / rect.height)
+  };
+}
+
+function manejarClick(ev){
+  ev.preventDefault();
+  const p = coordsDesdeEvento(ev);
+  if (modoActual === 'largo'){
+    if (puntosLargo.length >= 2) return;
+    puntosLargo.push(p);
+    if (puntosLargo.length === 2) cajaCalib.style.display = 'block';
+  } else if (modoActual === 'anchoX'){
+    if (puntosAnchoX.length >= 2) return;
+    puntosAnchoX.push(p);
+    if (puntosAnchoX.length === 2) calcularAnchoX();
+  } else if (modoActual === 'anchoY'){
+    if (puntosAnchoY.length >= 2) return;
+    puntosAnchoY.push(p);
+    if (puntosAnchoY.length === 2) calcularAnchoY();
+  } else if (modoActual === 'superficie'){
+    if (poligonoCerrado) return;
+    puntosSuperficie.push(p);
+    btnCerrarPoligono.style.display = puntosSuperficie.length >= 3 ? 'inline-block' : 'none';
+  }
+  redibujar();
+}
+canvas.addEventListener('mousedown', manejarClick);
+canvas.addEventListener('touchstart', manejarClick, {passive:false});
+
+document.getElementById('btn-confirmar-largo').addEventListener('click', function(){
+  const cmReal = parseFloat(document.getElementById('largo-real-cm').value);
+  if (!cmReal || cmReal <= 0){
+    alert('Ingresá un valor válido de largo en centímetros.');
+    return;
+  }
+  const distPx = Math.hypot(puntosLargo[1].x - puntosLargo[0].x, puntosLargo[1].y - puntosLargo[0].y);
+  pxPorCm = distPx / cmReal;
+  resultado.largo_cm = cmReal.toFixed(1);
+  cajaCalib.style.display = 'none';
+  actualizarResumen();
+  marcarModoHecho('largo');
+  document.getElementById('modo-anchoX').disabled = false;
+  cambiarModo('anchoX');
+});
+
+function calcularAnchoX(){
+  const distPx = Math.hypot(puntosAnchoX[1].x - puntosAnchoX[0].x, puntosAnchoX[1].y - puntosAnchoX[0].y);
+  resultado.anchoX_cm = (distPx / pxPorCm).toFixed(2);
+  actualizarResumen();
+  marcarModoHecho('anchoX');
+  document.getElementById('modo-anchoY').disabled = false;
+  calcularIndicesSiCorresponde();
+  cambiarModo('anchoY');
+}
+
+function calcularAnchoY(){
+  const distPx = Math.hypot(puntosAnchoY[1].x - puntosAnchoY[0].x, puntosAnchoY[1].y - puntosAnchoY[0].y);
+  resultado.anchoY_cm = (distPx / pxPorCm).toFixed(2);
+  actualizarResumen();
+  marcarModoHecho('anchoY');
+  document.getElementById('modo-superficie').disabled = false;
+  calcularIndicesSiCorresponde();
+  cambiarModo('superficie');
+}
+
+function calcularIndicesSiCorresponde(){
+  if (!resultado.anchoX_cm || !resultado.anchoY_cm) return;
+  const X = parseFloat(resultado.anchoX_cm);
+  const Y = parseFloat(resultado.anchoY_cm);
+
+  // Índice de Hernández-Corvo: % Arco = (X - Y) / X * 100
+  const hc = ((X - Y) / X) * 100;
+  resultado.hc_pct = hc.toFixed(1);
+  let hcClasif;
+  if (hc >= 75) hcClasif = 'Pie Cavo Extremo';
+  else if (hc >= 55) hcClasif = 'Pie Cavo';
+  else if (hc >= 40) hcClasif = 'Pie Cavo-Normal';
+  else if (hc >= 35) hcClasif = 'Pie Normal';
+  else if (hc >= 4)  hcClasif = 'Pie Plano-Normal';
+  else               hcClasif = 'Pie Plano';
+
+  // Índice de Chippaux-Smirak: I = Y / X * 100
+  const cs = (Y / X) * 100;
+  resultado.cs_pct = cs.toFixed(1);
+  let csClasif;
+  if (cs < 30) csClasif = 'Tendencia a Cavo';
+  else if (cs <= 45) csClasif = 'Normal';
+  else csClasif = 'Tendencia a Plano';
+
+  document.getElementById('res-hc').textContent = resultado.hc_pct + '%';
+  document.getElementById('res-cs').textContent = resultado.cs_pct + '%';
+  document.getElementById('hc-valor').textContent = resultado.hc_pct + '%';
+  document.getElementById('hc-clasif').textContent = hcClasif;
+  document.getElementById('cs-valor').textContent = resultado.cs_pct + '%';
+  document.getElementById('cs-clasif').textContent = csClasif;
+  cardIndices.style.display = 'block';
+
+  // Sugerencia automática (editable) para el desplegable de patrón general
+  const sel = document.getElementById('patron-general');
+  if (hcClasif.indexOf('Cavo') !== -1) sel.value = 'Cavo';
+  else if (hcClasif === 'Pie Plano') sel.value = 'Plano';
+  else sel.value = 'Normal';
+}
+
+// ══════════════════════════════════════════════════════════
+// ARCH INDEX (Cavanagh-Rodgers) — versión adaptada con
+// referencia anatómica del Costa-Bártani cuando está disponible.
+// Recorta el polígono de superficie en 3 zonas (retro/medio/ante-pié)
+// usando el eje talón→punta ya medido en el paso "Largo".
+// ══════════════════════════════════════════════════════════
+function proyeccionEnEje(p, origen, dirUnit){
+  return (p.x - origen.x) * dirUnit.x + (p.y - origen.y) * dirUnit.y;
+}
+function shoelaceArea(poly){
+  if (poly.length < 3) return 0;
+  let a = 0;
+  for (let i=0;i<poly.length;i++){
+    const p1 = poly[i], p2 = poly[(i+1)%poly.length];
+    a += (p1.x*p2.y) - (p2.x*p1.y);
+  }
+  return Math.abs(a) / 2;
+}
+// Recorta un polígono contra la línea perpendicular al eje en la posición "corte" (px a lo largo del eje).
+// keepMayor = true -> conserva la parte con proyección >= corte; false -> conserva proyección <= corte.
+function recortarPoligono(poly, origen, dirUnit, corte, keepMayor){
+  const test = (p) => {
+    const s = proyeccionEnEje(p, origen, dirUnit);
+    return keepMayor ? s >= corte : s <= corte;
+  };
+  const interseccion = (a, b) => {
+    const sa = proyeccionEnEje(a, origen, dirUnit);
+    const sb = proyeccionEnEje(b, origen, dirUnit);
+    const t = (corte - sa) / (sb - sa);
+    return { x: a.x + t*(b.x-a.x), y: a.y + t*(b.y-a.y) };
+  };
+  let out = [];
+  const n = poly.length;
+  for (let i=0;i<n;i++){
+    const curr = poly[i], prev = poly[(i+n-1)%n];
+    const currIn = test(curr), prevIn = test(prev);
+    if (currIn){
+      if (!prevIn) out.push(interseccion(prev, curr));
+      out.push(curr);
+    } else if (prevIn){
+      out.push(interseccion(prev, curr));
+    }
+  }
+  return out;
+}
+
+function calcularArchIndex(){
+  if (puntosLargo.length < 2 || puntosSuperficie.length < 3) return;
+
+  const origen = puntosLargo[0]; // talón
+  const destino = puntosLargo[1]; // punta del dedo más largo
+  const largoTotalPx = Math.hypot(destino.x-origen.x, destino.y-origen.y);
+  const dirUnit = { x:(destino.x-origen.x)/largoTotalPx, y:(destino.y-origen.y)/largoTotalPx };
+
+  // Posición del ancho metatarsal (X) proyectada sobre el eje = límite mediopié/antepié "empírico" en esta foto
+  let corte2Px;
+  if (puntosAnchoX.length === 2){
+    const medioAnchoX = { x:(puntosAnchoX[0].x+puntosAnchoX[1].x)/2, y:(puntosAnchoX[0].y+puntosAnchoX[1].y)/2 };
+    corte2Px = proyeccionEnEje(medioAnchoX, origen, dirUnit);
+  } else {
+    corte2Px = largoTotalPx * (2/3); // respaldo clásico
+  }
+
+  // Límite retropié/mediopié: anatómico (Costa-Bártani) si existe, si no, tercio clásico
+  let corte1Px;
+  if (proporcionVerticeXray !== null){
+    corte1Px = corte2Px * (proporcionVerticeXray / 100);
+  } else {
+    corte1Px = largoTotalPx * (1/3);
+  }
+
+  const zonaRetro = recortarPoligono(puntosSuperficie, origen, dirUnit, corte1Px, false);
+  let zonaMedio = recortarPoligono(puntosSuperficie, origen, dirUnit, corte1Px, true);
+  zonaMedio = recortarPoligono(zonaMedio, origen, dirUnit, corte2Px, false);
+  const zonaAnte  = recortarPoligono(puntosSuperficie, origen, dirUnit, corte2Px, true);
+
+  const areaRetroPx = shoelaceArea(zonaRetro);
+  const areaMedioPx = shoelaceArea(zonaMedio);
+  const areaAntePx  = shoelaceArea(zonaAnte);
+  const areaTotalPx = areaRetroPx + areaMedioPx + areaAntePx;
+
+  if (areaTotalPx <= 0) return;
+
+  const archIndex = areaMedioPx / areaTotalPx;
+  let clasif;
+  if (archIndex < 0.21) clasif = 'Pie Cavo';
+  else if (archIndex <= 0.26) clasif = 'Normal';
+  else clasif = 'Pie Plano';
+
+  resultado.ai_valor = archIndex.toFixed(2);
+  document.getElementById('ai-valor').textContent = resultado.ai_valor;
+  document.getElementById('ai-clasif').textContent = clasif;
+  document.getElementById('ai-fuente').textContent = 'Corte retro/mediopié: ' + fuenteProporcion;
+  window.__archIndexClasif = clasif;
+}
+
+btnCerrarPoligono.addEventListener('click', function(){
+  if (puntosSuperficie.length < 3) return;
+  poligonoCerrado = true;
+  let areaPx = 0;
+  const n = puntosSuperficie.length;
+  for (let i=0;i<n;i++){
+    const p1 = puntosSuperficie[i];
+    const p2 = puntosSuperficie[(i+1)%n];
+    areaPx += (p1.x * p2.y) - (p2.x * p1.y);
+  }
+  areaPx = Math.abs(areaPx) / 2;
+  const areaCm2 = areaPx / (pxPorCm * pxPorCm);
+  resultado.superficie_cm2 = areaCm2.toFixed(1);
+  actualizarResumen();
+  marcarModoHecho('superficie');
+  btnCerrarPoligono.style.display = 'none';
+  calcularArchIndex();
+  redibujar();
+  cardPatron.style.display = 'block';
+  cardPatron.scrollIntoView({behavior:'smooth', block:'start'});
+});
+
+function actualizarResumen(){
+  document.getElementById('res-largo').textContent = resultado.largo_cm || '--';
+  document.getElementById('res-anchoX').textContent = resultado.anchoX_cm || '--';
+  document.getElementById('res-anchoY').textContent = resultado.anchoY_cm || '--';
+  document.getElementById('res-superficie').textContent = resultado.superficie_cm2 || '--';
+  document.getElementById('res-hc').textContent = resultado.hc_pct ? resultado.hc_pct + '%' : '--';
+  document.getElementById('res-cs').textContent = resultado.cs_pct ? resultado.cs_pct + '%' : '--';
+}
+
+function marcarModoHecho(modo){
+  document.getElementById('modo-' + modo).classList.add('hecho');
+}
+
+document.querySelectorAll('.modo-btn').forEach(btn=>{
+  btn.addEventListener('click', function(){
+    if (this.disabled) return;
+    cambiarModo(this.dataset.modo);
+  });
+});
+
+function cambiarModo(modo){
+  modoActual = modo;
+  document.querySelectorAll('.modo-btn').forEach(b=>b.classList.remove('activo'));
+  document.getElementById('modo-' + modo).classList.add('activo');
+  cajaCalib.style.display = (modo === 'largo' && puntosLargo.length === 2 && !resultado.largo_cm) ? 'block' : 'none';
+  btnCerrarPoligono.style.display = (modo === 'superficie' && puntosSuperficie.length >= 3 && !poligonoCerrado) ? 'inline-block' : 'none';
+  if (modo === 'largo') txtInstr.innerHTML = 'Marcá <b>2 puntos</b>: el más posterior del talón y la punta del dedo más largo. Con esto se calibra la escala.';
+  else if (modo === 'anchoX') txtInstr.innerHTML = 'Marcá <b>2 puntos</b> en la parte más ancha del <b>antepié / zona metatarsal</b> (borde interno y externo, a la altura de las cabezas metatarsianas).';
+  else if (modo === 'anchoY') txtInstr.innerHTML = 'Marcá <b>2 puntos</b> en la parte más angosta del <b>istmo</b> (la cintura del arco, en la zona media del pie).';
+  else if (modo === 'superficie') txtInstr.innerHTML = 'Marcá varios puntos siguiendo el <b>contorno de la zona de apoyo</b> (la huella oscura/en contacto). Cuando termines, tocá "Cerrar figura".';
+}
+
+document.getElementById('btn-reiniciar-modo').addEventListener('click', ()=>{
+  if (modoActual === 'largo'){ puntosLargo=[]; resultado.largo_cm=null; cajaCalib.style.display='none'; }
+  else if (modoActual === 'anchoX'){ puntosAnchoX=[]; resultado.anchoX_cm=null; resultado.hc_pct=null; resultado.cs_pct=null; cardIndices.style.display='none'; }
+  else if (modoActual === 'anchoY'){ puntosAnchoY=[]; resultado.anchoY_cm=null; resultado.hc_pct=null; resultado.cs_pct=null; cardIndices.style.display='none'; }
+  else if (modoActual === 'superficie'){ puntosSuperficie=[]; poligonoCerrado=false; resultado.superficie_cm2=null; btnCerrarPoligono.style.display='none'; }
+  document.getElementById('modo-' + modoActual).classList.remove('hecho');
+  actualizarResumen();
+  redibujar();
+});
+
+document.getElementById('btn-otra-foto').addEventListener('click', ()=>{
+  fileInputCelular.value = '';
+  fileInputPodoscopio.value = '';
+  cardFoto.scrollIntoView({behavior:'smooth', block:'start'});
+});
+
+document.getElementById('btn-guardar').addEventListener('click', async function(){
+  const dni = document.getElementById('dni').value.trim();
+  const msg = document.getElementById('msg-guardado');
+  if (!dni){
+    msg.className = 'msg-error';
+    msg.textContent = '⚠️ Ingresá el DNI del paciente antes de guardar.';
+    return;
+  }
+  if (!resultado.largo_cm || !resultado.anchoX_cm || !resultado.anchoY_cm || !resultado.superficie_cm2){
+    msg.className = 'msg-error';
+    msg.textContent = '⚠️ Completá las 4 mediciones antes de guardar.';
+    return;
+  }
+  this.disabled = true;
+  this.textContent = 'Guardando...';
+  msg.className = ''; msg.textContent = '';
+
+  const fotoBase64 = canvas.toDataURL('image/jpeg', 0.85);
+  const datosExtra = {
+    largo_cm: resultado.largo_cm,
+    ancho_metatarso_X_cm: resultado.anchoX_cm,
+    ancho_istmo_Y_cm: resultado.anchoY_cm,
+    superficie_cm2: resultado.superficie_cm2,
+    indice_hernandez_corvo_pct: resultado.hc_pct,
+    indice_hernandez_corvo_clasif: document.getElementById('hc-clasif').textContent,
+    indice_chippaux_smirak_pct: resultado.cs_pct,
+    indice_chippaux_smirak_clasif: document.getElementById('cs-clasif').textContent,
+    arch_index_valor: resultado.ai_valor,
+    arch_index_clasif: window.__archIndexClasif || '',
+    arch_index_fuente_corte: fuenteProporcion,
+    apoyo_talon: document.getElementById('apoyo-talon').value,
+    borde_arco: document.getElementById('borde-arco').value,
+    grado_plano: document.getElementById('grado-plano').value,
+    apoyo_antepie: document.getElementById('apoyo-antepie').value,
+    apoyo_dedos: document.getElementById('apoyo-dedos').value,
+    tendencia: document.getElementById('tendencia').value,
+    patron_general: document.getElementById('patron-general').value
+  };
+  const resumenClasif = datosExtra.patron_general + ' — ' + datosExtra.tendencia + ' (HC ' + resultado.hc_pct + '%)';
+
+  const payload = {
+    action: 'guardar_gonio_medicion',
+    dni: dni,
+    tipo_medicion: 'Podoscopia',
+    pie: document.getElementById('pie').value,
+    angulo: '',
+    clasificacion: resumenClasif,
+    comentario: document.getElementById('comentario').value.trim(),
+    foto_base64: fotoBase64,
+    puntos: {largo:puntosLargo, anchoX:puntosAnchoX, anchoY:puntosAnchoY, superficie:puntosSuperficie},
+    datos_extra: datosExtra
+  };
+
+  try {
+    const resp = await fetch(GAS_URL, {
+      method: 'POST',
+      headers: {'Content-Type': 'text/plain;charset=utf-8'},
+      body: JSON.stringify(payload)
+    });
+    const data = await resp.json();
+    if (data.success){
+      msg.className = 'msg-ok';
+      msg.textContent = '✅ Podoscopia guardada en la carpeta del paciente (DNI ' + dni + ', pie ' + document.getElementById('pie').value + ').';
+    } else {
+      msg.className = 'msg-error';
+      msg.textContent = '❌ Error al guardar: ' + (data.error || data.message || 'desconocido');
+    }
+  } catch (err) {
+    msg.className = 'msg-error';
+    msg.textContent = '❌ No se pudo conectar con el backend. Revisar conexión a internet.';
+  }
+  this.disabled = false;
+  this.textContent = '💾 Guardar en la carpeta del paciente';
+});
+
+window.addEventListener('resize', ()=>{ if (img.src) dibujarImagenBase(); });
+</script>
+
+</body>
+</html>

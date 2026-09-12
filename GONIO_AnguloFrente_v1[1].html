@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>GONIO — Ángulos de Frente (Intermetatarsiano/Interfalángico) · SMM</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--navy:#0b1f3a;--green:#22c55e;--blue:#2563eb;--red:#dc2626;--border:#e2e8f0}
+body{font-family:'Inter',Arial,sans-serif;background:#f0f4f8;min-height:100vh;color:#1e293b}
+.header{background:var(--navy);color:#fff;padding:16px 20px;display:flex;align-items:center;justify-content:space-between}
+.header h1{font-size:15px;font-weight:700}
+.header a{color:#93c5fd;font-size:12px;text-decoration:none}
+.main{max-width:720px;margin:0 auto;padding:16px}
+.card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px}
+.card h2{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:10px;text-transform:uppercase;letter-spacing:.04em}
+.card h3{font-size:12.5px;font-weight:700;color:#334155;margin:14px 0 6px}
+label{display:block;font-size:12px;font-weight:600;color:#475569;margin-bottom:4px;margin-top:10px}
+input[type=text],select,textarea{width:100%;padding:9px 10px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;font-family:inherit}
+textarea{resize:vertical;min-height:60px}
+.btn{display:inline-block;background:var(--blue);color:#fff;border:none;padding:10px 16px;border-radius:8px;
+font-size:13px;font-weight:600;cursor:pointer;margin-top:10px;margin-right:8px}
+.btn:hover{background:#1d4ed8}
+.btn.gris{background:#64748b} .btn.gris:hover{background:#475569}
+.btn.verde{background:var(--green)} .btn.verde:hover{background:#16a34a}
+.btn:disabled{background:#cbd5e1;cursor:not-allowed}
+#file-input{display:none}
+.zona-foto{border:2px dashed #cbd5e1;border-radius:10px;padding:24px 16px;text-align:center;cursor:pointer;color:#64748b;font-size:13px}
+.zona-foto:hover{border-color:var(--blue);color:var(--blue)}
+#canvas-wrap{position:relative;width:100%;max-width:100%;touch-action:none}
+canvas{width:100%;border-radius:8px;display:block;background:#000;touch-action:none}
+.instructivo{background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px 12px;font-size:12.5px;color:#1e3a5f;margin-bottom:10px}
+.instructivo b{color:#1d4ed8}
+.resultado{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:16px;text-align:center;margin-top:12px}
+.resultado .num{font-size:34px;font-weight:800;color:#166534}
+.resultado .clasif{font-size:14px;font-weight:600;margin-top:4px;color:#475569}
+.badge-paso{display:inline-block;background:var(--blue);color:#fff;font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px;margin-bottom:6px}
+.msg-ok{color:#166534;font-size:13px;font-weight:600;margin-top:8px}
+.msg-error{color:var(--red);font-size:13px;font-weight:600;margin-top:8px}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>📐 GONIO — Ángulos de Frente (Hallux Valgus / Dedos)</h1>
+  <a href="INDEX_SIM.html">← Menú principal</a>
+</div>
+
+<div class="main">
+
+  <div class="card">
+    <h2>1 · Paciente</h2>
+    <label>DNI</label>
+    <input type="text" id="dni" placeholder="Ej: 12345678" inputmode="numeric">
+    <label>Pie evaluado</label>
+    <select id="pie">
+      <option value="Derecho">Derecho</option>
+      <option value="Izquierdo">Izquierdo</option>
+    </select>
+    <label>Qué ángulo vas a medir</label>
+    <select id="tipo-angulo">
+      <option value="Intermetatarsiano_1_2">Intermetatarsiano 1°-2° (líneas de eje, 2 rectas)</option>
+      <option value="Intermetatarsiano_1_3">Intermetatarsiano 1°-3° (líneas de eje, 2 rectas)</option>
+      <option value="Interfalangico_Distal">Interfalángico Distal — IFD (vértice, 3 puntos)</option>
+      <option value="Interfalangico_Proximal">Interfalángico Proximal — IFP (vértice, 3 puntos)</option>
+    </select>
+  </div>
+
+  <div class="card" id="card-foto">
+    <h2>2 · Radiografía de frente</h2>
+    <div class="instructivo">
+      Radiografía de pie de frente (dorsoplantar), con buena calidad y encuadrando todo el antepié.
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <div class="zona-foto" id="zona-foto" style="flex:1;min-width:150px">📱 Foto con el celular</div>
+      <div class="zona-foto" id="zona-foto-webcam" style="flex:1;min-width:150px">🎥 Cámara Web HD</div>
+    </div>
+    <input type="file" id="file-input" accept="image/*" capture="environment" style="display:none">
+  </div>
+
+  <div id="modal-webcam" style="display:none;position:fixed;inset:0;background:rgba(11,31,58,.85);z-index:9999;align-items:center;justify-content:center;padding:16px">
+    <div style="background:#fff;border-radius:12px;padding:16px;max-width:640px;width:100%">
+      <div style="font-size:13px;font-weight:700;color:#0b1f3a;margin-bottom:8px">🎥 Cámara Web HD</div>
+      <video id="webcam-video" autoplay playsinline style="width:100%;border-radius:8px;background:#000"></video>
+      <div id="webcam-error" style="color:#dc2626;font-size:12px;margin-top:6px"></div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="btn verde" id="btn-capturar-webcam" style="flex:1">📸 Capturar foto</button>
+        <button class="btn gris" id="btn-cancelar-webcam">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="card-canvas" style="display:none">
+    <h2>3 · Marcar el ángulo</h2>
+    <div class="instructivo" id="txt-paso"></div>
+    <div id="canvas-wrap"><canvas id="canvas"></canvas></div>
+    <button class="btn gris" id="btn-reiniciar">↺ Reiniciar puntos</button>
+    <button class="btn gris" id="btn-otra-foto">🔄 Cambiar foto</button>
+  </div>
+
+  <div class="card" id="card-resultado" style="display:none">
+    <h2>4 · Resultado</h2>
+    <div class="resultado">
+      <div class="num" id="num-angulo">--°</div>
+      <div class="clasif" id="txt-clasif">—</div>
+    </div>
+
+    <h3>Seguimiento — Hallux Valgus pediátrico (remodelación fisaria)</h3>
+    <label>¿Aplica remodelación fisaria en este seguimiento?</label>
+    <select id="remodelacion-fisaria">
+      <option value="No">No — solo seguimiento angular</option>
+      <option value="Fisis distal 1er metatarsiano">Sí — Fisis distal 1er metatarsiano</option>
+      <option value="Fisis proximal 1er metatarsiano">Sí — Fisis proximal 1er metatarsiano</option>
+      <option value="Fisis distal y proximal">Sí — Fisis distal y proximal</option>
+    </select>
+    <label>Fecha de inicio del tratamiento (si aplica)</label>
+    <input type="text" id="fecha-tratamiento" placeholder="DD/MM/AAAA">
+
+    <label>Comentario / observación (opcional)</label>
+    <textarea id="comentario" placeholder="Detalles adicionales..."></textarea>
+    <button class="btn verde" id="btn-guardar">💾 Guardar en la carpeta del paciente</button>
+    <div id="msg-guardado"></div>
+  </div>
+
+</div>
+
+<script>
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbwYdoFuU8mQL4YKqufSBQ9AD_yqWEEesLtGzYQjNw2JG1BZIQF7ug80mHB5sLMXhaUpvQ/exec';
+
+const zonaFoto   = document.getElementById('zona-foto');
+const fileInput  = document.getElementById('file-input');
+const cardCanvas = document.getElementById('card-canvas');
+const cardResult = document.getElementById('card-resultado');
+const canvas     = document.getElementById('canvas');
+const ctx        = canvas.getContext('2d');
+const txtPaso    = document.getElementById('txt-paso');
+
+let img = new Image();
+let puntos = [];
+
+function modoActual(){
+  const v = document.getElementById('tipo-angulo').value;
+  return (v==='Interfalangico_Distal' || v==='Interfalangico_Proximal') ? 'vertice' : 'dosLineas';
+}
+function maxPuntos(){ return modoActual()==='vertice' ? 3 : 4; }
+
+const TEXTOS_VERTICE = [
+  {badge:'Punto 1 de 3', texto:'Marcá el punto proximal, sobre el eje de la falange proximal al vértice de esa articulación.'},
+  {badge:'Punto 2 de 3', texto:'Marcá el <b>vértice</b>: el centro de la articulación interfalángica a medir.'},
+  {badge:'Punto 3 de 3', texto:'Marcá el punto distal, sobre el eje de la falange distal a esa articulación.'}
+];
+const TEXTOS_DOSLINEAS = [
+  {badge:'Punto 1 de 4', texto:'Marcá el <b>primer punto</b> del eje del metatarsiano de referencia (proximal).'},
+  {badge:'Punto 2 de 4', texto:'Marcá el <b>segundo punto</b> del eje de ese mismo metatarsiano (distal).'},
+  {badge:'Punto 3 de 4', texto:'Ahora marcá el <b>primer punto</b> del eje del segundo metatarsiano (proximal).'},
+  {badge:'Punto 4 de 4', texto:'Marcá el <b>segundo punto</b> de ese eje (distal). Se calcula el ángulo automáticamente.'}
+];
+
+zonaFoto.addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', function () {
+  const file = this.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    img = new Image();
+    img.onload = function () {
+      dibujarImagenBase();
+      cardCanvas.style.display = 'block';
+      cardResult.style.display = 'none';
+      puntos = [];
+      actualizarInstructivo();
+      cardCanvas.scrollIntoView({behavior:'smooth', block:'start'});
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+});
+
+// Cámara Web HD
+const modalWebcam = document.getElementById('modal-webcam');
+const videoWebcam = document.getElementById('webcam-video');
+const errorWebcam = document.getElementById('webcam-error');
+let streamWebcamActivo = null;
+document.getElementById('zona-foto-webcam').addEventListener('click', async () => {
+  errorWebcam.textContent = '';
+  modalWebcam.style.display = 'flex';
+  try {
+    streamWebcamActivo = await navigator.mediaDevices.getUserMedia({video:{width:{ideal:1920},height:{ideal:1080}}});
+    videoWebcam.srcObject = streamWebcamActivo;
+  } catch (err) { errorWebcam.textContent = '⚠️ No se pudo acceder a ninguna cámara conectada (' + err.message + ').'; }
+});
+function cerrarModalWebcam(){
+  if (streamWebcamActivo){ streamWebcamActivo.getTracks().forEach(t=>t.stop()); streamWebcamActivo=null; }
+  modalWebcam.style.display = 'none';
+}
+document.getElementById('btn-cancelar-webcam').addEventListener('click', cerrarModalWebcam);
+document.getElementById('btn-capturar-webcam').addEventListener('click', () => {
+  if (!streamWebcamActivo) return;
+  const cnv = document.createElement('canvas');
+  cnv.width = videoWebcam.videoWidth; cnv.height = videoWebcam.videoHeight;
+  cnv.getContext('2d').drawImage(videoWebcam, 0, 0, cnv.width, cnv.height);
+  const dataURL = cnv.toDataURL('image/jpeg', 0.92);
+  cerrarModalWebcam();
+  img = new Image();
+  img.onload = function () {
+    dibujarImagenBase();
+    cardCanvas.style.display = 'block';
+    cardResult.style.display = 'none';
+    puntos = [];
+    actualizarInstructivo();
+    cardCanvas.scrollIntoView({behavior:'smooth', block:'start'});
+  };
+  img.src = dataURL;
+});
+
+function dibujarImagenBase(){
+  const anchoMax = Math.min(window.innerWidth - 40, 680);
+  window.__escala = anchoMax / img.width;
+  canvas.width = anchoMax;
+  canvas.height = img.height * window.__escala;
+  redibujar();
+}
+function redibujar(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  if (modoActual()==='vertice'){
+    if (puntos.length >= 2) dibujarLinea(puntos[0], puntos[1], '#38bdf8');
+    if (puntos.length >= 3) dibujarLinea(puntos[1], puntos[2], '#facc15');
+  } else {
+    if (puntos.length >= 2) dibujarLinea(puntos[0], puntos[1], '#38bdf8');
+    if (puntos.length >= 4) dibujarLinea(puntos[2], puntos[3], '#facc15');
+  }
+  const colores = ['#0ea5e9','#f97316','#eab308','#a855f7'];
+  puntos.forEach((p,i)=>{
+    ctx.beginPath(); ctx.arc(p.x,p.y,7,0,Math.PI*2);
+    ctx.fillStyle = colores[i]; ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+  });
+}
+function dibujarLinea(a,b,color){
+  ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y);
+  ctx.strokeStyle = color; ctx.lineWidth = 3; ctx.stroke();
+}
+function coordsDesdeEvento(ev){
+  const rect = canvas.getBoundingClientRect();
+  const clientX = ev.touches ? ev.touches[0].clientX : ev.clientX;
+  const clientY = ev.touches ? ev.touches[0].clientY : ev.clientY;
+  return { x:(clientX-rect.left)*(canvas.width/rect.width), y:(clientY-rect.top)*(canvas.height/rect.height) };
+}
+function manejarClick(ev){
+  ev.preventDefault();
+  if (puntos.length >= maxPuntos()) return;
+  puntos.push(coordsDesdeEvento(ev));
+  redibujar();
+  actualizarInstructivo();
+  if (puntos.length === maxPuntos()) calcularAngulo();
+}
+canvas.addEventListener('mousedown', manejarClick);
+canvas.addEventListener('touchstart', manejarClick, {passive:false});
+
+function actualizarInstructivo(){
+  const textos = modoActual()==='vertice' ? TEXTOS_VERTICE : TEXTOS_DOSLINEAS;
+  if (puntos.length < maxPuntos()){
+    const paso = textos[puntos.length];
+    txtPaso.innerHTML = '<span class="badge-paso">'+paso.badge+'</span><br>'+paso.texto;
+  } else {
+    txtPaso.innerHTML = '<span class="badge-paso" style="background:#16a34a">Listo ✓</span><br>Ángulo calculado abajo.';
+  }
+}
+document.getElementById('tipo-angulo').addEventListener('change', ()=>{
+  puntos = []; cardResult.style.display='none';
+  if (img.src){ redibujar(); actualizarInstructivo(); }
+});
+document.getElementById('btn-reiniciar').addEventListener('click', ()=>{
+  puntos = []; redibujar(); actualizarInstructivo(); cardResult.style.display='none';
+});
+document.getElementById('btn-otra-foto').addEventListener('click', ()=>{ fileInput.value=''; fileInput.click(); });
+
+function calcularAngulo(){
+  let anguloDeg, etiquetaResultado;
+  if (modoActual()==='vertice'){
+    const vertice = puntos[1];
+    const v1 = {x:puntos[0].x-vertice.x, y:puntos[0].y-vertice.y};
+    const v2 = {x:puntos[2].x-vertice.x, y:puntos[2].y-vertice.y};
+    const dot = v1.x*v2.x+v1.y*v2.y;
+    const mag1=Math.hypot(v1.x,v1.y), mag2=Math.hypot(v2.x,v2.y);
+    const anguloVertice = Math.acos(Math.max(-1,Math.min(1,dot/(mag1*mag2))))*180/Math.PI;
+    anguloDeg = 180 - anguloVertice; // desviación respecto de la línea recta
+    etiquetaResultado = anguloDeg < 5 ? 'Alineación normal' : 'Desviación angular presente';
+  } else {
+    const v1 = {x:puntos[1].x-puntos[0].x, y:puntos[1].y-puntos[0].y};
+    const v2 = {x:puntos[3].x-puntos[2].x, y:puntos[3].y-puntos[2].y};
+    const dot = v1.x*v2.x+v1.y*v2.y;
+    const mag1=Math.hypot(v1.x,v1.y), mag2=Math.hypot(v2.x,v2.y);
+    anguloDeg = Math.acos(Math.max(-1,Math.min(1,dot/(mag1*mag2))))*180/Math.PI;
+    if (anguloDeg>90) anguloDeg = 180-anguloDeg;
+    const tipo = document.getElementById('tipo-angulo').value;
+    if (tipo==='Intermetatarsiano_1_2') etiquetaResultado = anguloDeg>9 ? 'Aumentado (sugiere Hallux Valgus)' : 'Dentro de rango habitual (<9°)';
+    else etiquetaResultado = anguloDeg>10 ? 'Aumentado' : 'Dentro de rango habitual';
+  }
+  document.getElementById('num-angulo').textContent = anguloDeg.toFixed(1)+'°';
+  document.getElementById('txt-clasif').textContent = etiquetaResultado;
+  cardResult.style.display='block';
+  cardResult.scrollIntoView({behavior:'smooth', block:'start'});
+  window.__gonioResultado = {angulo:anguloDeg.toFixed(1), clasificacion:etiquetaResultado};
+}
+
+document.getElementById('remodelacion-fisaria').addEventListener('change', function(){
+  document.getElementById('fecha-tratamiento').style.display = this.value==='No' ? 'none':'block';
+});
+
+document.getElementById('btn-guardar').addEventListener('click', async function(){
+  const dni = document.getElementById('dni').value.trim();
+  const msg = document.getElementById('msg-guardado');
+  if (!dni){ msg.className='msg-error'; msg.textContent='⚠️ Ingresá el DNI del paciente antes de guardar.'; return; }
+  if (!window.__gonioResultado){ msg.className='msg-error'; msg.textContent='⚠️ Primero completá la medición.'; return; }
+  this.disabled=true; this.textContent='Guardando...'; msg.className=''; msg.textContent='';
+
+  const fotoBase64 = canvas.toDataURL('image/jpeg', 0.85);
+  const payload = {
+    action: 'guardar_gonio_medicion',
+    dni: dni,
+    tipo_medicion: document.getElementById('tipo-angulo').value,
+    pie: document.getElementById('pie').value,
+    angulo: window.__gonioResultado.angulo,
+    clasificacion: window.__gonioResultado.clasificacion,
+    comentario: document.getElementById('comentario').value.trim(),
+    foto_base64: fotoBase64,
+    puntos: puntos,
+    datos_extra: {
+      remodelacion_fisaria: document.getElementById('remodelacion-fisaria').value,
+      fecha_tratamiento: document.getElementById('fecha-tratamiento').value.trim()
+    }
+  };
+  try {
+    const resp = await fetch(GAS_URL, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(payload)});
+    const data = await resp.json();
+    if (data.success){
+      msg.className='msg-ok';
+      msg.textContent='✅ Medición guardada (DNI '+dni+', '+document.getElementById('tipo-angulo').selectedOptions[0].textContent+').';
+    } else {
+      msg.className='msg-error'; msg.textContent='❌ Error al guardar: '+(data.error||data.message||'desconocido');
+    }
+  } catch (err) {
+    msg.className='msg-error'; msg.textContent='❌ No se pudo conectar con el backend.';
+  }
+  this.disabled=false; this.textContent='💾 Guardar en la carpeta del paciente';
+});
+
+window.addEventListener('resize', ()=>{ if (img.src) dibujarImagenBase(); });
+</script>
+
+</body>
+</html>
