@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>GONIO — Miembro Inferior: Hallux Valgus, Genu, Costa-Bártani, Retropié · SMM</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--navy:#0b1f3a;--green:#22c55e;--blue:#2563eb;--red:#dc2626;--border:#e2e8f0;--purple:#a855f7}
+body{font-family:'Inter',Arial,sans-serif;background:#f0f4f8;min-height:100vh;color:#1e293b}
+.header{background:var(--navy);color:#fff;padding:16px 20px;display:flex;align-items:center;justify-content:space-between}
+.header h1{font-size:15px;font-weight:700}
+.header a{color:#93c5fd;font-size:12px;text-decoration:none}
+.main{max-width:720px;margin:0 auto;padding:16px}
+.card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px}
+.card h2{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:10px;text-transform:uppercase;letter-spacing:.04em}
+label{display:block;font-size:12px;font-weight:600;color:#475569;margin-bottom:4px;margin-top:10px}
+input[type=text],input[type=number],select,textarea{width:100%;padding:9px 10px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;font-family:inherit}
+textarea{resize:vertical;min-height:60px}
+.btn{display:inline-block;background:var(--blue);color:#fff;border:none;padding:11px 18px;border-radius:8px;
+font-size:14px;font-weight:600;cursor:pointer;margin-top:12px;margin-right:8px}
+.btn:hover{background:#1d4ed8}
+.btn.gris{background:#64748b}
+.btn.gris:hover{background:#475569}
+.btn.verde{background:var(--green)}
+.btn.verde:hover{background:#16a34a}
+.btn:disabled{background:#cbd5e1;cursor:not-allowed}
+#file-input{display:none}
+.zona-foto{border:2px dashed #cbd5e1;border-radius:10px;padding:30px 16px;text-align:center;cursor:pointer;color:#64748b;font-size:13px}
+.zona-foto:hover{border-color:var(--blue);color:var(--blue)}
+#canvas-wrap{position:relative;width:100%;max-width:100%;touch-action:none}
+canvas{width:100%;border-radius:8px;display:block;background:#000;touch-action:none}
+.instructivo{background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px 12px;font-size:12.5px;color:#1e3a5f;margin-bottom:10px}
+.instructivo b{color:#1d4ed8}
+.nota-fuente{background:#fefce8;border:1px solid #fde68a;border-radius:8px;padding:9px 11px;font-size:11.5px;color:#713f12;margin-top:10px;line-height:1.4}
+.resultado{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:16px;text-align:center;margin-top:12px}
+.resultado .num{font-size:34px;font-weight:800;color:#166534}
+.resultado .clasif{font-size:14px;font-weight:600;margin-top:4px;color:#475569}
+.resultado .aviso{font-size:11px;color:#78716c;margin-top:8px;line-height:1.4}
+.badge-paso{display:inline-block;background:var(--blue);color:#fff;font-size:11px;font-weight:700;
+padding:2px 9px;border-radius:20px;margin-bottom:6px}
+.msg-ok{color:#166534;font-size:13px;font-weight:600;margin-top:8px}
+.msg-error{color:var(--red);font-size:13px;font-weight:600;margin-top:8px}
+.leyenda{display:flex;gap:14px;font-size:11px;color:#64748b;margin-top:8px;flex-wrap:wrap}
+.leyenda span{display:flex;align-items:center;gap:5px}
+.punto-ico{width:10px;height:10px;border-radius:50%;display:inline-block}
+.opciones-doble{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
+.opcion-btn{flex:1;min-width:130px;background:#fff;border:2px solid #cbd5e1;border-radius:10px;padding:12px;text-align:center;cursor:pointer}
+.opcion-btn:hover{border-color:var(--blue)}
+.opcion-btn.elegida{border-color:var(--green);background:#f0fdf4}
+.opcion-btn .num{font-size:22px;font-weight:800;color:var(--navy)}
+.opcion-btn .lbl{font-size:11px;color:#64748b;margin-top:2px}
+.valor-multiple{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.valor-multiple .item{background:#fff;border:1px solid var(--border);border-radius:10px;padding:10px 16px;text-align:center;min-width:100px}
+.valor-multiple .item .num{font-size:22px;font-weight:800;color:var(--navy)}
+.valor-multiple .item .lbl{font-size:10.5px;color:#64748b;margin-top:2px}
+table.hist{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px}
+table.hist th,table.hist td{border-bottom:1px solid var(--border);padding:6px 4px;text-align:left}
+table.hist th{color:#475569;font-weight:700;font-size:11px;text-transform:uppercase}
+.grupo-hist{margin-top:16px}
+.grupo-hist h3{font-size:12.5px;color:var(--navy);font-weight:700;margin-bottom:6px}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>📐 GONIO — Miembro Inferior</h1>
+  <a href="index.html">← Menú principal</a>
+</div>
+
+<div class="main">
+
+  <div class="card">
+    <h2>1 · Paciente</h2>
+    <label>DNI</label>
+    <input type="text" id="dni" placeholder="Ej: 12345678" inputmode="numeric">
+  </div>
+
+  <div class="card">
+    <h2>2 · Tipo de medición</h2>
+    <select id="sel-tipo">
+      <option value="hallux_valgus">Hallux Valgus — HVA + IMA (frente)</option>
+      <option value="genu">Genu Valgo/Varo — eje mecánico (frente)</option>
+      <option value="costa_bartani">Costa-Bártani — arco plantar (perfil)</option>
+      <option value="retropie">Valgo/Varo de Retropié (posterior)</option>
+    </select>
+    <div class="instructivo" style="margin-top:10px">
+      <b>Vista necesaria:</b> <span id="txt-vista"></span>
+    </div>
+  </div>
+
+  <div class="card" id="card-campos" style="display:none">
+    <h2>3 · Datos adicionales</h2>
+    <div id="campos-manuales-wrap"></div>
+  </div>
+
+  <div class="card" id="card-foto">
+    <h2 id="titulo-foto">4 · Foto</h2>
+    <div class="instructivo">
+      Sacale la foto a la radiografía proyectada en la pantalla (o al negatoscopio), o la foto clínica según corresponda — bien encuadrada y derecha.
+      Si ya cargaste una foto para otro índice de la <b>misma vista</b>, no hace falta sacarla de nuevo — cambiá el "tipo de medición" arriba y reutilizala.
+    </div>
+    <div class="msg-ok" id="foto-cargada-aviso" style="display:none">✅ Foto cargada — se mantiene al cambiar el tipo de medición. Tocá "Cambiar foto" si necesitás otra.</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <div class="zona-foto" id="zona-foto" style="flex:1;min-width:150px">📱 Foto con el celular</div>
+      <div class="zona-foto" id="zona-foto-webcam" style="flex:1;min-width:150px">🎥 Cámara Web HD</div>
+    </div>
+    <input type="file" id="file-input" accept="image/*" capture="environment" style="display:none">
+    <button class="btn gris" id="btn-sin-foto" style="display:none">Continuar sin foto</button>
+  </div>
+
+  <div id="modal-webcam" style="display:none;position:fixed;inset:0;background:rgba(11,31,58,.85);z-index:9999;align-items:center;justify-content:center;padding:16px">
+    <div style="background:#fff;border-radius:12px;padding:16px;max-width:640px;width:100%">
+      <div style="font-size:13px;font-weight:700;color:#0b1f3a;margin-bottom:8px">🎥 Cámara Web HD — útil para fotografiar la pantalla o el negatoscopio</div>
+      <video id="webcam-video" autoplay playsinline style="width:100%;border-radius:8px;background:#000"></video>
+      <div id="webcam-error" style="color:#dc2626;font-size:12px;margin-top:6px"></div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="btn verde" id="btn-capturar-webcam" style="flex:1">📸 Capturar foto</button>
+        <button class="btn gris" id="btn-cancelar-webcam">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="card-canvas" style="display:none">
+    <h2>5 · Marcar puntos</h2>
+    <div class="nota-fuente" id="aviso-vista" style="display:none"></div>
+    <div class="instructivo" id="txt-paso"></div>
+    <div id="canvas-wrap">
+      <canvas id="canvas"></canvas>
+    </div>
+    <div class="leyenda" id="leyenda"></div>
+    <button class="btn gris" id="btn-reiniciar">↺ Reiniciar puntos</button>
+    <button class="btn gris" id="btn-otra-foto">🔄 Cambiar foto</button>
+    <button class="btn" id="btn-calcular" style="display:none">🧮 Calcular</button>
+  </div>
+
+  <div class="card" id="card-directo" style="display:none">
+    <h2>5 · Calcular</h2>
+    <button class="btn" id="btn-calcular-directo">🧮 Calcular</button>
+  </div>
+
+  <div class="card" id="card-resultado" style="display:none">
+    <h2>6 · Resultado</h2>
+    <div class="resultado" id="resultado-render"></div>
+    <div class="nota-fuente" id="nota-fuente"></div>
+    <label>Comentario / observación (opcional)</label>
+    <textarea id="comentario" placeholder="Ej: paciente en apoyo bipodal, buena colaboración, buena calidad de imagen..."></textarea>
+    <button class="btn verde" id="btn-guardar">💾 Guardar en la carpeta del paciente</button>
+    <div id="msg-guardado"></div>
+  </div>
+
+  <div class="card">
+    <h2>📈 Historial del paciente (seguimiento en el tiempo)</h2>
+    <div class="instructivo">Solo muestra los valores medidos y guardados — no es una predicción ni una estimación de progresión, es el registro objetivo de lo marcado en cada visita.</div>
+    <label>DNI</label>
+    <input type="text" id="dni-historial" placeholder="Ej: 12345678" inputmode="numeric">
+    <button class="btn" id="btn-cargar-historial">🔎 Cargar historial</button>
+    <div id="historial-render"></div>
+  </div>
+
+</div>
+
+<script>
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbwYdoFuU8mQL4YKqufSBQ9AD_yqWEEesLtGzYQjNw2JG1BZIQF7ug80mHB5sLMXhaUpvQ/exec';
+
+// ─────────────────────────── Geometría ───────────────────────────
+function distancia(a,b){ return Math.hypot(b.x-a.x, b.y-a.y); }
+function anguloEntreLineas(a1,a2,b1,b2){
+  const v1 = {x:a2.x-a1.x, y:a2.y-a1.y};
+  const v2 = {x:b2.x-b1.x, y:b2.y-b1.y};
+  const dot = v1.x*v2.x + v1.y*v2.y;
+  const mag1 = Math.hypot(v1.x,v1.y), mag2 = Math.hypot(v2.x,v2.y);
+  if(mag1===0||mag2===0) return 0;
+  return Math.acos(Math.max(-1,Math.min(1, dot/(mag1*mag2)))) * 180/Math.PI;
+}
+function anguloVertice(a, vertice, b){
+  const v1 = {x:a.x-vertice.x, y:a.y-vertice.y};
+  const v2 = {x:b.x-vertice.x, y:b.y-vertice.y};
+  const dot = v1.x*v2.x+v1.y*v2.y;
+  const mag1=Math.hypot(v1.x,v1.y), mag2=Math.hypot(v2.x,v2.y);
+  const ang = Math.acos(Math.max(-1,Math.min(1,dot/(mag1*mag2))))*180/Math.PI;
+  const cruz = v1.x*v2.y - v1.y*v2.x;
+  return {angulo:ang, cruz:cruz};
+}
+
+// ─────────────────────────── Configuración de tipos ───────────────────────────
+const TIPOS = {
+  hallux_valgus: {
+    label:'Hallux Valgus — HVA + IMA + HIA',
+    prefijo:'MI_HalluxValgus',
+    vistaTag:'frente_pie',
+    vista:'Radiografía de pie de frente (AP), de pie/con carga.',
+    camposManual:[
+      {id:'hv-pie', tipo:'select', label:'Pie evaluado', opciones:['Derecho','Izquierdo']}
+    ],
+    puntos:[
+      {badge:'Punto 1 de 8', color:'#38bdf8', texto:'Marcá la <b>base del 1er metatarsiano</b> (extremo proximal, hacia el mediopié).'},
+      {badge:'Punto 2 de 8', color:'#38bdf8', texto:'Marcá la <b>cabeza del 1er metatarsiano</b> (extremo distal, la articulación).'},
+      {badge:'Punto 3 de 8', color:'#f97316', texto:'Marcá la <b>base de la falange proximal del hallux</b>.'},
+      {badge:'Punto 4 de 8', color:'#f97316', texto:'Marcá la <b>cabeza de la falange proximal del hallux</b> (articulación interfalángica).'},
+      {badge:'Punto 5 de 8', color:'#eab308', texto:'Marcá la <b>base del 2do metatarsiano</b>.'},
+      {badge:'Punto 6 de 8', color:'#eab308', texto:'Marcá la <b>cabeza del 2do metatarsiano</b>.'},
+      {badge:'Punto 7 de 8', color:'#a855f7', texto:'Marcá la <b>base de la falange distal del hallux</b> (mismo nivel de la articulación interfalángica que el punto 4).'},
+      {badge:'Punto 8 de 8', color:'#a855f7', texto:'Marcá la <b>punta de la falange distal del hallux</b>.'}
+    ],
+    lineas:[[0,1],[2,3],[4,5],[6,7]],
+    fuente:'HVA/IMA: Coughlin MJ, Jones CP. Hallux valgus: demographics, etiology, and radiographic assessment. Foot Ankle Int. 2007;28(7):759-777 (clasificación de Mann-Coughlin). Una revisión sistemática de 2024 (Arch Orthop Trauma Surg) encontró heterogeneidad real entre fuentes en los cortes exactos — un mismo IMA de 14° se clasifica distinto según el autor. HIA (Hallux Interphalangeus Angle): ángulo único entre el eje de la falange proximal y el eje de la falange distal del hallux, en la articulación interfalángica — es el único ángulo interfalángico real del hallux (que tiene una sola articulación IFalángica, a diferencia de los otros dedos que tienen IFP e IFD). Nguyen et al. 2019 (JISAKOS); Doty et al., reliability studies. Por eso el ángulo crudo es el dato principal; la categoría es orientativa "según Mann-Coughlin", no un corte único universal.',
+    calcular(p){
+      const hva = anguloEntreLineas(p[0],p[1],p[2],p[3]);
+      const ima = anguloEntreLineas(p[0],p[1],p[4],p[5]);
+      const hia = anguloEntreLineas(p[2],p[3],p[6],p[7]);
+      const catHVA = hva<15?'Normal':hva<20?'Leve':hva<40?'Moderado':'Severo';
+      const catIMA = ima<9?'Normal':ima<11?'Leve':ima<16?'Moderado':'Severo';
+      return {tipo:'multiple', valores:[
+        {etiqueta:'HVA', nombre:'Metatarsofalángico — '+catHVA+' (orient.)', valor:hva, unidad:'°'},
+        {etiqueta:'IMA', nombre:'Intermetat. 1-2 — '+catIMA+' (orient.)', valor:ima, unidad:'°'},
+        {etiqueta:'HIA', nombre:'Interfalángico del hállux', valor:hia, unidad:'°'}
+      ], nota:'HVA = metatarsofalángico (MT1 vs falange proximal) · IMA = intermetatarsiano 1-2 · HIA = interfalángico (falange proximal vs distal, único — el hállux no tiene IFP/IFD separados como el resto de los dedos). Categorías de HVA/IMA orientativas según Mann-Coughlin — no hay un corte único validado universalmente entre fuentes (ver nota bibliográfica abajo).'};
+    }
+  },
+  genu: {
+    label:'Genu Valgo/Varo — eje mecánico',
+    prefijo:'MI_GenuValgoVaro',
+    vistaTag:'frente_pierna',
+    vista:'Radiografía panorámica de miembro inferior de frente, de pie/con carga (debe verse cadera, rodilla y tobillo).',
+    camposManual:[
+      {id:'genu-pie', tipo:'select', label:'Lado', opciones:['Derecho','Izquierdo']},
+      {id:'genu-contexto', tipo:'select', label:'Contexto', opciones:['Pediátrico (considerar valgo/varo fisiológico según edad)','Adulto']}
+    ],
+    puntos:[
+      {badge:'Punto 1 de 3', color:'#38bdf8', texto:'Marcá el <b>centro de la cabeza femoral</b>.'},
+      {badge:'Punto 2 de 3', color:'#f97316', texto:'Marcá el <b>centro de la rodilla</b> (escotadura intercondílea/espinas tibiales) — es el vértice del ángulo.'},
+      {badge:'Punto 3 de 3', color:'#eab308', texto:'Marcá el <b>centro del tobillo</b> (mortaja tibioastragalina).'}
+    ],
+    lineas:[[0,1],[1,2]],
+    fuente:'Técnica del eje mecánico (ángulo en el vértice de la rodilla entre cadera y tobillo). La literatura actual reporta más habitualmente la desviación del eje mecánico (MAD) en milímetros que este ángulo — acá se usa como proxy angular equivalente. En niños existe valgo/varo fisiológico que cambia con la edad (varo ~15-20° al nacer → valgo fisiológico máximo ~10-15° a los 3-4 años → valores de adulto hacia los 6-7 años) — no hay un corte numérico único válido para todas las edades.',
+    calcular(p, extra){
+      const r = anguloVertice(p[0], p[1], p[2]);
+      const desviacion = 180 - r.angulo;
+      const pie = extra['genu-pie'];
+      let lado;
+      if(pie==='Derecho'){ lado = r.cruz>0 ? 'Valgo':'Varo'; } else { lado = r.cruz>0 ? 'Varo':'Valgo'; }
+      if(desviacion<2) lado = 'Eje neutro (sin desviación significativa)';
+      return {tipo:'unico', valor:desviacion, unidad:'°', detalle:'Genu '+lado};
+    }
+  },
+  costa_bartani: {
+    label:'Costa-Bártani — arco plantar',
+    prefijo:'MI_CostaBartani',
+    vistaTag:'perfil_pie',
+    vista:'Radiografía de pie de perfil, de pie/con carga.',
+    camposManual:[
+      {id:'cb-pie', tipo:'select', label:'Pie evaluado', opciones:['Derecho','Izquierdo']}
+    ],
+    puntos:[
+      {badge:'Punto 1 de 3', color:'#0ea5e9', texto:'Marcá el punto <b>más inferior del calcáneo</b> (parte posterior, apoyo del talón).'},
+      {badge:'Punto 2 de 3', color:'#f97316', texto:'Marcá el <b>vértice del arco</b>: el punto más bajo de la articulación astrágalo-escafoidea.'},
+      {badge:'Punto 3 de 3', color:'#eab308', texto:'Marcá el punto <b>más inferior de la cabeza del 1° metatarsiano</b>.'}
+    ],
+    lineas:[[0,1],[1,2]],
+    fuente:'Ángulo de Costa-Bártani, reportado directamente en el vértice (no es una desviación de 180°, a diferencia del valgo/varo).',
+    calcular(p){
+      const r = anguloVertice(p[0], p[1], p[2]);
+      const cat = r.angulo<120?'Pie Cavo':r.angulo>130?'Pie Plano':'Normal';
+      return {tipo:'unico', valor:r.angulo, unidad:'°', detalle:cat, nota:'Referencia: Cavo <120° · Normal 120°-130° · Plano >130° (valor orientativo de la bibliografía, no reemplaza el criterio clínico).'};
+    }
+  },
+  retropie: {
+    label:'Valgo/Varo de Retropié',
+    prefijo:'MI_RetropieValgoVaro',
+    vistaTag:'posterior_talon',
+    vista:'Foto/radiografía del talón, vista posterior, de pie con ambos apoyos.',
+    camposManual:[
+      {id:'rp-pie', tipo:'select', label:'Pie evaluado', opciones:['Derecho','Izquierdo']},
+      {id:'rp-estado', tipo:'select', label:'Estado quirúrgico (seguimiento)', opciones:['Seguimiento (sin indicación quirúrgica)','Candidato a cirugía','Pre-operatorio','Post-operatorio']},
+      {id:'rp-tecnica', tipo:'select', label:'Técnica quirúrgica (si aplica)', opciones:['Osteosíntesis de Seno del Tarso','Otra','No aplica']},
+      {id:'rp-implante', tipo:'text', label:'Implante (tipo/talla, si aplica)'},
+      {id:'rp-fecha-cx', tipo:'text', label:'Fecha de cirugía (si aplica, DD/MM/AAAA)'}
+    ],
+    puntos:[
+      {badge:'Punto 1 de 3', color:'#0ea5e9', texto:'Marcá el <b>punto superior</b>, sobre el eje de la pierna (pantorrilla/tendón de Aquiles, bien arriba).'},
+      {badge:'Punto 2 de 3', color:'#f97316', texto:'Marcá el <b>vértice</b>: cruce entre el eje de la pierna y el eje del talón (altura del tobillo).'},
+      {badge:'Punto 3 de 3', color:'#eab308', texto:'Marcá el <b>punto inferior</b>, sobre el eje del calcáneo (línea media del talón).'}
+    ],
+    lineas:[[0,1],[1,2]],
+    fuente:'Ángulo talo-calcáneo clínico (eje pierna-talón), misma técnica ya validada en el GONIO Valgo/Varo original de este sistema.',
+    calcular(p, extra){
+      const r = anguloVertice(p[0], p[1], p[2]);
+      const desviacion = 180 - r.angulo;
+      const pie = extra['rp-pie'];
+      let clasif;
+      if(pie==='Derecho'){ clasif = r.cruz>0 ? 'Valgo':'Varo'; } else { clasif = r.cruz>0 ? 'Varo':'Valgo'; }
+      if(desviacion<2) clasif = 'Neutro (sin desviación significativa)';
+      return {tipo:'unico', valor:desviacion, unidad:'°', detalle:clasif};
+    }
+  }
+};
+
+// ─────────────────────────── Estado ───────────────────────────
+let TIPO_ACTUAL = 'hallux_valgus';
+let img = new Image();
+let hayFoto = false;
+let vistaFotoCargada = null;
+let puntos = [];
+let resultadoActual = null;
+let opcionElegidaIdx = null;
+
+const selTipo     = document.getElementById('sel-tipo');
+const cardCampos  = document.getElementById('card-campos');
+const cardFoto    = document.getElementById('card-foto');
+const cardCanvas  = document.getElementById('card-canvas');
+const cardDirecto = document.getElementById('card-directo');
+const cardResult  = document.getElementById('card-resultado');
+const canvas      = document.getElementById('canvas');
+const ctx         = canvas.getContext('2d');
+const txtPaso     = document.getElementById('txt-paso');
+const leyenda     = document.getElementById('leyenda');
+const zonaFoto    = document.getElementById('zona-foto');
+const fileInput   = document.getElementById('file-input');
+
+function cfgActual(){ return TIPOS[TIPO_ACTUAL]; }
+
+function renderCamposManuales(){
+  const cfg = cfgActual();
+  const wrap = document.getElementById('campos-manuales-wrap');
+  wrap.innerHTML = '';
+  const campos = cfg.camposManual || [];
+  cardCampos.style.display = campos.length ? 'block' : 'none';
+  campos.forEach(c=>{
+    const lab = document.createElement('label');
+    lab.textContent = c.label;
+    wrap.appendChild(lab);
+    if(c.tipo==='select'){
+      const sel = document.createElement('select');
+      sel.id = c.id;
+      c.opciones.forEach((o,idx)=>{
+        const opt = document.createElement('option');
+        opt.value = o; opt.textContent = o;
+        sel.appendChild(opt);
+      });
+      wrap.appendChild(sel);
+    } else {
+      const inp = document.createElement('input');
+      inp.type = c.tipo || 'text';
+      inp.id = c.id;
+      if(c.tipo==='number') inp.step = 'any';
+      wrap.appendChild(inp);
+    }
+  });
+}
+
+function leerCamposManuales(){
+  const cfg = cfgActual();
+  const out = {};
+  (cfg.camposManual||[]).forEach(c=>{
+    const el = document.getElementById(c.id);
+    if(el) out[c.id] = el.value;
+  });
+  return out;
+}
+
+function reiniciarFlujo(){
+  puntos = [];
+  resultadoActual = null;
+  opcionElegidaIdx = null;
+  cardResult.style.display = 'none';
+  document.getElementById('btn-calcular').style.display = 'none';
+}
+
+function actualizarAvisoVista(){
+  const cfg = cfgActual();
+  const aviso = document.getElementById('aviso-vista');
+  if(hayFoto && vistaFotoCargada && cfg.vistaTag !== 'ninguna' && vistaFotoCargada !== cfg.vistaTag){
+    aviso.style.display = 'block';
+    aviso.textContent = '⚠️ La foto que tenés cargada corresponde a otra vista y este índice necesita: ' + cfg.vista + ' Verificá que sea la radiografía/foto correcta o tocá "Cambiar foto".';
+  } else {
+    aviso.style.display = 'none';
+  }
+}
+
+function cambiarTipo(){
+  TIPO_ACTUAL = selTipo.value;
+  const cfg = cfgActual();
+  document.getElementById('txt-vista').textContent = cfg.vista;
+  renderCamposManuales();
+  reiniciarFlujo();
+  document.getElementById('foto-cargada-aviso').style.display = hayFoto ? 'block' : 'none';
+  if(cfg.sinCanvas){
+    cardFoto.style.display = cfg.fotoOpcional ? 'block' : 'none';
+    document.getElementById('titulo-foto').textContent = '4 · Foto de referencia (opcional)';
+    document.getElementById('btn-sin-foto').style.display = cfg.fotoOpcional ? 'inline-block' : 'none';
+    cardCanvas.style.display = 'none';
+    cardDirecto.style.display = 'block';
+    actualizarAvisoVista();
+  } else {
+    cardFoto.style.display = 'block';
+    document.getElementById('titulo-foto').textContent = '4 · Foto';
+    document.getElementById('btn-sin-foto').style.display = 'none';
+    cardDirecto.style.display = 'none';
+    if(hayFoto){
+      cardCanvas.style.display = 'block';
+      redibujar();
+      actualizarInstructivo();
+    } else {
+      cardCanvas.style.display = 'none';
+    }
+    actualizarAvisoVista();
+  }
+}
+selTipo.addEventListener('change', cambiarTipo);
+
+// ─────────────────────────── Captura de foto ───────────────────────────
+zonaFoto.addEventListener('click', () => fileInput.click());
+
+const modalWebcam = document.getElementById('modal-webcam');
+const videoWebcam = document.getElementById('webcam-video');
+const errorWebcam = document.getElementById('webcam-error');
+let streamWebcamActivo = null;
+document.getElementById('zona-foto-webcam').addEventListener('click', async () => {
+  errorWebcam.textContent = '';
+  modalWebcam.style.display = 'flex';
+  try {
+    streamWebcamActivo = await navigator.mediaDevices.getUserMedia({video:{width:{ideal:1920},height:{ideal:1080}}});
+    videoWebcam.srcObject = streamWebcamActivo;
+  } catch (err) {
+    errorWebcam.textContent = '⚠️ No se pudo acceder a ninguna cámara conectada (' + err.message + ').';
+  }
+});
+function cerrarModalWebcam(){
+  if (streamWebcamActivo){ streamWebcamActivo.getTracks().forEach(t=>t.stop()); streamWebcamActivo=null; }
+  modalWebcam.style.display = 'none';
+}
+document.getElementById('btn-cancelar-webcam').addEventListener('click', cerrarModalWebcam);
+document.getElementById('btn-capturar-webcam').addEventListener('click', () => {
+  if (!streamWebcamActivo) return;
+  const cnv = document.createElement('canvas');
+  cnv.width = videoWebcam.videoWidth; cnv.height = videoWebcam.videoHeight;
+  cnv.getContext('2d').drawImage(videoWebcam, 0, 0, cnv.width, cnv.height);
+  const dataURL = cnv.toDataURL('image/jpeg', 0.92);
+  cerrarModalWebcam();
+  cargarImagen(dataURL);
+});
+
+fileInput.addEventListener('change', function () {
+  const file = this.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function (e) { cargarImagen(e.target.result); };
+  reader.readAsDataURL(file);
+});
+
+function cargarImagen(dataURL){
+  img = new Image();
+  img.onload = function () {
+    hayFoto = true;
+    vistaFotoCargada = cfgActual().vistaTag;
+    document.getElementById('foto-cargada-aviso').style.display = 'block';
+    dibujarImagenBase();
+    const cfg = cfgActual();
+    if(!cfg.sinCanvas){
+      cardCanvas.style.display = 'block';
+      puntos = [];
+      actualizarInstructivo();
+      cardCanvas.scrollIntoView({behavior:'smooth', block:'start'});
+    } else {
+      cardDirecto.scrollIntoView({behavior:'smooth', block:'start'});
+    }
+    cardResult.style.display = 'none';
+    actualizarAvisoVista();
+  };
+  img.src = dataURL;
+}
+
+document.getElementById('btn-sin-foto').addEventListener('click', ()=>{
+  cardDirecto.scrollIntoView({behavior:'smooth', block:'start'});
+});
+
+function dibujarImagenBase(){
+  const anchoMax = Math.min(window.innerWidth - 40, 680);
+  window.__escala = anchoMax / img.width;
+  canvas.width = anchoMax;
+  canvas.height = img.height * window.__escala;
+  redibujar();
+}
+
+const COLORES_DEFECTO = ['#38bdf8','#0ea5e9','#f97316','#eab308','#a855f7','#ec4899'];
+
+function redibujar(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  if(hayFoto) ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  const cfg = cfgActual();
+  (cfg.lineas||[]).forEach(par=>{
+    if(puntos[par[0]] && puntos[par[1]]) dibujarLinea(puntos[par[0]], puntos[par[1]], '#ffffff');
+  });
+  puntos.forEach((p,i)=>{
+    const color = (cfg.puntos[i] && cfg.puntos[i].color) || COLORES_DEFECTO[i % COLORES_DEFECTO.length];
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 7, 0, Math.PI*2);
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  });
+}
+
+function dibujarLinea(a, b, color){
+  ctx.beginPath();
+  ctx.moveTo(a.x, a.y);
+  ctx.lineTo(b.x, b.y);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.setLineDash([6,4]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+function coordsDesdeEvento(ev){
+  const rect = canvas.getBoundingClientRect();
+  const clientX = ev.touches ? ev.touches[0].clientX : ev.clientX;
+  const clientY = ev.touches ? ev.touches[0].clientY : ev.clientY;
+  return {
+    x: (clientX - rect.left) * (canvas.width / rect.width),
+    y: (clientY - rect.top) * (canvas.height / rect.height)
+  };
+}
+
+function manejarClick(ev){
+  ev.preventDefault();
+  const cfg = cfgActual();
+  if (puntos.length >= cfg.puntos.length) return;
+  puntos.push(coordsDesdeEvento(ev));
+  redibujar();
+  actualizarInstructivo();
+  if (puntos.length === cfg.puntos.length){
+    document.getElementById('btn-calcular').style.display = 'inline-block';
+  }
+}
+canvas.addEventListener('mousedown', manejarClick);
+canvas.addEventListener('touchstart', manejarClick, {passive:false});
+
+function actualizarInstructivo(){
+  const cfg = cfgActual();
+  leyenda.innerHTML = cfg.puntos.map((pp,i)=>
+    '<span><i class="punto-ico" style="background:'+pp.color+'"></i> Punto '+(i+1)+'</span>'
+  ).join('');
+  if (puntos.length < cfg.puntos.length){
+    const paso = cfg.puntos[puntos.length];
+    txtPaso.innerHTML = '<span class="badge-paso">' + paso.badge + '</span><br>' + paso.texto;
+  } else {
+    txtPaso.innerHTML = '<span class="badge-paso" style="background:#16a34a">Listo ✓</span><br>Tocá "Calcular" o "Reiniciar puntos" si no quedó bien.';
+  }
+}
+
+document.getElementById('btn-reiniciar').addEventListener('click', ()=>{
+  puntos = [];
+  redibujar();
+  actualizarInstructivo();
+  cardResult.style.display = 'none';
+  document.getElementById('btn-calcular').style.display = 'none';
+});
+document.getElementById('btn-otra-foto').addEventListener('click', ()=>{
+  fileInput.value = '';
+  fileInput.click();
+});
+
+// ─────────────────────────── Cálculo y resultado ───────────────────────────
+document.getElementById('btn-calcular').addEventListener('click', ejecutarCalculo);
+document.getElementById('btn-calcular-directo').addEventListener('click', ejecutarCalculo);
+
+function ejecutarCalculo(){
+  const cfg = cfgActual();
+  const extra = leerCamposManuales();
+  const salida = cfg.calcular(puntos, extra);
+  const msgArea = document.getElementById('resultado-render');
+  if(salida.error){
+    cardResult.style.display = 'block';
+    msgArea.innerHTML = '<div class="msg-error">⚠️ ' + salida.error + '</div>';
+    document.getElementById('nota-fuente').textContent = '';
+    resultadoActual = null;
+    cardResult.scrollIntoView({behavior:'smooth', block:'start'});
+    return;
+  }
+  resultadoActual = salida;
+  opcionElegidaIdx = null;
+  renderResultado(salida);
+  document.getElementById('nota-fuente').textContent = '📚 ' + (cfg.fuente || '');
+  cardResult.style.display = 'block';
+  cardResult.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function renderResultado(salida){
+  const cont = document.getElementById('resultado-render');
+  if(salida.tipo === 'doble'){
+    cont.innerHTML =
+      '<div class="opciones-doble">' +
+      salida.opciones.map((v,i)=>
+        '<div class="opcion-btn" data-idx="'+i+'" onclick="elegirOpcion('+i+')">'+
+        '<div class="num">'+v.toFixed(1)+salida.unidad+'</div><div class="lbl">Opción '+(i===0?'A':'B')+'</div></div>'
+      ).join('') + '</div>' +
+      '<div class="aviso" style="margin-top:10px">'+ (salida.nota||'') +'</div>';
+  } else if(salida.tipo === 'unico'){
+    cont.innerHTML =
+      '<div class="num">'+salida.valor.toFixed(1)+salida.unidad+'</div>' +
+      (salida.detalle ? '<div class="clasif">'+salida.detalle+'</div>' : '') +
+      '<div class="aviso">'+(salida.nota||'')+'</div>';
+  } else if(salida.tipo === 'multiple'){
+    cont.innerHTML =
+      '<div class="valor-multiple">' +
+      salida.valores.map(v=>
+        '<div class="item"><div class="num">'+v.valor.toFixed(1)+v.unidad+'</div><div class="lbl">'+v.etiqueta+'<br>'+v.nombre+'</div></div>'
+      ).join('') + '</div>' +
+      '<div class="aviso" style="margin-top:10px">'+(salida.nota||'')+'</div>';
+  } else if(salida.tipo === 'texto'){
+    cont.innerHTML = '<div class="clasif" style="font-size:16px">'+salida.texto+'</div>';
+  }
+}
+
+function elegirOpcion(idx){
+  opcionElegidaIdx = idx;
+  document.querySelectorAll('.opcion-btn').forEach(el=>el.classList.remove('elegida'));
+  document.querySelector('.opcion-btn[data-idx="'+idx+'"]').classList.add('elegida');
+}
+
+// ─────────────────────────── Guardado ───────────────────────────
+document.getElementById('btn-guardar').addEventListener('click', async function(){
+  const dni = document.getElementById('dni').value.trim();
+  const msg = document.getElementById('msg-guardado');
+  const cfg = cfgActual();
+  if (!dni){
+    msg.className = 'msg-error';
+    msg.textContent = '⚠️ Ingresá el DNI del paciente antes de guardar.';
+    return;
+  }
+  if (!resultadoActual){
+    msg.className = 'msg-error';
+    msg.textContent = '⚠️ Primero completá la medición.';
+    return;
+  }
+  if (resultadoActual.tipo === 'doble' && opcionElegidaIdx === null){
+    msg.className = 'msg-error';
+    msg.textContent = '⚠️ Elegí cuál de las dos opciones coincide con lo observado.';
+    return;
+  }
+  this.disabled = true;
+  this.textContent = 'Guardando...';
+  msg.className = '';
+  msg.textContent = '';
+
+  const fotoBase64 = hayFoto ? canvas.toDataURL('image/jpeg', 0.85) : '';
+  const comentario = document.getElementById('comentario').value.trim();
+  const extra = leerCamposManuales();
+  const pieExtra = extra['hv-pie'] || extra['genu-pie'] || extra['cb-pie'] || extra['rp-pie'] || '';
+
+  let registros = [];
+  if(resultadoActual.tipo === 'doble'){
+    registros.push({
+      tipo_medicion: cfg.prefijo,
+      angulo: resultadoActual.opciones[opcionElegidaIdx].toFixed(1),
+      clasificacion: 'Opción ' + (opcionElegidaIdx===0?'A':'B') + ' elegida'
+    });
+  } else if(resultadoActual.tipo === 'unico'){
+    registros.push({
+      tipo_medicion: cfg.prefijo,
+      angulo: resultadoActual.valor.toFixed(1),
+      clasificacion: resultadoActual.detalle || ''
+    });
+  } else if(resultadoActual.tipo === 'multiple'){
+    registros = resultadoActual.valores.map(v=>({
+      tipo_medicion: cfg.prefijo + '_' + v.etiqueta,
+      angulo: v.valor.toFixed(1),
+      clasificacion: v.nombre
+    }));
+  } else if(resultadoActual.tipo === 'texto'){
+    registros.push({
+      tipo_medicion: cfg.prefijo,
+      angulo: '',
+      clasificacion: resultadoActual.texto
+    });
+  }
+
+  try {
+    for (const reg of registros){
+      const payload = {
+        action: 'guardar_gonio_medicion',
+        dni: dni,
+        tipo_medicion: reg.tipo_medicion,
+        pie: pieExtra,
+        angulo: reg.angulo,
+        clasificacion: reg.clasificacion,
+        comentario: comentario,
+        foto_base64: fotoBase64,
+        puntos: puntos,
+        datos_extra: extra
+      };
+      const resp = await fetch(GAS_URL, {
+        method: 'POST',
+        headers: {'Content-Type': 'text/plain;charset=utf-8'},
+        body: JSON.stringify(payload)
+      });
+      const data = await resp.json();
+      if (!data.success){
+        throw new Error(data.error || data.message || 'desconocido');
+      }
+    }
+    msg.className = 'msg-ok';
+    msg.textContent = '✅ Medición guardada en la carpeta del paciente (DNI ' + dni + ').';
+  } catch (err) {
+    msg.className = 'msg-error';
+    msg.textContent = '❌ Error al guardar: ' + err.message;
+  }
+  this.disabled = false;
+  this.textContent = '💾 Guardar en la carpeta del paciente';
+});
+
+window.addEventListener('resize', ()=>{ if (hayFoto && img.src) dibujarImagenBase(); });
+
+// ─────────────────────────── Historial ───────────────────────────
+document.getElementById('btn-cargar-historial').addEventListener('click', cargarHistorial);
+
+async function cargarHistorial(){
+  const dni = document.getElementById('dni-historial').value.trim();
+  const cont = document.getElementById('historial-render');
+  if(!dni){ cont.innerHTML = '<div class="msg-error">⚠️ Ingresá el DNI.</div>'; return; }
+  cont.innerHTML = '<div style="font-size:12px;color:#64748b;margin-top:8px">Cargando...</div>';
+  try{
+    const resp = await fetch(GAS_URL + '?action=get_gonio_mediciones&dni=' + encodeURIComponent(dni));
+    const data = await resp.json();
+    if(!data.success){ cont.innerHTML = '<div class="msg-error">❌ ' + (data.error||'Error') + '</div>'; return; }
+    const filas = (data.data||[]).filter(r => String(r.Tipo_Medicion||'').indexOf('MI_') === 0);
+    if(!filas.length){ cont.innerHTML = '<div style="font-size:12px;color:#64748b;margin-top:8px">Sin mediciones de miembro inferior registradas todavía para este paciente.</div>'; return; }
+    filas.sort((a,b)=> new Date(a.Timestamp) - new Date(b.Timestamp));
+    const grupos = {};
+    filas.forEach(f=>{
+      const key = f.Tipo_Medicion + (f.Pie ? ' ('+f.Pie+')' : '');
+      if(!grupos[key]) grupos[key] = [];
+      grupos[key].push(f);
+    });
+    let html = '';
+    Object.keys(grupos).forEach(key=>{
+      const filasGrupo = grupos[key];
+      html += '<div class="grupo-hist"><h3>' + key.replace('MI_','') + '</h3>';
+      html += '<table class="hist"><thead><tr><th>Fecha</th><th>Valor</th><th>Detalle</th></tr></thead><tbody>';
+      filasGrupo.forEach(f=>{
+        const fecha = new Date(f.Timestamp);
+        const fechaStr = fecha.toLocaleDateString('es-AR') + ' ' + fecha.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
+        html += '<tr><td>'+fechaStr+'</td><td>'+(f.Angulo!==''&&f.Angulo!==undefined?f.Angulo+'°':'—')+'</td><td>'+(f.Clasificacion||'')+'</td></tr>';
+      });
+      html += '</tbody></table>';
+      const keySeguro = key.replace(/[^a-zA-Z0-9]/g,'_');
+      if(filasGrupo.length >= 2 && filasGrupo.every(f=>f.Angulo!=='' && !isNaN(parseFloat(f.Angulo)))){
+        html += '<canvas class="grafico-hist" id="grafico-'+keySeguro+'" height="120" style="background:#fff;border:1px solid var(--border);border-radius:8px;margin-top:6px;width:100%"></canvas>';
+      }
+      html += '</div>';
+    });
+    cont.innerHTML = html;
+    Object.keys(grupos).forEach(key=>{
+      const keySeguro = key.replace(/[^a-zA-Z0-9]/g,'_');
+      const canvasGrafico = document.getElementById('grafico-'+keySeguro);
+      if(canvasGrafico) dibujarGrafico(canvasGrafico, grupos[key]);
+    });
+  }catch(err){
+    cont.innerHTML = '<div class="msg-error">❌ No se pudo conectar con el backend.</div>';
+  }
+}
+
+function dibujarGrafico(canvasEl, filas){
+  const dpr = window.devicePixelRatio || 1;
+  const anchoCss = canvasEl.parentElement.clientWidth || 300;
+  canvasEl.width = anchoCss * dpr;
+  canvasEl.height = 120 * dpr;
+  canvasEl.style.width = anchoCss + 'px';
+  const c = canvasEl.getContext('2d');
+  c.scale(dpr,dpr);
+  const valores = filas.map(f=>parseFloat(f.Angulo));
+  const minV = Math.min(...valores), maxV = Math.max(...valores);
+  const rango = (maxV-minV) || 1;
+  const padY = 16, padX = 10, alto = 120 - padY*2, ancho = anchoCss - padX*2;
+  c.strokeStyle = '#2563eb';
+  c.lineWidth = 2;
+  c.beginPath();
+  valores.forEach((v,i)=>{
+    const x = padX + (i/(valores.length-1||1)) * ancho;
+    const y = padY + (1 - (v-minV)/rango) * alto;
+    if(i===0) c.moveTo(x,y); else c.lineTo(x,y);
+  });
+  c.stroke();
+  valores.forEach((v,i)=>{
+    const x = padX + (i/(valores.length-1||1)) * ancho;
+    const y = padY + (1 - (v-minV)/rango) * alto;
+    c.fillStyle = '#2563eb';
+    c.beginPath();
+    c.arc(x,y,3,0,Math.PI*2);
+    c.fill();
+    c.fillStyle = '#334155';
+    c.font = '10px Arial';
+    c.fillText(v.toFixed(1), x-8, y-6);
+  });
+}
+
+// ─────────────────────────── Init ───────────────────────────
+cambiarTipo();
+</script>
+
+</body>
+</html>
