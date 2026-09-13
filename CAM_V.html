@@ -62,6 +62,12 @@
 
   .resumen-box{white-space:pre-wrap;background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.55;max-height:340px;overflow-y:auto}
   .clasif-box{background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.55;color:#9a3412;min-height:20px}
+  .clasif-nota{font-size:10.5px;color:var(--muted);line-height:1.5;margin-top:4px;margin-bottom:8px;font-style:italic}
+  #clasif-diagrama{background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:10px 12px;margin-top:6px}
+  .cd-anio{font-size:11px;color:var(--azul-osc);font-weight:700;margin-bottom:8px}
+  .cd-barra{display:flex;gap:4px;flex-wrap:wrap}
+  .cd-seg{flex:1;min-width:78px;background:#fff;border:1px solid #7dd3fc;border-radius:6px;padding:6px 7px;font-size:10px;text-align:center;color:#0c4a6e;font-weight:600;line-height:1.35}
+  .cd-seg.cd-activo{background:#0369a1;color:#fff;border-color:#0369a1}
 
   .toast-cont{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:999;display:flex;flex-direction:column;gap:6px;align-items:center}
   .toast{background:#0f172a;color:#fff;padding:9px 16px;border-radius:8px;font-size:12.5px;box-shadow:0 4px 14px rgba(0,0,0,.2)}
@@ -237,6 +243,20 @@
             <option value="escoliosis">Escoliosis (Ángulo de Cobb)</option>
             <option value="listesis">Espondilolistesis (Meyerding)</option>
             <option value="pie">Pie plano / cavo (Hernández-Corvo)</option>
+            <option value="artrosis">Artrosis de rodilla/cadera (Kellgren-Lawrence)</option>
+            <option value="hallux">Hallux valgus (Mann &amp; Coughlin)</option>
+            <option value="manguito">Manguito rotador — infiltración grasa (Goutallier/Fuchs)</option>
+            <option value="discopatia">Discopatía lumbar / ciatalgia (Pfirrmann + hernia)</option>
+            <option value="esguince_tobillo">Esguince de tobillo (Grado I-III)</option>
+            <option value="esguince_rodilla">Esguince / lesión ligamentaria de rodilla</option>
+            <option value="menisco">Lesión meniscal</option>
+            <option value="genu">Genu valgo / varo</option>
+            <option value="pie_valgo_retropie">Pie plano del adulto — retropié valgo (Johnson &amp; Strom)</option>
+            <option value="gmfcs">Parálisis cerebral — función motora gruesa (GMFCS)</option>
+            <option value="ao_fractura">Fractura — clasificación AO/OTA</option>
+            <option value="balance_sagital">Desbalance sagital de columna (SRS-Schwab)</option>
+            <option value="edad_osea">Edad ósea (Greulich-Pyle / Tanner-Whitehouse)</option>
+            <option value="icrs">Lesión de cartílago articular (ICRS)</option>
             <option value="otra">Otra — consultar con IA según el Diagnóstico</option>
           </select>
         </div>
@@ -249,15 +269,275 @@
               <option>0</option><option>I</option><option>II</option><option>III</option><option>IV</option><option>V</option>
             </select></div>
           </div>
+          <div class="fg"><label>Etiología (opcional)</label><select id="clasif-esco-etiologia">
+            <option value="">Sin especificar</option>
+            <option value="Idiopática infantil (inicio &lt;3 años)">Idiopática infantil (inicio &lt;3 años)</option>
+            <option value="Idiopática juvenil (inicio 3-10 años)">Idiopática juvenil (inicio 3-10 años)</option>
+            <option value="Idiopática del adolescente (desde los 10 años)">Idiopática del adolescente (desde los 10 años)</option>
+            <option value="Idiopática del adulto (tras madurez esquelética)">Idiopática del adulto (tras madurez esquelética)</option>
+            <option value="Congénita">Congénita</option>
+            <option value="Neuromuscular / neuropática">Neuromuscular / neuropática</option>
+            <option value="Sindrómica">Sindrómica</option>
+          </select></div>
+          <div class="clasif-nota">Categorías etiológicas según el glosario de la SRS (Scoliosis Research Society). En congénita, el detalle clásico es falla de formación (hemivértebra, vértebra en cuña) vs. falla de segmentación (barra no segmentada uni/bilateral) — de Winter. En neuromuscular, la severidad/progresión se correlaciona con el nivel de GMFCS más que con una escala propia.</div>
         </div>
 
         <div id="clasif-campos-listesis" style="display:none">
           <div class="fg"><label>Desplazamiento (%)</label><input id="clasif-list-pct" type="number" step="1" min="0" oninput="actualizarGradoMeyerdingClasif()"></div>
           <div class="fg"><label>Grado de Meyerding (auto)</label><input id="clasif-list-grado" type="text" readonly></div>
+          <div class="fg"><label>Tipo etiológico (Wiltse-Newman-MacNab, opcional)</label><select id="clasif-list-tipo">
+            <option value="">Sin especificar</option>
+            <option value="I — Displásica (congénita)">I — Displásica (congénita)</option>
+            <option value="IIA — Ístmica, fractura por fatiga de la pars">IIA — Ístmica, fractura por fatiga de la pars</option>
+            <option value="IIB — Ístmica, pars elongada intacta">IIB — Ístmica, pars elongada intacta</option>
+            <option value="IIC — Ístmica, fractura aguda de la pars">IIC — Ístmica, fractura aguda de la pars</option>
+            <option value="III — Degenerativa">III — Degenerativa</option>
+            <option value="IV — Traumática (no pars)">IV — Traumática (no pars)</option>
+            <option value="V — Patológica">V — Patológica</option>
+          </select></div>
+          <div class="clasif-nota">El % de desplazamiento define la severidad (Meyerding); el tipo etiológico (Wiltse-Newman-MacNab, 1976) define la causa — son dos ejes independientes, se documentan juntos.</div>
+        </div>
+
+        <div id="clasif-campos-discopatia" style="display:none">
+          <div class="fg"><label>Grado de degeneración discal — Pfirrmann (RM)</label><select id="clasif-disco-pfirrmann">
+            <option value="">Seleccionar…</option>
+            <option value="I">Grado I — disco homogéneo, blanco brillante, altura normal</option>
+            <option value="II">Grado II — inhomogéneo ± bandas horizontales, altura normal</option>
+            <option value="III">Grado III — inhomogéneo, gris, altura normal a levemente disminuida</option>
+            <option value="IV">Grado IV — inhomogéneo, gris a negro, altura disminuida moderadamente</option>
+            <option value="V">Grado V — disco negro, colapsado</option>
+          </select></div>
+          <div class="fg"><label>Morfología de la hernia (opcional)</label><select id="clasif-disco-morfologia">
+            <option value="">Sin hernia / no evaluado</option>
+            <option value="Abombamiento (bulging), extensión difusa no focal">Abombamiento (bulging) — extensión difusa, no focal</option>
+            <option value="Protrusión — base más ancha que el material desplazado">Protrusión — base más ancha que el material desplazado</option>
+            <option value="Extrusión — material desplazado más ancho que la base">Extrusión — material desplazado más ancho que la base</option>
+            <option value="Secuestro — fragmento libre sin continuidad con el disco">Secuestro — fragmento libre, sin continuidad con el disco</option>
+          </select></div>
+          <div class="clasif-nota">Pfirrmann (2001, RM) para grado de degeneración; nomenclatura de hernia según la Versión 2.0 del Combined Task Force NASS/ASSR/ASNR (2014). La ciatalgia/cervicobraquialgia es la correlación clínica (dolor irradiado) — no tiene clasificación propia, se documenta junto al hallazgo de imagen que la explica. Sirve igual para discopatía cervical/dorsal/lumbar, cambiando el segmento en el Diagnóstico.</div>
+        </div>
+
+        <div id="clasif-campos-esguince_tobillo" style="display:none">
+          <div class="fg"><label>Grado</label><select id="clasif-est-grado">
+            <option value="">Seleccionar…</option>
+            <option value="Grado I — distensión del LPAA, sin inestabilidad, apoyo conservado">Grado I — distensión del LPAA, sin inestabilidad, apoyo conservado</option>
+            <option value="Grado II — rotura parcial (LPAA ± LPC), inestabilidad leve, apoyo dificultoso">Grado II — rotura parcial (LPAA ± LPC), inestabilidad leve, apoyo dificultoso</option>
+            <option value="Grado III — rotura completa (LPAA + LPC ± LPAP), inestabilidad mecánica, sin apoyo">Grado III — rotura completa (LPAA + LPC ± LPAP), inestabilidad mecánica, sin apoyo</option>
+          </select></div>
+          <div class="clasif-nota">Convención de uso extendido (esquema tipo "West Point"); ninguna sociedad la regula de forma única — una revisión de 2022 relevó 26 sistemas distintos publicados, sin datos de validez que respalden uno sobre otro. Se ofrece como referencia clínica habitual, no como estándar único validado.</div>
+        </div>
+
+        <div id="clasif-campos-esguince_rodilla" style="display:none">
+          <div class="row">
+            <div class="fg"><label>Ligamento afectado</label><select id="clasif-esr-ligamento">
+              <option value="LCM">LCM (colateral medial)</option>
+              <option value="LCL">LCL (colateral lateral)</option>
+              <option value="LCA">LCA (cruzado anterior)</option>
+              <option value="LCP">LCP (cruzado posterior)</option>
+            </select></div>
+            <div class="fg"><label>Grado clínico</label><select id="clasif-esr-grado">
+              <option value="">Seleccionar…</option>
+              <option value="Grado I — distensión, ligamento íntegro, tope firme">Grado I — distensión, ligamento íntegro, tope firme</option>
+              <option value="Grado II — rotura parcial, laxitud con tope definido">Grado II — rotura parcial, laxitud con tope definido</option>
+              <option value="Grado III — rotura completa, laxitud sin tope">Grado III — rotura completa, laxitud sin tope</option>
+            </select></div>
+          </div>
+          <div class="fg"><label>IKDC (opcional, con artrómetro KT-1000/2000)</label><select id="clasif-esr-ikdc">
+            <option value="">Sin especificar</option>
+            <option value="A — Normal (diferencia 0-2mm)">A — Normal (diferencia 0-2mm)</option>
+            <option value="B — Casi normal (diferencia 3-5mm)">B — Casi normal (diferencia 3-5mm)</option>
+            <option value="C — Anormal (diferencia 6-10mm)">C — Anormal (diferencia 6-10mm)</option>
+            <option value="D — Muy anormal (diferencia &gt;10mm)">D — Muy anormal (diferencia &gt;10mm)</option>
+          </select></div>
+          <div class="clasif-nota">El grado I-III es convención clínica de uso extendido, sin sociedad única que la regule (igual que en tobillo). El IKDC (1993/2000, ESKA/AOSSM) sí es un estándar objetivo instrumentado — usalo cuando tengas medición con artrómetro.</div>
+        </div>
+
+        <div id="clasif-campos-menisco" style="display:none">
+          <div class="fg"><label>Grado de señal — Stoller (RM)</label><select id="clasif-men-stoller">
+            <option value="">Seleccionar…</option>
+            <option value="Grado 0 — menisco normal">Grado 0 — menisco normal</option>
+            <option value="Grado I — foco intrasustancia, no llega a la superficie">Grado I — foco intrasustancia, no llega a la superficie</option>
+            <option value="Grado II — señal lineal intrasustancia, no llega a la superficie articular">Grado II — señal lineal intrasustancia, no llega a la superficie articular</option>
+            <option value="Grado III — señal que llega a la superficie articular (rotura verdadera)">Grado III — señal que llega a la superficie articular (rotura verdadera)</option>
+          </select></div>
+          <div class="fg"><label>Patrón de rotura (si Grado III)</label><select id="clasif-men-patron">
+            <option value="">No aplica / no evaluado</option>
+            <option value="Longitudinal / asa de balde">Longitudinal / asa de balde</option>
+            <option value="Radial">Radial</option>
+            <option value="Horizontal">Horizontal</option>
+            <option value="Compleja / degenerativa">Compleja / degenerativa</option>
+          </select></div>
+          <div class="fg"><label>Zona vascular</label><select id="clasif-men-zona">
+            <option value="">Sin especificar</option>
+            <option value="Roja-roja (periférica, buena vascularización)">Roja-roja (periférica, buena vascularización)</option>
+            <option value="Roja-blanca (intermedia)">Roja-blanca (intermedia)</option>
+            <option value="Blanca-blanca (central, avascular)">Blanca-blanca (central, avascular)</option>
+          </select></div>
+          <div class="clasif-nota">Stoller/Crues para grado de señal en RM; patrón y zona vascular son descriptores clínico-quirúrgicos estándar (relevantes para decidir sutura vs. meniscectomía). No reemplaza la evaluación artroscópica directa.</div>
+        </div>
+
+        <div id="clasif-campos-genu" style="display:none">
+          <div class="row">
+            <div class="fg"><label>Tipo</label><select id="clasif-genu-tipo">
+              <option value="valgo">Genu valgo</option>
+              <option value="varo">Genu varo</option>
+            </select></div>
+            <div class="fg"><label>Edad del paciente</label><select id="clasif-genu-edad">
+              <option value="pediatrico">Pediátrico (en crecimiento)</option>
+              <option value="adulto">Adulto</option>
+            </select></div>
+          </div>
+          <div class="row">
+            <div class="fg"><label>Distancia intermaleolar/intercondílea (cm, opcional)</label><input id="clasif-genu-dist" type="number" step="0.5"></div>
+            <div class="fg"><label>Eje mecánico — desviación (°, opcional)</label><input id="clasif-genu-eje" type="number" step="0.5"></div>
+          </div>
+          <div class="clasif-nota">No existe una escala de gravedad única avalada por sociedad (AAOS/POSNA) — se documenta como hallazgo descriptivo, no como "grado". En pediatría, el valgo fisiológico normal alcanza un pico de ~10-20° a los 3-4 años y se estabiliza en ~5-8° hacia los 6-7 años (curva de Salenius-Vankka, 1975, con variación poblacional descripta en estudios posteriores); valgo que persiste o empeora después de los 7-8 años, o asimétrico, amerita evaluación. En adultos se describe por distancia (cm) o por desviación del eje mecánico (°), sin puntos de corte estandarizados de gravedad.</div>
+        </div>
+
+        <div id="clasif-campos-pie_valgo_retropie" style="display:none">
+          <div class="fg"><label>Estadio (Johnson &amp; Strom / Myerson)</label><select id="clasif-pvr-estadio">
+            <option value="">Seleccionar…</option>
+            <option value="I — Tenosinovitis del tibial posterior, tendón de longitud normal, talón flexible">I — Tenosinovitis del tibial posterior, tendón de longitud normal, talón flexible</option>
+            <option value="IIA — Tendón elongado/degenerado, pie plano flexible, sin/mínima abducción del antepié">IIA — Tendón elongado/degenerado, pie plano flexible, sin/mínima abducción del antepié</option>
+            <option value="IIB — Ídem IIA + abducción del antepié ('demasiados dedos')">IIB — Ídem IIA + abducción del antepié ("demasiados dedos")</option>
+            <option value="III — Tendón roto/atenuado, retropié RÍGIDO en valgo, antepié en abducción rígida, artrosis subastragalina">III — Tendón roto/atenuado, retropié RÍGIDO en valgo, antepié en abducción rígida, artrosis subastragalina</option>
+            <option value="IV (Myerson) — Ídem III + valgo de tobillo por falla del ligamento deltoideo">IV (Myerson) — Ídem III + valgo de tobillo por falla del ligamento deltoideo</option>
+          </select></div>
+          <div class="clasif-nota">Clasificación de Johnson &amp; Strom (1989), con la ampliación de Myerson (estadio IV). Es específica de la deformidad progresiva del adulto con disfunción del tibial posterior (retropié en VALGO). Para retropié en VARO no existe una escala de gravedad estandarizada — se evalúa clínicamente con la prueba del bloque de Coleman (flexible vs. rígido) y se describe de forma cualitativa, no numérica.</div>
+        </div>
+
+        <div id="clasif-campos-gmfcs" style="display:none">
+          <div class="fg"><label>Nivel GMFCS</label><select id="clasif-gmfcs-nivel">
+            <option value="">Seleccionar…</option>
+            <option value="I — camina sin limitaciones en todos los entornos">I — camina sin limitaciones en todos los entornos</option>
+            <option value="II — camina sin dispositivos, con limitaciones en exteriores/distancias largas/escaleras">II — camina sin dispositivos, con limitaciones en exteriores/distancias largas/escaleras</option>
+            <option value="III — camina con dispositivo manual (andador/muletas) en interiores; usa silla de ruedas para trayectos largos">III — camina con dispositivo manual (andador/muletas) en interiores; usa silla de ruedas para trayectos largos</option>
+            <option value="IV — automovilidad limitada; usa movilidad motorizada o es transportado">IV — automovilidad limitada; usa movilidad motorizada o es transportado</option>
+            <option value="V — automovilidad muy limitada incluso con tecnología asistencial; control de cabeza/tronco limitado">V — automovilidad muy limitada incluso con tecnología asistencial; control de cabeza/tronco limitado</option>
+          </select></div>
+          <div class="clasif-nota">GMFCS-E&amp;R (Palisano et al. — CanChild, Universidad McMaster; la AACPDM lo adopta clínicamente pero no es la autora). Guía la vigilancia de cadera: a mayor nivel, mayor riesgo de migración femoral y mayor frecuencia de control radiográfico recomendada.</div>
         </div>
 
         <div id="clasif-campos-pie" style="display:none">
           <div class="fg"><label>Grado de Hernández-Corvo</label><input id="clasif-hcorvo" type="text" placeholder="Ej: Grado I a IV — lo que hayas cargado en Podoscopía"></div>
+        </div>
+
+        <div id="clasif-campos-artrosis" style="display:none">
+          <div class="row">
+            <div class="fg"><label>Articulación</label><select id="clasif-art-articulacion">
+              <option value="Rodilla">Rodilla</option>
+              <option value="Cadera">Cadera</option>
+            </select></div>
+            <div class="fg"><label>Grado radiográfico</label><select id="clasif-art-grado">
+              <option value="">Seleccionar…</option>
+              <option value="0">Grado 0 — sin signos radiográficos de artrosis</option>
+              <option value="1">Grado 1 — dudoso (osteofitos incipientes/dudosos)</option>
+              <option value="2">Grado 2 — mínimo (osteofitos definidos, posible pinzamiento)</option>
+              <option value="3">Grado 3 — moderado (osteofitos múltiples, pinzamiento definido, algo de esclerosis)</option>
+              <option value="4">Grado 4 — severo (osteofitos grandes, pinzamiento severo, esclerosis marcada, deformidad ósea)</option>
+            </select></div>
+          </div>
+          <div class="clasif-nota">Clasificación de Kellgren-Lawrence (1957). El texto exacto de cada grado varía levemente entre fuentes bibliográficas — este redactado sigue la versión más citada (CORR "Classifications in Brief"). El OARSI tiene además un atlas propio que puntúa cada signo por separado (0–3); no reemplaza a Kellgren-Lawrence, es un complemento más granular para investigación.</div>
+        </div>
+
+        <div id="clasif-campos-hallux" style="display:none">
+          <div class="row">
+            <div class="fg"><label>Ángulo de Hallux Valgus — HVA (°)</label><input id="clasif-hv-hva" type="number" step="0.5"></div>
+            <div class="fg"><label>Ángulo intermetatarsiano 1°-2° — IMA (°)</label><input id="clasif-hv-ima" type="number" step="0.5"></div>
+          </div>
+          <div class="clasif-nota">Clasificación de Mann &amp; Coughlin (la más citada en la bibliografía). AOFAS no publica un umbral angular propio para gravedad — su "escala AOFAS" es un score clínico/funcional distinto (dolor y función), no esta clasificación angular. Los cortes exactos varían algo según el autor.</div>
+        </div>
+
+        <div id="clasif-campos-manguito" style="display:none">
+          <div class="fg"><label>Técnica de imagen</label><select id="clasif-mr-tecnica">
+            <option value="RM">Resonancia Magnética (adaptación de Fuchs)</option>
+            <option value="TC">Tomografía Computada (Goutallier original)</option>
+          </select></div>
+          <div class="fg"><label>Estadio de infiltración grasa</label><select id="clasif-mr-estadio">
+            <option value="">Seleccionar…</option>
+            <option value="0">Estadio 0 — músculo normal, sin estrías grasas</option>
+            <option value="1">Estadio 1 — algunas estrías grasas</option>
+            <option value="2">Estadio 2 — infiltración grasa presente, predomina el músculo (grasa &lt;50%)</option>
+            <option value="3">Estadio 3 — cantidades iguales de grasa y músculo (~50/50)</option>
+            <option value="4">Estadio 4 — predomina la grasa sobre el músculo</option>
+          </select></div>
+          <div class="clasif-nota">Los estadios verbales son iguales en la versión original de Goutallier (TC, 1994) y en la adaptación de Fuchs (RM, 1999) — lo que cambia es la técnica de imagen y el corte evaluado. Ninguna sociedad (SECEC-ESSSE/ASES) fijó formalmente cuál usar; en la práctica actual predomina la versión por RM porque es la técnica más usada para el hombro.</div>
+        </div>
+
+        <div id="clasif-campos-ao_fractura" style="display:none">
+          <div class="fg"><label>Segmento óseo</label><select id="clasif-ao-segmento" onchange="actualizarTiposAO()">
+            <option value="">Seleccionar…</option>
+            <option value="11">11 — Húmero proximal</option>
+            <option value="12">12 — Húmero diafisario</option>
+            <option value="23">23 — Radio distal</option>
+            <option value="31">31 — Fémur proximal</option>
+            <option value="32">32 — Fémur diafisario</option>
+            <option value="33">33 — Fémur distal</option>
+            <option value="41">41 — Tibia proximal (platillos)</option>
+            <option value="42">42 — Tibia diafisaria</option>
+            <option value="43">43 — Tibia distal (pilón)</option>
+            <option value="44">44 — Maleolar / tobillo (≈ Danis-Weber)</option>
+          </select></div>
+          <div class="fg"><label>Tipo</label><select id="clasif-ao-tipo">
+            <option value="">Elegí primero el segmento…</option>
+          </select></div>
+          <div class="clasif-nota">AO/OTA Fracture and Dislocation Classification Compendium, revisión 2018 (Meinberg, Agel, Roberts, Karam, Kellam — <i>J Orthop Trauma</i>). Código general: hueso-segmento.tipo (A/B/C). Esto muestra el nivel general de tipo; el detalle de grupo/subgrupo específico de cada fractura se completa en el Diagnóstico si hace falta más precisión.</div>
+        </div>
+
+        <div id="clasif-campos-balance_sagital" style="display:none">
+          <div class="row">
+            <div class="fg"><label>Incidencia pélvica — PI (°)</label><input id="clasif-bs-pi" type="number" step="0.5" oninput="calcularModificadoresSagitales()"></div>
+            <div class="fg"><label>Lordosis lumbar — LL (°)</label><input id="clasif-bs-ll" type="number" step="0.5" oninput="calcularModificadoresSagitales()"></div>
+          </div>
+          <div class="row">
+            <div class="fg"><label>SVA (cm)</label><input id="clasif-bs-sva" type="number" step="0.1" oninput="calcularModificadoresSagitales()"></div>
+            <div class="fg"><label>Pelvic Tilt — PT (°)</label><input id="clasif-bs-pt" type="number" step="0.5" oninput="calcularModificadoresSagitales()"></div>
+          </div>
+          <div class="fg"><label>Tipo de curva coronal (opcional)</label><select id="clasif-bs-curva">
+            <option value="">Sin especificar</option>
+            <option value="T (torácica, ápex T9 o más alto)">T (torácica, ápex T9 o más alto)</option>
+            <option value="L (lumbar/toracolumbar, ápex T10 o más bajo)">L (lumbar/toracolumbar, ápex T10 o más bajo)</option>
+            <option value="D (doble curva mayor)">D (doble curva mayor)</option>
+            <option value="N (sin curva coronal mayor >30°)">N (sin curva coronal mayor &gt;30°)</option>
+          </select></div>
+          <div id="clasif-bs-preview" style="font-size:11px;color:var(--muted);margin-top:4px"></div>
+          <div class="clasif-nota">Clasificación SRS-Schwab de deformidad espinal del adulto (Schwab et al., 2012). Modificadores: desajuste PI-LL (0 &lt;10° · + 10-20° · ++ &gt;20°), SVA (0 &lt;4cm · + 4-9.5cm · ++ &gt;9.5cm), PT (0 &lt;20° · + 20-30° · ++ &gt;30°). El "pelvic tilt test" clínico y la "inclinación sacra" postural no son lo mismo que estos parámetros radiográficos — no los confundas en la documentación.</div>
+        </div>
+
+        <div id="clasif-campos-edad_osea" style="display:none">
+          <div class="fg"><label>Método utilizado</label><select id="clasif-eo-metodo">
+            <option value="Greulich-Pyle">Greulich-Pyle (comparación con atlas)</option>
+            <option value="Tanner-Whitehouse 3 (TW3)">Tanner-Whitehouse 3 — TW3 (puntaje por hueso)</option>
+          </select></div>
+          <div class="fg"><label>Edad ósea determinada</label><input id="clasif-eo-edad" type="text" placeholder="Ej: 13 años y 6 meses"></div>
+          <div class="clasif-nota">Greulich-Pyle (atlas, 1959) es el método más usado en la práctica diaria por su rapidez; Tanner-Whitehouse (TW2 1975 → TW3, revisión de 2001) puntúa hueso por hueso y se reserva para casos dudosos o donde se necesita más precisión. Este campo es de carga manual — vos determinás la edad ósea con el método que prefieras y acá queda registrada.</div>
+        </div>
+
+        <div id="clasif-campos-icrs" style="display:none">
+          <div class="fg"><label>Contexto</label><select id="clasif-icrs-contexto" onchange="mostrarGradoICRS()">
+            <option value="general">Lesión condral (general)</option>
+            <option value="ocd">Osteocondritis disecante (OCD)</option>
+          </select></div>
+          <div id="clasif-icrs-grado-general">
+            <div class="fg"><label>Grado</label><select id="clasif-icrs-grado">
+              <option value="">Seleccionar…</option>
+              <option value="0 — Normal">0 — Normal</option>
+              <option value="1 — Casi normal (1A ablandamiento; 1B fisuras superficiales)">1 — Casi normal (1A ablandamiento; 1B fisuras superficiales)</option>
+              <option value="2 — Anormal, &lt;50% del espesor, sin hueso expuesto">2 — Anormal, &lt;50% del espesor, sin hueso expuesto</option>
+              <option value="3 — Severamente anormal, &gt;50% del espesor, hueso subcondral intacto">3 — Severamente anormal, &gt;50% del espesor, hueso subcondral intacto</option>
+              <option value="4 — Defecto osteocondral de espesor completo, atraviesa el hueso subcondral">4 — Defecto osteocondral de espesor completo, atraviesa el hueso subcondral</option>
+            </select></div>
+          </div>
+          <div id="clasif-icrs-grado-ocd" style="display:none">
+            <div class="fg"><label>Grado (OCD)</label><select id="clasif-icrs-grado-ocd-sel">
+              <option value="">Seleccionar…</option>
+              <option value="I — Estable, área reblandecida, cartílago íntegro">I — Estable, área reblandecida, cartílago íntegro</option>
+              <option value="II — Discontinuidad parcial, estable al probar">II — Discontinuidad parcial, estable al probar</option>
+              <option value="III — Discontinuidad completa, no desplazado, inestable ('muerto in situ')">III — Discontinuidad completa, no desplazado, inestable ("muerto in situ")</option>
+              <option value="IV — Defecto vacío o fragmento desplazado/suelto">IV — Defecto vacío o fragmento desplazado/suelto</option>
+            </select></div>
+          </div>
+          <div class="clasif-nota">ICRS (International Cartilage Regeneration &amp; Joint Preservation Society) — estandarizada en el taller ICRS 2000, publicada por Brittberg &amp; Winalski en 2003. La confiabilidad interobservador es solo moderada (Puhakka et al., 2021) — es una guía, no un dato absoluto.</div>
         </div>
 
         <div class="fila-btns" id="clasif-btn-generar" style="display:none;margin-top:6px">
@@ -266,6 +546,10 @@
         <div class="fila-btns" id="clasif-btn-ia" style="display:none;margin-top:6px">
           <button type="button" class="btn btn-ia" onclick="actualizarClasificacion(this)">🔄 Actualizar clasificación</button>
         </div>
+        <div class="fila-btns" id="clasif-btn-diagrama" style="display:none;margin-top:6px">
+          <button type="button" class="btn btn-ghost" onclick="verDiagramaClasif()">📊 Ver escala completa y año de referencia</button>
+        </div>
+        <div id="clasif-diagrama" style="display:none"></div>
         <div class="clasif-box" id="clasif-resultado" style="margin-top:8px">Elegí arriba qué patología clasificar.</div>
       </div>
     </div>
@@ -657,17 +941,62 @@ async function pulirRecuadro(cual, btnEl){
 // (no se inventa una tabla de gravedad para eso). "Otra" patología cae al
 // modo anterior: consulta libre a la IA en base al texto del Diagnóstico.
 // ══════════════════════════════════════════════════════════════
+const CLASIF_ESTRUCTURADAS_ = ['escoliosis','listesis','pie','artrosis','hallux','manguito',
+  'discopatia','esguince_tobillo','esguince_rodilla','menisco','genu','pie_valgo_retropie','gmfcs',
+  'ao_fractura','balance_sagital','edad_osea','icrs'];
 function mostrarCamposClasificacion(){
   const val = document.getElementById('clasif-patologia').value;
-  ['escoliosis','listesis','pie'].forEach(k=>{
+  CLASIF_ESTRUCTURADAS_.forEach(k=>{
     document.getElementById('clasif-campos-'+k).style.display = (val===k) ? 'block' : 'none';
   });
-  document.getElementById('clasif-btn-generar').style.display = (val==='escoliosis'||val==='listesis'||val==='pie') ? 'flex' : 'none';
+  document.getElementById('clasif-btn-generar').style.display = CLASIF_ESTRUCTURADAS_.indexOf(val)>-1 ? 'flex' : 'none';
   document.getElementById('clasif-btn-ia').style.display = (val==='otra') ? 'flex' : 'none';
+  document.getElementById('clasif-btn-diagrama').style.display = CLASIF_META_[val] ? 'flex' : 'none';
+  document.getElementById('clasif-diagrama').style.display = 'none';
   const box = document.getElementById('clasif-resultado');
   if(!val) box.textContent = 'Elegí arriba qué patología clasificar.';
   else if(val==='otra') box.textContent = 'Escribí el diagnóstico arriba y tocá "Actualizar clasificación".';
   else box.textContent = 'Completá los campos y tocá "Calcular clasificación".';
+}
+
+// ══════════════════════════════════════════════════════════════
+// Año/fuente de cada clasificación + escala completa, para que el médico
+// pueda corroborar visualmente contra qué está comparando (pedido explícito:
+// "poder corroborar con certeza" + "año de vigencia"). No son imágenes de
+// atlas (esas son material con derechos de las sociedades/revistas) — es
+// la escala propia armada con los datos investigados, no de memoria.
+// ══════════════════════════════════════════════════════════════
+const CLASIF_META_ = {
+  escoliosis: {anio:'Cobb: 1948 (John R. Cobb) · Categorías etiológicas: glosario vigente de la SRS (Scoliosis Research Society)', escala:['Leve <25°','Moderada 25-40°','Grave >40°']},
+  listesis: {anio:'Meyerding: 1932 · Wiltse-Newman-MacNab (tipo etiológico): 1976', escala:['I ≤25%','II ≤50%','III ≤75%','IV ≤100%','V >100% (espondiloptosis)']},
+  pie: {anio:'Hernández-Corvo: 1989', escala:['Pie plano','Plano-normal','Normal','Cavo-normal','Pie cavo','Cavo extremo']},
+  artrosis: {anio:'Kellgren-Lawrence: 1957 (Ann Rheum Dis)', escala:['Grado 0','Grado 1','Grado 2','Grado 3','Grado 4']},
+  hallux: {anio:'Mann & Coughlin — clasificación de uso extendido en la bibliografía (no fijada por año único ni por AOFAS)', escala:['Normal','Leve','Moderado','Severo']},
+  manguito: {anio:'Goutallier (TC): 1994 · Fuchs (adaptación a RM): 1999', escala:['Estadio 0','Estadio 1','Estadio 2','Estadio 3','Estadio 4']},
+  discopatia: {anio:'Pfirrmann: 2001 · Nomenclatura de hernia discal — Versión 2.0 (NASS/ASSR/ASNR): 2014, actualiza la de 2001', escala:['Grado I','Grado II','Grado III','Grado IV','Grado V']},
+  esguince_tobillo: {anio:'Convención de uso extendido ("West Point") — sin autor/año único fijado; AAOS la usa en su lenguaje mild/moderate/severe', escala:['Grado I','Grado II','Grado III']},
+  esguince_rodilla: {anio:'Grado clínico I-III: convención sin año único · IKDC: 1993, revisado 2000', escala:['Grado I','Grado II','Grado III']},
+  menisco: {anio:'Stoller/Crues: 1987', escala:['Grado 0','Grado I','Grado II','Grado III']},
+  genu: {anio:'Curva de Salenius-Vankka (pediátrica): 1975 — sin escala de gravedad única en adultos', escala:['Varo','Normal','Valgo']},
+  pie_valgo_retropie: {anio:'Johnson & Strom: 1989 · ampliación de Myerson (estadio IV): 1997', escala:['I','IIA','IIB','III','IV']},
+  gmfcs: {anio:'GMFCS original: 1997 · GMFCS-E&R (vigente): 2007 (CanChild, Universidad McMaster)', escala:['I','II','III','IV','V']},
+  ao_fractura: {anio:'AO/OTA Fracture and Dislocation Classification Compendium — revisión vigente: 2018', escala:['Tipo A','Tipo B','Tipo C']},
+  balance_sagital: {anio:'SRS-Schwab: 2012', escala:['0 — sin desbalance','+ — moderado','++ — severo']},
+  edad_osea: {anio:'Greulich-Pyle: 1959 · Tanner-Whitehouse: TW2 1975 → TW3 (vigente) 2001', escala:[]},
+  icrs: {anio:'ICRS — estandarizada en el taller ICRS 2000, publicada por Brittberg & Winalski en 2003', escala:['Grado 0','Grado 1','Grado 2','Grado 3','Grado 4']}
+};
+function verDiagramaClasif(){
+  const val = document.getElementById('clasif-patologia').value;
+  const meta = CLASIF_META_[val];
+  const cont = document.getElementById('clasif-diagrama');
+  if(!meta){ cont.style.display='none'; return; }
+  const yaAbierto = cont.style.display==='block';
+  if(yaAbierto){ cont.style.display='none'; return; }
+  const barra = meta.escala.length
+    ? `<div class="cd-barra">${meta.escala.map(e=>`<div class="cd-seg">${e}</div>`).join('')}</div>`
+    : `<div style="font-size:11px;color:var(--muted)">Carga manual — no es una escala numérica de grados, sino un dato que vos determinás con el método elegido.</div>`;
+  cont.innerHTML = `<div class="cd-anio">📅 ${meta.anio}</div>${barra}`;
+  cont.style.display = 'block';
 }
 function actualizarGradoMeyerdingClasif(){
   const pct = parseFloat(document.getElementById('clasif-list-pct').value);
@@ -690,17 +1019,181 @@ function generarClasificacionEstructurada(){
     else if(cobb<=40) severidad='moderada';
     else severidad='grave (criterio quirúrgico habitual >40-45°, según contexto clínico)';
     const risser = document.getElementById('clasif-risser').value;
-    box.textContent = `Escoliosis ${severidad} — Ángulo de Cobb: ${cobb}°` + (risser?` — Risser: ${risser}`:'');
+    const etio = document.getElementById('clasif-esco-etiologia').value;
+    box.textContent = `Escoliosis ${severidad} — Ángulo de Cobb: ${cobb}°` + (risser?` — Risser: ${risser}`:'') + (etio?` — Etiología: ${etio}`:'');
   } else if(val==='listesis'){
     const pct = document.getElementById('clasif-list-pct').value;
     const grado = document.getElementById('clasif-list-grado').value;
     if(!pct||!grado){ toast('⚠️ Cargá el porcentaje de desplazamiento','err'); return; }
-    box.textContent = `Espondilolistesis — Grado de Meyerding ${grado} (desplazamiento del ${pct}%)`;
+    const tipo = document.getElementById('clasif-list-tipo').value;
+    box.textContent = `Espondilolistesis — Grado de Meyerding ${grado} (desplazamiento del ${pct}%)` + (tipo?` — Tipo: ${tipo}`:'');
   } else if(val==='pie'){
     const g = document.getElementById('clasif-hcorvo').value.trim();
     if(!g){ toast('⚠️ Cargá el grado de Hernández-Corvo','err'); return; }
     box.textContent = `Pie plano/cavo — Hernández-Corvo: ${g}`;
+  } else if(val==='artrosis'){
+    const art = document.getElementById('clasif-art-articulacion').value;
+    const selGrado = document.getElementById('clasif-art-grado');
+    if(!selGrado.value){ toast('⚠️ Elegí el grado radiográfico','err'); return; }
+    const desc = selGrado.selectedOptions[0].text;
+    box.textContent = `Artrosis de ${art} — Kellgren-Lawrence: ${desc}`;
+  } else if(val==='hallux'){
+    const hva = parseFloat(document.getElementById('clasif-hv-hva').value);
+    const ima = parseFloat(document.getElementById('clasif-hv-ima').value);
+    if(isNaN(hva) && isNaN(ima)){ toast('⚠️ Cargá al menos un ángulo (HVA o IMA)','err'); return; }
+    const partes=[];
+    if(!isNaN(hva)){
+      let sev; if(hva<15) sev='normal'; else if(hva<20) sev='leve'; else if(hva<=40) sev='moderado'; else sev='severo';
+      partes.push(`HVA ${hva}° (${sev})`);
+    }
+    if(!isNaN(ima)){
+      let sev; if(ima<9) sev='normal'; else if(ima<11) sev='leve'; else if(ima<=16) sev='moderado'; else sev='severo';
+      partes.push(`IMA ${ima}° (${sev})`);
+    }
+    box.textContent = `Hallux valgus — ${partes.join(' — ')} · clasificación de Mann & Coughlin (uso más frecuente en bibliografía; los cortes exactos varían según el autor).`;
+  } else if(val==='manguito'){
+    const tec = document.getElementById('clasif-mr-tecnica').value;
+    const selEstadio = document.getElementById('clasif-mr-estadio');
+    if(!selEstadio.value){ toast('⚠️ Elegí el estadio de infiltración grasa','err'); return; }
+    const desc = selEstadio.selectedOptions[0].text;
+    const fuente = tec==='TC' ? 'Goutallier original (TC)' : 'adaptación de Fuchs (RM)';
+    box.textContent = `Manguito rotador — Infiltración grasa: ${desc} · ${fuente}`;
+  } else if(val==='discopatia'){
+    const selPf = document.getElementById('clasif-disco-pfirrmann');
+    if(!selPf.value){ toast('⚠️ Elegí el grado de Pfirrmann','err'); return; }
+    const morfo = document.getElementById('clasif-disco-morfologia').value;
+    box.textContent = `Discopatía — Pfirrmann grado ${selPf.value}` + (morfo?` — ${morfo}`:' — sin hernia asociada / no evaluada');
+  } else if(val==='esguince_tobillo'){
+    const sel = document.getElementById('clasif-est-grado');
+    if(!sel.value){ toast('⚠️ Elegí el grado','err'); return; }
+    box.textContent = `Esguince de tobillo — ${sel.value}`;
+  } else if(val==='esguince_rodilla'){
+    const lig = document.getElementById('clasif-esr-ligamento').value;
+    const selG = document.getElementById('clasif-esr-grado');
+    if(!selG.value){ toast('⚠️ Elegí el grado clínico','err'); return; }
+    const ikdc = document.getElementById('clasif-esr-ikdc').value;
+    box.textContent = `Lesión de ${lig} — ${selG.value}` + (ikdc?` — IKDC ${ikdc}`:'');
+  } else if(val==='menisco'){
+    const selS = document.getElementById('clasif-men-stoller');
+    if(!selS.value){ toast('⚠️ Elegí el grado de Stoller','err'); return; }
+    const patron = document.getElementById('clasif-men-patron').value;
+    const zona = document.getElementById('clasif-men-zona').value;
+    box.textContent = `Menisco — ${selS.value}` + (patron?` — Patrón: ${patron}`:'') + (zona?` — Zona: ${zona}`:'');
+  } else if(val==='genu'){
+    const tipo = document.getElementById('clasif-genu-tipo').value;
+    const edad = document.getElementById('clasif-genu-edad').value==='pediatrico'?'pediátrico':'adulto';
+    const dist = document.getElementById('clasif-genu-dist').value;
+    const eje = document.getElementById('clasif-genu-eje').value;
+    const partes=[];
+    if(dist) partes.push(`distancia ${dist} cm`);
+    if(eje) partes.push(`eje mecánico ${eje}°`);
+    box.textContent = `Genu ${tipo} (${edad})` + (partes.length?` — ${partes.join(', ')}`:'') + ' — sin escala de gravedad estandarizada; hallazgo descriptivo.';
+  } else if(val==='pie_valgo_retropie'){
+    const sel = document.getElementById('clasif-pvr-estadio');
+    if(!sel.value){ toast('⚠️ Elegí el estadio','err'); return; }
+    box.textContent = `Pie plano del adulto (retropié valgo) — Johnson & Strom, ${sel.value}`;
+  } else if(val==='gmfcs'){
+    const sel = document.getElementById('clasif-gmfcs-nivel');
+    if(!sel.value){ toast('⚠️ Elegí el nivel','err'); return; }
+    box.textContent = `GMFCS — Nivel ${sel.value}`;
+  } else if(val==='ao_fractura'){
+    const seg = document.getElementById('clasif-ao-segmento');
+    const tipo = document.getElementById('clasif-ao-tipo');
+    if(!seg.value||!tipo.value){ toast('⚠️ Elegí el segmento y el tipo','err'); return; }
+    box.textContent = `Fractura AO/OTA ${seg.value} (${seg.selectedOptions[0].text.split('—')[1].trim()}) — ${tipo.selectedOptions[0].text}`;
+  } else if(val==='balance_sagital'){
+    const pi = parseFloat(document.getElementById('clasif-bs-pi').value);
+    const ll = parseFloat(document.getElementById('clasif-bs-ll').value);
+    const sva = parseFloat(document.getElementById('clasif-bs-sva').value);
+    const pt = parseFloat(document.getElementById('clasif-bs-pt').value);
+    if(isNaN(pi)&&isNaN(ll)&&isNaN(sva)&&isNaN(pt)){ toast('⚠️ Cargá al menos un parámetro','err'); return; }
+    const curva = document.getElementById('clasif-bs-curva').value;
+    const partes=[];
+    if(!isNaN(pi)&&!isNaN(ll)){
+      const mismatch = Math.abs(pi-ll);
+      let mod; if(mismatch<10) mod='0'; else if(mismatch<=20) mod='+'; else mod='++';
+      partes.push(`PI-LL ${mismatch.toFixed(1)}° (${mod})`);
+    }
+    if(!isNaN(sva)){
+      let mod; if(sva<4) mod='0'; else if(sva<=9.5) mod='+'; else mod='++';
+      partes.push(`SVA ${sva}cm (${mod})`);
+    }
+    if(!isNaN(pt)){
+      let mod; if(pt<20) mod='0'; else if(pt<=30) mod='+'; else mod='++';
+      partes.push(`PT ${pt}° (${mod})`);
+    }
+    box.textContent = `Balance sagital` + (curva?` — Curva ${curva}`:'') + (partes.length?` — ${partes.join(' · ')}`:'') + ' (SRS-Schwab: 0 sin desbalance, + moderado, ++ severo)';
+  } else if(val==='edad_osea'){
+    const metodo = document.getElementById('clasif-eo-metodo').value;
+    const edad = document.getElementById('clasif-eo-edad').value.trim();
+    if(!edad){ toast('⚠️ Cargá la edad ósea determinada','err'); return; }
+    box.textContent = `Edad ósea: ${edad} — método ${metodo}`;
+  } else if(val==='icrs'){
+    const ctx = document.getElementById('clasif-icrs-contexto').value;
+    if(ctx==='ocd'){
+      const sel = document.getElementById('clasif-icrs-grado-ocd-sel');
+      if(!sel.value){ toast('⚠️ Elegí el grado','err'); return; }
+      box.textContent = `Osteocondritis disecante — ICRS ${sel.value}`;
+    } else {
+      const sel = document.getElementById('clasif-icrs-grado');
+      if(!sel.value){ toast('⚠️ Elegí el grado','err'); return; }
+      box.textContent = `Lesión de cartílago — ICRS ${sel.value}`;
+    }
   }
+}
+
+// ══════════════════════════════════════════════════════════════
+// AO/OTA — Type A/B/C cambia de significado según el segmento óseo (fémur
+// proximal usa una lógica distinta a la extraarticular/parcial/completa
+// habitual, y el segmento maleolar corresponde a Danis-Weber). Se arma la
+// lista de tipos dinámicamente al elegir el segmento, en vez de mostrar
+// siempre "A/B/C" genérico sin explicar qué significa en cada hueso.
+// ══════════════════════════════════════════════════════════════
+const AO_TIPOS_ = {
+  '11': {A:'A — Extraarticular, unifocal (2 partes)', B:'B — Extraarticular, bifocal (3 partes)', C:'C — Articular (4 partes / head-split / luxación)'},
+  '12': {A:'A — Simple', B:'B — En cuña (wedge)', C:'C — Compleja / multifragmentaria'},
+  '23': {A:'A — Extraarticular', B:'B — Articular parcial', C:'C — Articular completa'},
+  '31': {A:'A — Extraarticular, trocantérica (per/intertrocantérea)', B:'B — Extraarticular, cuello femoral', C:'C — Articular, cabeza femoral (ej. Pipkin)'},
+  '32': {A:'A — Simple', B:'B — En cuña (wedge)', C:'C — Compleja'},
+  '33': {A:'A — Extraarticular', B:'B — Articular parcial (incl. fragmento de Hoffa)', C:'C — Articular completa'},
+  '41': {A:'A — Extraarticular', B:'B — Articular parcial (split / depresión / split-depresión)', C:'C — Articular completa'},
+  '42': {A:'A — Simple', B:'B — En cuña (wedge)', C:'C — Compleja / multifragmentaria'},
+  '43': {A:'A — Extraarticular', B:'B — Articular parcial', C:'C — Articular completa'},
+  '44': {A:'A — Infrasindesmal (peroné bajo la sindesmosis, ≈ Danis-Weber A)', B:'B — Transindesmal (a nivel de la sindesmosis, ≈ Danis-Weber B)', C:'C — Suprasindesmal (peroné sobre la sindesmosis, ≈ Danis-Weber C)'}
+};
+function actualizarTiposAO(){
+  const seg = document.getElementById('clasif-ao-segmento').value;
+  const sel = document.getElementById('clasif-ao-tipo');
+  if(!seg || !AO_TIPOS_[seg]){ sel.innerHTML = '<option value="">Elegí primero el segmento…</option>'; return; }
+  const t = AO_TIPOS_[seg];
+  sel.innerHTML = '<option value="">Seleccionar…</option>' +
+    `<option value="A">${t.A}</option><option value="B">${t.B}</option><option value="C">${t.C}</option>`;
+}
+function calcularModificadoresSagitales(){
+  const pi = parseFloat(document.getElementById('clasif-bs-pi').value);
+  const ll = parseFloat(document.getElementById('clasif-bs-ll').value);
+  const sva = parseFloat(document.getElementById('clasif-bs-sva').value);
+  const pt = parseFloat(document.getElementById('clasif-bs-pt').value);
+  const partes=[];
+  if(!isNaN(pi)&&!isNaN(ll)){
+    const mismatch = Math.abs(pi-ll);
+    let mod; if(mismatch<10) mod='0'; else if(mismatch<=20) mod='+'; else mod='++';
+    partes.push(`Desajuste PI-LL: ${mismatch.toFixed(1)}° (${mod})`);
+  }
+  if(!isNaN(sva)){
+    let mod; if(sva<4) mod='0'; else if(sva<=9.5) mod='+'; else mod='++';
+    partes.push(`SVA: ${sva}cm (${mod})`);
+  }
+  if(!isNaN(pt)){
+    let mod; if(pt<20) mod='0'; else if(pt<=30) mod='+'; else mod='++';
+    partes.push(`PT: ${pt}° (${mod})`);
+  }
+  document.getElementById('clasif-bs-preview').textContent = partes.join(' · ');
+}
+function mostrarGradoICRS(){
+  const ctx = document.getElementById('clasif-icrs-contexto').value;
+  document.getElementById('clasif-icrs-grado-general').style.display = (ctx==='general') ? 'block' : 'none';
+  document.getElementById('clasif-icrs-grado-ocd').style.display = (ctx==='ocd') ? 'block' : 'none';
 }
 async function actualizarClasificacion(btnEl){
   const diag = document.getElementById('texto-diagnostico').value.trim();
