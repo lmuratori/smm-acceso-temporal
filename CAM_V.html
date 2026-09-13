@@ -1,0 +1,885 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CAM V — Consulta por voz + herramientas</title>
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<style>
+  :root{--azul:#0369a1;--azul-osc:#0c4a6e;--verde:#16a34a;--ambar:#d97706;--rojo:#dc2626;--violeta:#7c2d92;--muted:#64748b;--border:#e2e8f0;--bg:#f4fbfd;--surface:#fff;--panel:#f8fafc}
+  *{box-sizing:border-box}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);margin:0;color:#0f172a;padding-bottom:60px}
+  .topbar{background:linear-gradient(135deg,var(--azul),var(--azul-osc));color:#fff;padding:16px 18px}
+  .topbar-top{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+  .topbar h1{margin:0 0 2px;font-size:18px}
+  .topbar p{margin:0;font-size:11.5px;opacity:.9}
+  .badge{display:inline-block;font-size:9.5px;font-weight:800;padding:2px 7px;border-radius:5px;margin-left:6px;vertical-align:middle;background:#fef3c7;color:#92400e;border:1px solid #fde68a}
+
+  .simm-nav-wrap{position:relative}
+  .simm-nav-btn{cursor:pointer;border:1px solid rgba(255,255,255,.5);background:rgba(255,255,255,.12);color:#fff;border-radius:7px;padding:6px 10px;font-size:11.5px;font-weight:700}
+  .simm-nav-dropdown{display:none;position:absolute;top:100%;right:0;margin-top:6px;background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.2);min-width:220px;max-height:70vh;overflow-y:auto;z-index:200;padding:4px;text-align:left}
+  .simm-nav-item{display:block;padding:7px 10px;font-size:12px;color:#0f172a;text-decoration:none;border-radius:6px;white-space:nowrap}
+  .simm-nav-item:hover{background:#f1f5f9}
+
+  .pacbar{background:#fff;border-bottom:1px solid var(--border);padding:10px 16px;display:flex;gap:10px;flex-wrap:wrap}
+  .pacbar input{padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:inherit;flex:1;min-width:140px}
+
+  .layout{max-width:1320px;margin:0 auto;padding:14px 12px;display:grid;grid-template-columns:230px 1fr 340px;gap:12px}
+  @media (max-width:980px){ .layout{grid-template-columns:1fr} }
+
+  .col-titulo{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin-bottom:8px}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:10px}
+  .card h3{margin:0 0 8px;font-size:13px;color:var(--azul-osc)}
+  label{font-size:10.5px;font-weight:700;color:var(--muted);display:block;margin-bottom:3px}
+  input[type=text],input[type=tel],input[type=number],textarea,select{width:100%;padding:7px 9px;border:1px solid var(--border);border-radius:6px;font-size:12.5px;font-family:inherit;background:#fff}
+  textarea{resize:vertical;line-height:1.5}
+  .fg{margin-bottom:8px}
+  .row{display:flex;gap:8px;flex-wrap:wrap}
+  .row>div{flex:1;min-width:110px}
+
+  .btn{border:none;border-radius:7px;padding:8px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit}
+  .btn-primary{background:var(--azul);color:#fff}
+  .btn-ghost{background:#eef2f7;color:#0f172a}
+  .btn-ia{background:var(--violeta);color:#fff}
+  .btn-ok{background:var(--verde);color:#fff}
+  .btn:disabled{opacity:.5;cursor:default}
+  .btn-mic{background:#fef2f2;color:var(--rojo);border:1px solid #fca5a5}
+  .btn-mic.on{background:var(--rojo);color:#fff;animation:pulse 1.2s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(220,38,38,.5)}70%{box-shadow:0 0 0 8px rgba(220,38,38,0)}100%{box-shadow:0 0 0 0 rgba(220,38,38,0)}}
+  .btn-herr{width:100%;text-align:left;background:#faf5ff;border:1px solid #e9d5ff;color:var(--violeta);padding:10px 12px;border-radius:8px;font-weight:700;font-size:12.5px;cursor:pointer;margin-bottom:8px}
+  .btn-herr.abierta{background:var(--violeta);color:#fff}
+  .fila-btns{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+
+  .panel-herr{display:none;border-top:2px solid #e9d5ff;padding-top:8px;margin:-2px 0 10px;font-size:12px}
+  .panel-herr.abierta{display:block}
+
+  .consulta-box{border:1.5px solid var(--border);border-radius:9px;margin-bottom:10px;overflow:hidden}
+  .consulta-box.activo{border-color:var(--azul)}
+  .consulta-head{background:var(--panel);padding:8px 12px;font-size:12.5px;font-weight:700;color:var(--azul-osc);cursor:pointer;display:flex;justify-content:space-between;align-items:center}
+  .consulta-box.activo .consulta-head{background:var(--azul);color:#fff}
+  .consulta-body{padding:10px 12px}
+  .interim{font-size:11.5px;color:var(--muted);font-style:italic;min-height:15px}
+
+  .resumen-box{white-space:pre-wrap;background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.55;max-height:340px;overflow-y:auto}
+  .clasif-box{background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.55;color:#9a3412;min-height:20px}
+
+  .toast-cont{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:999;display:flex;flex-direction:column;gap:6px;align-items:center}
+  .toast{background:#0f172a;color:#fff;padding:9px 16px;border-radius:8px;font-size:12.5px;box-shadow:0 4px 14px rgba(0,0,0,.2)}
+  .toast.err{background:#dc2626}
+  .toast.ok{background:#16a34a}
+  .spin{display:inline-block;width:10px;height:10px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite;vertical-align:middle;margin-right:5px}
+  @keyframes sp{to{transform:rotate(360deg)}}
+
+  .maniobra-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:6px 0;border-bottom:1px dashed var(--border)}
+  .maniobra-row input[type=text]{flex:1.4;min-width:110px}
+  .maniobra-row select{flex:1;min-width:100px}
+  .sug-rationale{font-size:10px;color:var(--muted);margin-top:-2px;margin-bottom:2px}
+  .info-box{background:#faf5ff;border:1px solid #e9d5ff;border-radius:8px;padding:10px 12px;font-size:11.5px;line-height:1.55;margin-top:8px}
+  .info-box .k{font-weight:700;color:var(--violeta)}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-top">
+    <h1>🎙️🧬 CAM V</h1>
+    <div class="simm-nav-wrap">
+      <button type="button" class="simm-nav-btn" onclick="toggleSimmNav()">🔀 Ir a…</button>
+      <div id="simm-nav-dropdown" class="simm-nav-dropdown">
+        <a href="index.html" class="simm-nav-item">🏠 Portada de SIM-M</a>
+        <a href="OCM_Muratori_v14_0_26.html" class="simm-nav-item">🗂️ OCM — Historia Clínica</a>
+        <a href="CAM_Herramientas_Clinicas.html" class="simm-nav-item">🧬 CAM — Herramientas Clínicas (manual)</a>
+        <a href="Consulta_Guiada_Beta_v1.html" class="simm-nav-item">🎙️ Consulta Guiada — Beta</a>
+      </div>
+    </div>
+  </div>
+  <p>Herramientas de examen a la izquierda, dictado por voz manual en el centro, recuadros de consulta a la derecha — con resumen final para copiar a otros sistemas.</p>
+</div>
+
+<div class="pacbar">
+  <input type="text" id="pac-nombre" placeholder="Apellido y nombre">
+  <input type="text" id="pac-dni" placeholder="DNI (para guardar en historia clínica)">
+</div>
+
+<div class="layout">
+
+  <!-- ═══ COLUMNA IZQUIERDA: HERRAMIENTAS DE EXAMEN FÍSICO ═══ -->
+  <div>
+    <div class="col-titulo">🛠️ Herramientas de examen físico</div>
+
+    <button type="button" class="btn-herr" id="btn-herr-podo" onclick="toggleHerramienta('podo')">🦶 Podoscopía</button>
+    <div class="panel-herr" id="panel-herr-podo">
+      <div class="row"><div class="fg"><label>Retropié — lado</label><select id="podo-lado-vv"><option>Derecho</option><option>Izquierdo</option><option>Bilateral</option></select></div>
+        <div class="fg"><label>Ángulo (+valgo / −varo)</label><input id="podo-angulo-vv" type="number" step="0.1"></div></div>
+      <div class="row"><div class="fg"><label>Índice Chippaux-Smirak (%)</label><input id="podo-chippaux" type="number" step="0.1"></div>
+        <div class="fg"><label>Hernández-Corvo</label><input id="podo-hcorvo" type="text" placeholder="Grado I a IV"></div></div>
+      <div class="fg"><label>Arch Index (Cavanagh-Rodgers)</label><input id="podo-archindex" type="number" step="0.01"></div>
+      <div class="fg"><label>Observaciones</label><textarea id="podo-obs" rows="2"></textarea></div>
+      <div class="fila-btns">
+        <button type="button" class="btn btn-ghost" onclick="generarInformePodoscopia()">📄 Generar informe</button>
+        <button type="button" class="btn btn-primary" onclick="enviarHerramientaAExamen('podo')">⬇️ Enviar a Examen físico</button>
+      </div>
+      <div class="resumen-box" id="podo-preview" style="margin-top:8px;display:none"></div>
+    </div>
+
+    <button type="button" class="btn-herr" id="btn-herr-sind" onclick="toggleHerramienta('sind')">🧬 Consulta de síndromes</button>
+    <div class="panel-herr" id="panel-herr-sind">
+      <div class="fg"><label>Síndrome</label><select id="sind-select" onchange="mostrarSindrome()"></select></div>
+      <div class="info-box" id="sind-info">Elegí un síndrome para ver su información.</div>
+      <div class="fila-btns">
+        <button type="button" class="btn btn-ghost" onclick="agregarSindromePersonalizado()">⭐ Agregar a mi diccionario</button>
+        <button type="button" class="btn btn-primary" onclick="enviarHerramientaAExamen('sind')">⬇️ Enviar a Examen físico</button>
+      </div>
+    </div>
+
+    <button type="button" class="btn-herr" id="btn-herr-man" onclick="toggleHerramienta('man')">🤲 Maniobras por segmento</button>
+    <div class="panel-herr" id="panel-herr-man">
+      <div class="fg"><label>Segmento a evaluar</label>
+        <select id="man-segmento">
+          <option value="">Seleccionar…</option>
+          <optgroup label="Columna y pelvis">
+            <option>Columna cervical</option><option>Columna dorsal</option><option>Columna lumbar</option>
+            <option>Articulación sacroilíaca / pelvis</option>
+          </optgroup>
+          <optgroup label="Miembro superior">
+            <option>Hombro</option><option>Codo</option><option>Muñeca</option><option>Mano / dedos</option>
+          </optgroup>
+          <optgroup label="Miembro inferior">
+            <option>Cadera</option><option>Rodilla</option><option>Tobillo</option><option>Pie / dedos</option>
+          </optgroup>
+        </select>
+      </div>
+      <div class="fila-btns">
+        <button type="button" class="btn btn-ia" onclick="sugerirManiobras(this)">🔎 Sugerir maniobras (IA)</button>
+        <button type="button" class="btn btn-ghost" onclick="agregarManiobraManual()">+ Manual</button>
+      </div>
+      <div id="man-lista" style="margin-top:8px"></div>
+      <button type="button" class="btn btn-primary" style="margin-top:8px;width:100%" onclick="enviarHerramientaAExamen('man')">⬇️ Enviar a Examen físico</button>
+    </div>
+  </div>
+
+  <!-- ═══ COLUMNA CENTRAL: DICTADO ═══ -->
+  <div>
+    <div class="col-titulo">🎙️ Dictado (activación manual)</div>
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <button type="button" class="btn btn-mic" id="mic-btn" onclick="toggleMic()">🎤 Escuchar</button>
+        <span style="font-size:11px;color:var(--muted)">o escribí directo abajo</span>
+      </div>
+      <div class="interim" id="interim-centro"></div>
+      <textarea id="dictado-centro" rows="14" placeholder="Acá va apareciendo lo que dictás (o escribís)…"></textarea>
+      <div class="fila-btns">
+        <button type="button" class="btn btn-ia" onclick="pulirCentro(this)">✨ Pulir con IA</button>
+        <button type="button" class="btn btn-ghost" onclick="document.getElementById('dictado-centro').value=''">🧹 Limpiar</button>
+      </div>
+      <div style="font-size:10.5px;color:var(--muted);margin:10px 0 4px;font-weight:700">⬇️ Enviar este texto a:</div>
+      <div class="fila-btns">
+        <button type="button" class="btn btn-ghost" onclick="enviarCentroA('motivo')">Motivo</button>
+        <button type="button" class="btn btn-ghost" onclick="enviarCentroA('interr')">Interrogatorio</button>
+        <button type="button" class="btn btn-ghost" onclick="enviarCentroA('examen')">Examen físico</button>
+        <button type="button" class="btn btn-ghost" onclick="enviarCentroA('estudios')">Estudios</button>
+        <button type="button" class="btn btn-ghost" onclick="enviarCentroA('diagnostico')">Diagnóstico</button>
+        <button type="button" class="btn btn-ghost" onclick="enviarCentroA('terapeutica')">Terapéutica</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ COLUMNA DERECHA: RECUADROS DE CONSULTA ═══ -->
+  <div>
+    <div class="col-titulo">📋 Consulta</div>
+
+    <div class="consulta-box" id="box-motivo">
+      <div class="consulta-head">🎯 Motivo de consulta y antecedentes</div>
+      <div class="consulta-body">
+        <textarea id="texto-motivo" rows="3"></textarea>
+        <div class="fila-btns"><button type="button" class="btn btn-ia" onclick="pulirRecuadro('motivo',this)">✨ Pulir con IA</button></div>
+      </div>
+    </div>
+
+    <div class="consulta-box" id="box-interr">
+      <div class="consulta-head">📝 Interrogatorio</div>
+      <div class="consulta-body">
+        <textarea id="texto-interr" rows="3"></textarea>
+        <div class="fila-btns"><button type="button" class="btn btn-ia" onclick="pulirRecuadro('interr',this)">✨ Pulir con IA</button></div>
+      </div>
+    </div>
+
+    <div class="consulta-box" id="box-examen">
+      <div class="consulta-head">🔎 Examen físico</div>
+      <div class="consulta-body">
+        <textarea id="texto-examen" rows="4" placeholder="Acá también caen los informes de podoscopía / síndromes / maniobras cuando los enviás desde la izquierda…"></textarea>
+        <div class="fila-btns"><button type="button" class="btn btn-ia" onclick="pulirRecuadro('examen',this)">✨ Pulir con IA</button></div>
+      </div>
+    </div>
+
+    <div class="consulta-box" id="box-estudios">
+      <div class="consulta-head">🧪 Estudios e indicaciones</div>
+      <div class="consulta-body">
+        <textarea id="texto-estudios" rows="3"></textarea>
+        <div class="fila-btns"><button type="button" class="btn btn-ia" onclick="pulirRecuadro('estudios',this)">✨ Ordenar con IA</button></div>
+      </div>
+    </div>
+
+    <div class="consulta-box" id="box-diagnostico">
+      <div class="consulta-head">🎯 Diagnóstico</div>
+      <div class="consulta-body">
+        <textarea id="texto-diagnostico" rows="2"></textarea>
+        <div class="fila-btns"><button type="button" class="btn btn-ia" onclick="pulirRecuadro('diagnostico',this)">✨ Pulir con IA</button></div>
+      </div>
+    </div>
+
+    <div class="consulta-box" id="box-clasif">
+      <div class="consulta-head">🏷️ Clasificaciones</div>
+      <div class="consulta-body">
+        <div class="fg"><label>Patología a clasificar</label>
+          <select id="clasif-patologia" onchange="mostrarCamposClasificacion()">
+            <option value="">Seleccionar…</option>
+            <option value="escoliosis">Escoliosis (Ángulo de Cobb)</option>
+            <option value="listesis">Espondilolistesis (Meyerding)</option>
+            <option value="pie">Pie plano / cavo (Hernández-Corvo)</option>
+            <option value="otra">Otra — consultar con IA según el Diagnóstico</option>
+          </select>
+        </div>
+
+        <div id="clasif-campos-escoliosis" style="display:none">
+          <div class="row">
+            <div class="fg"><label>Ángulo de Cobb (°)</label><input id="clasif-cobb" type="number" step="0.5"></div>
+            <div class="fg"><label>Risser (opcional)</label><select id="clasif-risser">
+              <option value="">Sin especificar</option>
+              <option>0</option><option>I</option><option>II</option><option>III</option><option>IV</option><option>V</option>
+            </select></div>
+          </div>
+        </div>
+
+        <div id="clasif-campos-listesis" style="display:none">
+          <div class="fg"><label>Desplazamiento (%)</label><input id="clasif-list-pct" type="number" step="1" min="0" oninput="actualizarGradoMeyerdingClasif()"></div>
+          <div class="fg"><label>Grado de Meyerding (auto)</label><input id="clasif-list-grado" type="text" readonly></div>
+        </div>
+
+        <div id="clasif-campos-pie" style="display:none">
+          <div class="fg"><label>Grado de Hernández-Corvo</label><input id="clasif-hcorvo" type="text" placeholder="Ej: Grado I a IV — lo que hayas cargado en Podoscopía"></div>
+        </div>
+
+        <div class="fila-btns" id="clasif-btn-generar" style="display:none;margin-top:6px">
+          <button type="button" class="btn btn-primary" onclick="generarClasificacionEstructurada()">📐 Calcular clasificación</button>
+        </div>
+        <div class="fila-btns" id="clasif-btn-ia" style="display:none;margin-top:6px">
+          <button type="button" class="btn btn-ia" onclick="actualizarClasificacion(this)">🔄 Actualizar clasificación</button>
+        </div>
+        <div class="clasif-box" id="clasif-resultado" style="margin-top:8px">Elegí arriba qué patología clasificar.</div>
+      </div>
+    </div>
+
+    <div class="consulta-box" id="box-terapeutica">
+      <div class="consulta-head">💊 Terapéutica</div>
+      <div class="consulta-body">
+        <textarea id="texto-terapeutica" rows="2" placeholder="Plan terapéutico: medicación, reposo, kinesiología, etc."></textarea>
+        <div class="fila-btns"><button type="button" class="btn btn-ia" onclick="pulirRecuadro('terapeutica',this)">✨ Pulir con IA</button></div>
+      </div>
+    </div>
+
+    <div class="consulta-box" id="box-cierre">
+      <div class="consulta-head">✅ Cierre y resumen</div>
+      <div class="consulta-body">
+        <button type="button" class="btn btn-ghost" style="width:100%;margin-bottom:8px" onclick="armarResumenCompleto(this)">🔄 Actualizar resumen</button>
+        <div class="resumen-box" id="resumen-completo">Tocá "Actualizar resumen" para armarlo con todo lo cargado hasta ahora.</div>
+        <div class="fila-btns" style="margin-top:8px">
+          <button type="button" class="btn btn-ghost" onclick="copiarResumen()">📋 Copiar para otros sistemas</button>
+          <button type="button" class="btn btn-ok" id="btn-guardar-hc" onclick="guardarEnHistoriaClinica()">💾 Guardar en historia clínica</button>
+        </div>
+
+        <div class="fg" style="margin-top:14px"><label>Próximo control (opcional)</label><input type="date" id="prox-control"></div>
+        <div style="font-size:10.5px;color:var(--muted);margin:8px 0 4px;font-weight:700">🔀 Otras acciones</div>
+        <div class="fila-btns">
+          <button type="button" class="btn btn-ghost" onclick="irAAgendarControl()">📅 Agendar control</button>
+          <button type="button" class="btn btn-ghost" onclick="irAOCM()">🗂️ Pasar a OCM</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<div class="toast-cont" id="toast-cont"></div>
+
+<script>
+const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbwYdoFuU8mQL4YKqufSBQ9AD_yqWEEesLtGzYQjNw2JG1BZIQF7ug80mHB5sLMXhaUpvQ/exec';
+
+function toggleSimmNav(){
+  const dd = document.getElementById('simm-nav-dropdown');
+  if(!dd) return;
+  dd.style.display = dd.style.display==='none' || !dd.style.display ? 'block' : 'none';
+}
+document.addEventListener('click', e=>{
+  const wrap = document.querySelector('.simm-nav-wrap');
+  const dd = document.getElementById('simm-nav-dropdown');
+  if(wrap && dd && !wrap.contains(e.target)) dd.style.display='none';
+});
+
+function toast(msg, tipo){
+  const el = document.createElement('div');
+  el.className = 'toast' + (tipo?(' '+tipo):'');
+  el.textContent = msg;
+  document.getElementById('toast-cont').appendChild(el);
+  setTimeout(()=>el.remove(), 3800);
+}
+
+async function llamarBackend(action, payload){
+  const resp = await fetch(SHEETS_URL, {
+    method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify(Object.assign({action}, payload))
+  });
+  return resp.json();
+}
+
+async function correrIAEnBoton(btn, fn){
+  const original = btn ? btn.innerHTML : null;
+  if(btn){ btn.disabled = true; btn.innerHTML = '<span class="spin"></span>Procesando…'; }
+  try{ await fn(); }
+  finally{ if(btn){ btn.disabled = false; btn.innerHTML = original; } }
+}
+
+// ══════════════════════════════════════════════════════════════
+// ACORDEÓN de herramientas de examen físico (columna izquierda)
+// ══════════════════════════════════════════════════════════════
+function toggleHerramienta(k){
+  ['podo','sind','man'].forEach(otro=>{
+    const panel = document.getElementById('panel-herr-'+otro);
+    const btn = document.getElementById('btn-herr-'+otro);
+    if(otro===k){
+      const abrir = !panel.classList.contains('abierta');
+      panel.classList.toggle('abierta', abrir);
+      btn.classList.toggle('abierta', abrir);
+    } else {
+      panel.classList.remove('abierta');
+      btn.classList.remove('abierta');
+    }
+  });
+}
+
+function enviarHerramientaAExamen(cual){
+  const destino = document.getElementById('texto-examen');
+  let texto = '';
+  if(cual==='podo'){
+    texto = document.getElementById('podo-preview').textContent.trim();
+    if(!texto){ toast('⚠️ Generá primero el informe de podoscopía','err'); return; }
+  } else if(cual==='sind'){
+    const idx = document.getElementById('sind-select').value;
+    if(idx===''){ toast('⚠️ Elegí un síndrome primero','err'); return; }
+    const s = SINDROMES_TODOS[idx];
+    texto = `${s.n} — Herencia: ${s.h}. ${s.gen}. ${s.d}`;
+  } else if(cual==='man'){
+    const filas = textoManiobras_();
+    if(!filas.length){ toast('⚠️ No hay maniobras cargadas todavía','err'); return; }
+    const segmento = document.getElementById('man-segmento').value;
+    texto = (segmento ? `Maniobras — ${segmento}:\n` : 'Maniobras:\n') + filas.join('\n');
+  }
+  destino.value = destino.value.trim() ? destino.value.trim()+'\n\n'+texto : texto;
+  toast('✅ Enviado a Examen físico','ok');
+}
+
+// ══════════════════════════════════════════════════════════════
+// PODOSCOPÍA (mismos cálculos que CAM_Herramientas_Clinicas.html,
+// sin el sub-módulo de medición con giroscopio — acá son campos
+// manuales para no duplicar esa pieza aparte).
+// ══════════════════════════════════════════════════════════════
+function generarInformePodoscopia(){
+  const g = id => { const el = document.getElementById(id); return el ? el.value.trim() : ''; };
+  const lineas = [];
+  if(g('podo-angulo-vv')) lineas.push(`Retropié (${g('podo-lado-vv')}): ${parseFloat(g('podo-angulo-vv'))>=0?'Valgo':'Varo'} de ${Math.abs(parseFloat(g('podo-angulo-vv')))}°`);
+  if(g('podo-chippaux')) lineas.push(`Índice de Chippaux-Smirak: ${g('podo-chippaux')}%`);
+  if(g('podo-hcorvo')) lineas.push(`Índice de Hernández-Corvo: ${g('podo-hcorvo')}`);
+  if(g('podo-archindex')) lineas.push(`Arch Index (Cavanagh-Rodgers): ${g('podo-archindex')}`);
+  if(g('podo-obs')) lineas.push(`Observaciones: ${g('podo-obs')}`);
+  const box = document.getElementById('podo-preview');
+  if(!lineas.length){ toast('⚠️ Completá al menos un dato','err'); box.style.display='none'; return; }
+  box.textContent = `PODOSCOPÍA\n${lineas.join('\n')}`;
+  box.style.display = 'block';
+}
+
+// ══════════════════════════════════════════════════════════════
+// SÍNDROMES (mismo diccionario y lógica que CAM_Herramientas_Clinicas.html)
+// ══════════════════════════════════════════════════════════════
+const SINDROMES = [
+  {n:'Acondroplasia', h:'Autosómico Dominante', gen:'Gen FGFR3 — cromosoma 4p16.3', d:'Predomina: rizomelia (acortamiento proximal de miembros), macrocefalia relativa, lordosis lumbar. Buscar: estenosis del canal espinal, genu varo, hipoplasia del tercio medio facial.'},
+  {n:'Síndrome de Marfan', h:'Autosómico Dominante', gen:'Gen FBN1 — cromosoma 15q21.1', d:'Predomina: aracnodactilia, hiperlaxitud, hábito longilíneo, deformidades torácicas. Buscar: escoliosis, luxación del cristalino, dilatación de la raíz aórtica (derivar a cardiología/oftalmología).'},
+  {n:'Síndrome de Ehlers-Danlos', h:'Autosómico Dominante (mayoría de subtipos) o Recesivo (algunos subtipos)', gen:'Varios genes de colágeno según subtipo', d:'Predomina: hiperlaxitud articular generalizada, piel hiperextensible y frágil. Buscar: inestabilidad articular recurrente, escoliosis, cicatrización anómala.'},
+  {n:'Síndrome de Down (Trisomía 21)', h:'Cromosómico', gen:'Trisomía del cromosoma 21', d:'Predomina: hipotonía, hiperlaxitud ligamentaria, facies característica. Buscar: inestabilidad atlantoaxoidea (radiografía cervical dinámica antes de deporte/anestesia), pie plano, displasia de cadera.'},
+  {n:'Osteogénesis Imperfecta', h:'Autosómico Dominante (mayoría) o Recesivo (formas graves)', gen:'Genes COL1A1 / COL1A2, entre otros', d:'Predomina: fragilidad ósea con fracturas a bajo impacto, escleras azuladas. Buscar: escoliosis, deformidades progresivas en huesos largos, hipoacusia.'},
+  {n:'Artrogriposis Múltiple Congénita', h:'Multifactorial / esporádica', gen:'Variable según etiología', d:'Predomina: contracturas articulares múltiples desde el nacimiento. Buscar: pie equinovaro, luxación de cadera, escoliosis, compromiso de miembros superiores.'},
+  {n:'Síndrome de Larsen', h:'Autosómico Dominante', gen:'Gen FLNB', d:'Predomina: luxaciones articulares múltiples congénitas, facies característica. Buscar: luxación de rodilla/cadera/codo, inestabilidad cervical.'},
+  {n:'Displasia del desarrollo de la cadera', h:'Multifactorial', gen:'No monogénica — herencia poligénica/ambiental', d:'Predomina: inestabilidad o displasia acetabular en el neonato/lactante. Buscar: signo de Ortolani/Barlow, asimetría de pliegues, limitación de la abducción.'},
+  {n:'Neurofibromatosis tipo 1', h:'Autosómico Dominante', gen:'Gen NF1 — cromosoma 17q11.2', d:'Predomina: manchas café con leche, neurofibromas cutáneos. Buscar: escoliosis distrófica, pseudoartrosis congénita de tibia, displasias óseas focales.'},
+  {n:'Síndrome de Prader-Willi', h:'Cromosómico', gen:'Región 15q11-q13', d:'Predomina: hipotonía neonatal marcada, obesidad de inicio en la infancia. Buscar: escoliosis, displasia de cadera.'},
+  {n:'Síndrome de Turner', h:'Cromosómico', gen:'Monosomía total o parcial del cromosoma X (45,X)', d:'Predomina: talla baja, cuello alado, cubitus valgo. Buscar: escoliosis, displasia de cadera, luxación rotuliana.'},
+  {n:'Síndrome de Noonan', h:'Autosómico Dominante', gen:'Gen PTPN11, entre otros', d:'Predomina: talla baja, cuello alado, cardiopatía congénita. Buscar: deformidades torácicas (pectus), escoliosis.'},
+  {n:'Síndrome de Klippel-Feil', h:'Esporádico', gen:'Variable — genes GDF6/GDF3 en algunas familias', d:'Predomina: fusión congénita de vértebras cervicales, cuello corto. Buscar: escoliosis asociada, anomalías renales y auditivas.'},
+  {n:'Displasia Espondiloepifisaria (SED)', h:'Autosómico Dominante', gen:'Gen COL2A1, entre otros', d:'Predomina: tronco corto desproporcionado, epífisis irregulares. Buscar: inestabilidad atlantoaxoidea, coxa vara, escoliosis.'},
+  {n:'Displasia Diastrófica', h:'Autosómico Recesivo', gen:'Gen SLC26A2', d:'Predomina: talla baja, pulgar en autoestop, orejas en "coliflor". Buscar: pie equinovaro rígido bilateral, escoliosis cervical.'},
+  {n:'Mucopolisacaridosis (Hurler, Hunter, Morquio, etc.)', h:'Autosómico Recesivo (mayoría) o Ligado al X (Hunter)', gen:'Genes de enzimas lisosomales, según tipo', d:'Predomina: rigidez articular progresiva, rasgos faciales toscos, talla baja. Buscar: inestabilidad atlantoaxoidea (especialmente Morquio), displasia de cadera, deformidades espinales.'},
+  {n:'Síndrome de Rett', h:'Ligado al X (predomina en niñas)', gen:'Gen MECP2', d:'Predomina: regresión del desarrollo, estereotipias manuales. Buscar: escoliosis progresiva de aparición temprana.'},
+  {n:'Atrofia Muscular Espinal (AME)', h:'Autosómico Recesivo', gen:'Gen SMN1', d:'Predomina: debilidad muscular proximal progresiva, hipotonía. Buscar: escoliosis neuromuscular, contracturas articulares, luxación de cadera.'},
+  {n:'Distrofia Muscular de Duchenne', h:'Ligado al X recesivo (varones)', gen:'Gen DMD', d:'Predomina: debilidad muscular proximal progresiva, pseudohipertrofia de pantorrillas. Buscar: escoliosis neuromuscular, contracturas en equino, signo de Gowers.'},
+  {n:'Displasia Cleidocraneal', h:'Autosómico Dominante', gen:'Gen RUNX2', d:'Predomina: hipoplasia/aplasia de clavículas, hombros hipermóviles. Buscar: hipermovilidad de hombros, talla baja, escoliosis.'},
+  {n:'Parálisis Cerebral', h:'No genética — adquirida perinatal / multifactorial', gen:'No aplica (lesión del SNC en desarrollo)', d:'Predomina: espasticidad y alteración del tono, patrón de marcha variable según topografía. Buscar: luxación de cadera progresiva, escoliosis neuromuscular, contracturas en equino.'}
+];
+let SINDROMES_TODOS = [...SINDROMES];
+async function cargarSindromesPersonalizados(){
+  try{
+    const resp = await fetch(SHEETS_URL+'?action=get_lista_quirurgico&tipo=SindromePersonalizado');
+    const data = await resp.json();
+    const lista = (data.success && data.data) ? data.data : [];
+    return lista.map(v=>{
+      const partes = v.split('|').map(p=>p.trim());
+      return {n:partes[0]||'(sin nombre)', h:partes[1]||'—', gen:partes[2]||'—', d:partes[3]||'—', personalizado:true};
+    });
+  }catch(e){ return []; }
+}
+async function inicializarSindromes(){
+  const custom = await cargarSindromesPersonalizados();
+  SINDROMES_TODOS = [...SINDROMES, ...custom];
+  poblarSelectSindromes();
+}
+function poblarSelectSindromes(){
+  const sel=document.getElementById('sind-select');
+  const actual=sel.value;
+  sel.innerHTML='<option value="">Seleccionar…</option>'+SINDROMES_TODOS.map((s,i)=>`<option value="${i}">${s.n}${s.personalizado?' ⭐':''}</option>`).join('');
+  if(actual) sel.value=actual;
+}
+function mostrarSindrome(){
+  const idx=document.getElementById('sind-select').value;
+  const info=document.getElementById('sind-info');
+  if(idx===''){ info.innerHTML='Elegí un síndrome para ver su información.'; return; }
+  const s=SINDROMES_TODOS[idx];
+  info.innerHTML=`<div><span class="k">Herencia:</span> ${s.h}</div>
+    <div style="margin-top:4px"><span class="k">Hallazgo genético:</span> ${s.gen}</div>
+    <div style="margin-top:4px"><span class="k">Predomina / a buscar:</span> ${s.d}</div>`;
+}
+async function agregarSindromePersonalizado(){
+  const nombre = prompt('Nombre del síndrome:');
+  if(!nombre || !nombre.trim()) return;
+  const herencia = prompt('Patrón de herencia:')||'—';
+  const gen = prompt('Hallazgo genético o cromosómico:')||'—';
+  const desc = prompt('Qué predomina y qué buscar en el examen:')||'—';
+  const valor = `${nombre.trim()} | ${herencia.trim()} | ${gen.trim()} | ${desc.trim()}`;
+  try{
+    const resp = await fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({action:'guardar_item_quirurgico', tipo:'SindromePersonalizado', valor})});
+    const data = await resp.json();
+    if(!data.success) throw new Error(data.error||'Error del servidor');
+    toast('✅ Síndrome agregado a tu diccionario','ok');
+    await inicializarSindromes();
+  }catch(e){
+    toast('❌ No se pudo agregar: '+(e&&e.message?e.message:e),'err');
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// MANIOBRAS POR SEGMENTO (mismo motor que Consulta_Guiada_Beta_v1.html)
+// ══════════════════════════════════════════════════════════════
+let maniobraCount = 0;
+async function sugerirManiobras(btnEl){
+  const segmento = document.getElementById('man-segmento').value;
+  const motivo = document.getElementById('texto-motivo').value || '';
+  if(!segmento && !motivo.trim()){
+    toast('⚠️ Elegí un segmento o completá primero el motivo de consulta','err');
+    return;
+  }
+  const prompt_ = 'Sos un médico especialista en traumatología/ortopedia. ' +
+    (segmento ? `El segmento a evaluar es: ${segmento}. ` : '') +
+    'En base a esto y al motivo de consulta, sugerí entre 3 y 6 MANIOBRAS de examen físico específicas y pertinentes ' +
+    '(nombres reales de maniobras semiológicas, ej: Lachman, Thomas, Ober, Phalen, Finkelstein, Lasègue, McMurray, etc., ' +
+    'según corresponda a la zona). Devolvé SOLO un JSON válido, sin texto adicional ni markdown: ' +
+    '[{"nombre":"...","motivo":"por qué tiene sentido en este caso, una frase corta"}]\n\n' +
+    'Motivo de consulta: ' + motivo;
+
+  await correrIAEnBoton(btnEl, async ()=>{
+    const res = await llamarBackend('asistente_consulta_ia', {prompt: prompt_});
+    if(!res || !res.success || !res.texto){
+      toast('❌ ' + ((res&&res.error)||'No se pudo sugerir maniobras'), 'err');
+      return;
+    }
+    let lista = [];
+    try{
+      const limpio = res.texto.replace(/```json|```/g,'').trim();
+      lista = JSON.parse(limpio);
+    }catch(e){
+      toast('❌ La IA no devolvió una lista válida — probá de nuevo','err');
+      return;
+    }
+    lista.forEach(m => agregarFilaManiobra(m.nombre||'', m.motivo||''));
+    toast('✅ ' + lista.length + ' maniobras sugeridas');
+  });
+}
+function agregarManiobraManual(){ agregarFilaManiobra('', ''); }
+function agregarFilaManiobra(nombre, rationale){
+  const i = maniobraCount++;
+  const cont = document.getElementById('man-lista');
+  const wrap = document.createElement('div');
+  wrap.id = 'man-wrap-'+i;
+  wrap.innerHTML = `
+    ${rationale ? `<div class="sug-rationale">💡 ${rationale}</div>` : ''}
+    <div class="maniobra-row">
+      <input type="checkbox" id="man-check-${i}" checked>
+      <input type="text" id="man-nombre-${i}" value="${(nombre||'').replace(/"/g,'&quot;')}" placeholder="Maniobra">
+      <select id="man-resultado-${i}"><option value="">Resultado…</option><option>Positiva</option><option>Negativa</option><option>Dudosa</option></select>
+      <span style="cursor:pointer;color:var(--muted);padding:0 4px" onclick="document.getElementById('man-wrap-${i}').remove()">✕</span>
+    </div>`;
+  cont.appendChild(wrap);
+}
+function textoManiobras_(){
+  const filas = [];
+  document.querySelectorAll('#man-lista [id^="man-wrap-"]').forEach(wrap=>{
+    const i = wrap.id.replace('man-wrap-','');
+    const check = document.getElementById('man-check-'+i);
+    const nombre = document.getElementById('man-nombre-'+i)?.value.trim();
+    if(!nombre || (check && !check.checked)) return;
+    const resultado = document.getElementById('man-resultado-'+i)?.value || '';
+    filas.push(`• ${nombre}${resultado?' — '+resultado:''}`);
+  });
+  return filas;
+}
+
+// ══════════════════════════════════════════════════════════════
+// MICRÓFONO MANUAL — dictado en el centro (mismo motor que
+// Consulta_Guiada_Beta_v1.html: continuous+interim, es-AR).
+// ══════════════════════════════════════════════════════════════
+let recognition = null;
+let micActivo = false;
+function crearRecognition(){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR){ toast('⚠️ Este navegador no soporta reconocimiento de voz — usá Chrome','err'); return null; }
+  const r = new SR();
+  r.lang = 'es-AR';
+  r.continuous = true;
+  r.interimResults = true;
+  return r;
+}
+function toggleMic(){
+  if(micActivo){ detenerMic(); return; }
+  recognition = crearRecognition();
+  if(!recognition) return;
+  micActivo = true;
+  actualizarBotonMic(true);
+  recognition.onresult = (ev)=>{
+    let interim = '', final = '';
+    for(let i = ev.resultIndex; i < ev.results.length; i++){
+      const t = ev.results[i][0].transcript;
+      if(ev.results[i].isFinal) final += t + ' '; else interim += t;
+    }
+    const interimEl = document.getElementById('interim-centro');
+    if(interimEl) interimEl.textContent = interim;
+    if(final.trim()){
+      const ta = document.getElementById('dictado-centro');
+      if(ta) ta.value = (ta.value.trim() ? ta.value.trim()+' ' : '') + final.trim();
+      if(interimEl) interimEl.textContent = '';
+    }
+  };
+  recognition.onerror = (e)=>{
+    if(e.error === 'no-speech') return;
+    toast('⚠️ Error de voz: ' + e.error, 'err');
+    detenerMic();
+  };
+  recognition.onend = ()=>{
+    if(micActivo){ try{ recognition.start(); }catch(_){ detenerMic(); } }
+  };
+  try{ recognition.start(); }catch(_){ toast('No se pudo iniciar el micrófono','err'); detenerMic(); }
+}
+function detenerMic(){
+  micActivo = false;
+  if(recognition){ try{ recognition.onend=null; recognition.stop(); }catch(_){ } }
+  actualizarBotonMic(false);
+  const interimEl = document.getElementById('interim-centro');
+  if(interimEl) interimEl.textContent = '';
+}
+function actualizarBotonMic(on){
+  const btn = document.getElementById('mic-btn');
+  if(!btn) return;
+  btn.textContent = on ? '⏹ Detener' : '🎤 Escuchar';
+  btn.classList.toggle('on', on);
+}
+
+async function pulirCentro(btnEl){
+  const ta = document.getElementById('dictado-centro');
+  if(!ta.value.trim()){ toast('⚠️ Todavía no hay texto para pulir','err'); return; }
+  const prompt_ = 'Sos un asistente médico. Redactá en prosa clínica breve y prolija, en español rioplatense, ' +
+    'a partir de este dictado textual (puede tener muletillas o desorden, arreglalo sin inventar datos que no estén). ' +
+    'No agregues encabezados ni markdown, solo el párrafo:\n\n' + ta.value.trim();
+  await correrIAEnBoton(btnEl, async ()=>{
+    const res = await llamarBackend('asistente_consulta_ia', {prompt: prompt_});
+    if(res && res.success && res.texto){ ta.value = res.texto; toast('✅ Redactado con IA'); }
+    else{ toast('❌ ' + ((res&&res.error)||'No se pudo procesar con IA'), 'err'); }
+  });
+}
+function enviarCentroA(destino){
+  const centro = document.getElementById('dictado-centro');
+  const texto = centro.value.trim();
+  if(!texto){ toast('⚠️ No hay texto en el centro para enviar','err'); return; }
+  const map = {motivo:'texto-motivo', interr:'texto-interr', examen:'texto-examen', diagnostico:'texto-diagnostico', terapeutica:'texto-terapeutica', estudios:'texto-estudios'};
+  const destinoEl = document.getElementById(map[destino]);
+  if(!destinoEl) return;
+  destinoEl.value = destinoEl.value.trim() ? destinoEl.value.trim()+' '+texto : texto;
+  centro.value = '';
+  toast('✅ Enviado');
+}
+
+// ══════════════════════════════════════════════════════════════
+// PULIR CON IA cada recuadro de consulta (motivo/interr/examen/
+// diagnóstico/estudios) — mismo patrón que Consulta Guiada Beta.
+// ══════════════════════════════════════════════════════════════
+async function pulirRecuadro(cual, btnEl){
+  const ta = document.getElementById('texto-'+cual);
+  if(!ta || !ta.value.trim()){ toast('⚠️ Todavía no hay nada escrito en este recuadro','err'); return; }
+  const motivo = document.getElementById('texto-motivo')?.value || '';
+  const tareas = {
+    motivo: 'Sos un asistente médico. Redactá en prosa clínica breve y prolija, en español rioplatense, el MOTIVO DE CONSULTA y ANTECEDENTES a partir de este dictado (arreglá muletillas/desorden sin inventar datos). Sin encabezados ni markdown:\n\n',
+    interr: 'Sos un asistente médico especialista en traumatología/ortopedia. Redactá el DESARROLLO DEL INTERROGATORIO en prosa clínica prolija (mecanismo, evolución, factores agravantes/atenuantes, tratamientos previos, impacto funcional), sin inventar datos. Sin markdown:\n\nMotivo de consulta: '+motivo+'\n\nDictado: ',
+    examen: 'Sos un asistente médico especialista en traumatología/ortopedia. Redactá los HALLAZGOS DEL EXAMEN FÍSICO en prosa clínica prolija a partir de este dictado, sin inventar datos. Sin markdown:\n\n',
+    diagnostico: 'Sos un médico especialista en traumatología/ortopedia. Redactá el DIAGNÓSTICO de forma breve y precisa (una o dos líneas), en términos clínicos correctos, a partir de este texto. No inventes datos que no estén dichos. Sin markdown:\n\n',
+    terapeutica: 'Sos un médico especialista en traumatología/ortopedia. Redactá el PLAN TERAPÉUTICO (medicación, reposo, kinesiología/rehabilitación, otras indicaciones de tratamiento) en prosa clínica breve y prolija, a partir de este dictado, sin inventar datos que no estén. Sin markdown:\n\n',
+    estudios: 'Sos un asistente médico. Ordená este dictado de ESTUDIOS A SOLICITAR E INDICACIONES en una lista prolija con "- " al inicio de cada línea. Sin markdown de títulos:\n\n'
+  };
+  const prompt_ = (tareas[cual]||'Redactá en prosa clínica prolija, sin inventar datos:\n\n') + ta.value.trim();
+  await correrIAEnBoton(btnEl, async ()=>{
+    const res = await llamarBackend('asistente_consulta_ia', {prompt: prompt_});
+    if(res && res.success && res.texto){ ta.value = res.texto; toast('✅ Redactado con IA'); }
+    else{ toast('❌ ' + ((res&&res.error)||'No se pudo procesar con IA'), 'err'); }
+  });
+}
+
+// ══════════════════════════════════════════════════════════════
+// CLASIFICACIONES — según la patología seleccionada. Para Escoliosis y
+// Espondilolistesis se usan criterios objetivos fijos (bandas de Cobb,
+// grado de Meyerding — este último es el MISMO cálculo exacto que ya usa
+// CAM_Herramientas_Clinicas.html, no una reinvención); para Pie plano/cavo
+// se muestra tal cual el grado de Hernández-Corvo que cargue el médico
+// (no se inventa una tabla de gravedad para eso). "Otra" patología cae al
+// modo anterior: consulta libre a la IA en base al texto del Diagnóstico.
+// ══════════════════════════════════════════════════════════════
+function mostrarCamposClasificacion(){
+  const val = document.getElementById('clasif-patologia').value;
+  ['escoliosis','listesis','pie'].forEach(k=>{
+    document.getElementById('clasif-campos-'+k).style.display = (val===k) ? 'block' : 'none';
+  });
+  document.getElementById('clasif-btn-generar').style.display = (val==='escoliosis'||val==='listesis'||val==='pie') ? 'flex' : 'none';
+  document.getElementById('clasif-btn-ia').style.display = (val==='otra') ? 'flex' : 'none';
+  const box = document.getElementById('clasif-resultado');
+  if(!val) box.textContent = 'Elegí arriba qué patología clasificar.';
+  else if(val==='otra') box.textContent = 'Escribí el diagnóstico arriba y tocá "Actualizar clasificación".';
+  else box.textContent = 'Completá los campos y tocá "Calcular clasificación".';
+}
+function actualizarGradoMeyerdingClasif(){
+  const pct = parseFloat(document.getElementById('clasif-list-pct').value);
+  const campo = document.getElementById('clasif-list-grado');
+  if(isNaN(pct)){ campo.value=''; return; }
+  if(pct<=25) campo.value='I';
+  else if(pct<=50) campo.value='II';
+  else if(pct<=75) campo.value='III';
+  else if(pct<=100) campo.value='IV';
+  else campo.value='V';
+}
+function generarClasificacionEstructurada(){
+  const val = document.getElementById('clasif-patologia').value;
+  const box = document.getElementById('clasif-resultado');
+  if(val==='escoliosis'){
+    const cobb = parseFloat(document.getElementById('clasif-cobb').value);
+    if(isNaN(cobb)){ toast('⚠️ Cargá el ángulo de Cobb','err'); return; }
+    let severidad;
+    if(cobb<25) severidad='leve';
+    else if(cobb<=40) severidad='moderada';
+    else severidad='grave (criterio quirúrgico habitual >40-45°, según contexto clínico)';
+    const risser = document.getElementById('clasif-risser').value;
+    box.textContent = `Escoliosis ${severidad} — Ángulo de Cobb: ${cobb}°` + (risser?` — Risser: ${risser}`:'');
+  } else if(val==='listesis'){
+    const pct = document.getElementById('clasif-list-pct').value;
+    const grado = document.getElementById('clasif-list-grado').value;
+    if(!pct||!grado){ toast('⚠️ Cargá el porcentaje de desplazamiento','err'); return; }
+    box.textContent = `Espondilolistesis — Grado de Meyerding ${grado} (desplazamiento del ${pct}%)`;
+  } else if(val==='pie'){
+    const g = document.getElementById('clasif-hcorvo').value.trim();
+    if(!g){ toast('⚠️ Cargá el grado de Hernández-Corvo','err'); return; }
+    box.textContent = `Pie plano/cavo — Hernández-Corvo: ${g}`;
+  }
+}
+async function actualizarClasificacion(btnEl){
+  const diag = document.getElementById('texto-diagnostico').value.trim();
+  const box = document.getElementById('clasif-resultado');
+  if(!diag){ toast('⚠️ Escribí primero el diagnóstico','err'); return; }
+  const prompt_ = 'Sos un médico especialista en traumatología/ortopedia. En base a este diagnóstico, indicá qué sistema de ' +
+    'clasificación clínica reconocido corresponde (por ejemplo, entre otros: Cobb para escoliosis, Meyerding para ' +
+    'espondilolistesis, Kellgren-Lawrence para artrosis, Garden para fractura de cadera, Salter-Harris para fracturas ' +
+    'fisarias, Gustilo-Anderson para fracturas expuestas, Tönnis para displasia de cadera) y en qué grado/estadio se ' +
+    'encuentra según lo descrito. Si no hay datos suficientes para precisar el grado, decilo así. Si no corresponde ningún ' +
+    'sistema de clasificación reconocido a este diagnóstico, decilo directamente. Respondé breve (2-3 líneas), en español ' +
+    'rioplatense, sin inventar datos que no estén en el diagnóstico:\n\nDiagnóstico: ' + diag;
+  await correrIAEnBoton(btnEl, async ()=>{
+    box.textContent = '⏳ Consultando…';
+    const res = await llamarBackend('asistente_consulta_ia', {prompt: prompt_});
+    if(res && res.success && res.texto){ box.textContent = res.texto.trim(); }
+    else{ box.textContent = '❌ ' + ((res&&res.error)||'No se pudo obtener la clasificación'); }
+  });
+}
+
+// ══════════════════════════════════════════════════════════════
+// RESUMEN FINAL + GUARDAR EN HISTORIA CLÍNICA + COPIAR
+// (mismo patrón que Consulta_Guiada_Beta_v1.html)
+// ══════════════════════════════════════════════════════════════
+let resumenGenerado = false;
+function materialesCrudos_(){
+  return {
+    nombre: document.getElementById('pac-nombre').value.trim(),
+    dni: document.getElementById('pac-dni').value.trim(),
+    motivo: document.getElementById('texto-motivo').value.trim(),
+    interr: document.getElementById('texto-interr').value.trim(),
+    examen: document.getElementById('texto-examen').value.trim(),
+    diagnostico: document.getElementById('texto-diagnostico').value.trim(),
+    clasificacion: document.getElementById('clasif-resultado').textContent.trim(),
+    terapeutica: document.getElementById('texto-terapeutica').value.trim(),
+    estudios: document.getElementById('texto-estudios').value.trim(),
+    proximoControl: document.getElementById('prox-control').value || '',
+    fecha: new Date().toLocaleDateString('es-AR')
+  };
+}
+function hayContenidoCargado_(m){
+  return !!(m.motivo || m.interr || m.examen || m.diagnostico || m.terapeutica || m.estudios);
+}
+function textoCompletoSegmentado_(m){
+  const bloques = [];
+  bloques.push(`CONSULTA — ${m.fecha}`);
+  bloques.push(`Paciente: ${m.nombre||'—'}${m.dni?' (DNI '+m.dni+')':''}`);
+  if(m.motivo) bloques.push(`\n── MOTIVO DE CONSULTA Y ANTECEDENTES ──\n${m.motivo}`);
+  if(m.interr) bloques.push(`\n── INTERROGATORIO ──\n${m.interr}`);
+  if(m.examen) bloques.push(`\n── EXAMEN FÍSICO ──\n${m.examen}`);
+  if(m.estudios) bloques.push(`\n── ESTUDIOS E INDICACIONES ──\n${m.estudios}`);
+  if(m.diagnostico) bloques.push(`\n── DIAGNÓSTICO ──\n${m.diagnostico}`);
+  if(m.clasificacion && !m.clasificacion.startsWith('Todavía') && !m.clasificacion.startsWith('Elegí') && !m.clasificacion.startsWith('Completá') && !m.clasificacion.startsWith('Escribí')) bloques.push(`\n── CLASIFICACIÓN ──\n${m.clasificacion}`);
+  if(m.terapeutica) bloques.push(`\n── TERAPÉUTICA ──\n${m.terapeutica}`);
+  return bloques.join('\n');
+}
+async function armarResumenCompleto(btnEl){
+  const box = document.getElementById('resumen-completo');
+  const m = materialesCrudos_();
+  if(!hayContenidoCargado_(m)){
+    box.textContent = 'Todavía no cargaste nada en las secciones anteriores.';
+    resumenGenerado = false;
+    return;
+  }
+  const prompt_ = 'Sos un médico especialista en traumatología/ortopedia redactando el resumen de una consulta para la ' +
+    'historia clínica. A partir de estos datos sueltos, escribí UN RELATO CLÍNICO CONTINUO EN PROSA — nada de títulos ni ' +
+    'viñetas — que cuente de corrido el motivo de consulta y antecedentes, el interrogatorio, los hallazgos del examen ' +
+    'físico, el diagnóstico y su clasificación si corresponde, el plan terapéutico indicado, y los estudios solicitados. ' +
+    'No inventes ningún dato que no esté en lo que te paso. Español rioplatense, tono profesional de historia clínica, ' +
+    'sin markdown.\n\n' +
+    `Paciente: ${m.nombre||'—'}${m.dni?' (DNI '+m.dni+')':''}\nFecha: ${m.fecha}\n\n` +
+    (m.motivo ? `Motivo de consulta y antecedentes: ${m.motivo}\n\n` : '') +
+    (m.interr ? `Interrogatorio: ${m.interr}\n\n` : '') +
+    (m.examen ? `Examen físico: ${m.examen}\n\n` : '') +
+    (m.estudios ? `Estudios solicitados e indicaciones: ${m.estudios}\n\n` : '') +
+    (m.diagnostico ? `Diagnóstico: ${m.diagnostico}\n\n` : '') +
+    (m.clasificacion && !m.clasificacion.startsWith('Todavía') && !m.clasificacion.startsWith('Elegí') && !m.clasificacion.startsWith('Completá') && !m.clasificacion.startsWith('Escribí') ? `Clasificación: ${m.clasificacion}\n\n` : '') +
+    (m.terapeutica ? `Plan terapéutico: ${m.terapeutica}` : '');
+
+  box.textContent = '⏳ Redactando el resumen con IA…';
+  const correr = async ()=>{
+    const res = await llamarBackend('asistente_consulta_ia', {prompt: prompt_});
+    if(res && res.success && res.texto){ box.textContent = res.texto.trim(); }
+    else{
+      toast('❌ ' + ((res&&res.error)||'No se pudo redactar el resumen con IA') + ' — se muestra por secciones', 'err');
+      box.textContent = textoCompletoSegmentado_(m);
+    }
+    resumenGenerado = true;
+  };
+  if(btnEl){ await correrIAEnBoton(btnEl, correr); } else { await correr(); }
+}
+function copiarResumen(){
+  if(!resumenGenerado){ toast('⚠️ Primero actualizá el resumen','err'); return; }
+  const texto = document.getElementById('resumen-completo').textContent;
+  navigator.clipboard.writeText(texto)
+    .then(()=>toast('📋 Resumen copiado — pegalo donde lo necesites'))
+    .catch(()=>toast('❌ No se pudo copiar','err'));
+}
+// Genera, con UN solo llamado a la IA, tres etiquetas MUY cortas (2 a 6
+// palabras) — Diagnóstico / Clasificación / Terapéutica — para que la lista
+// de "Antecedentes y consultas anteriores" en OCM (arriba del recetario)
+// pueda mostrar cada consulta en una sola línea junto a la fecha. El texto
+// completo de cada una NO se pierde: queda en Observaciones para el "ver
+// más" de esa lista. Si la IA falla, se recorta el texto propio como
+// respaldo (nunca se deja de guardar por esto).
+async function generarEtiquetasCortas_(m){
+  const fallback = {
+    diagCorto: (m.diagnostico||m.motivo||'').slice(0,60),
+    clasifCorto: (m.clasificacion && !m.clasificacion.startsWith('Todavía')) ? m.clasificacion.slice(0,60) : '',
+    terapCorto: (m.terapeutica||'').slice(0,60)
+  };
+  if(!m.diagnostico && !m.clasificacion && !m.terapeutica) return fallback;
+  const prompt_ = 'Generá tres etiquetas MUY CORTAS (entre 2 y 6 palabras cada una, sin punto final) para mostrar en una ' +
+    'lista de historia clínica junto a la fecha. Respondé EXACTAMENTE en este formato, tres líneas, sin nada más:\n' +
+    'DIAGNOSTICO: ...\nCLASIFICACION: ...\nTERAPEUTICA: ...\n\n' +
+    `Diagnóstico completo: ${m.diagnostico||'(no especificado)'}\n` +
+    `Clasificación completa: ${(m.clasificacion&&!m.clasificacion.startsWith('Todavía'))?m.clasificacion:'(no especificada)'}\n` +
+    `Plan terapéutico completo: ${m.terapeutica||'(no especificado)'}`;
+  try{
+    const res = await llamarBackend('asistente_consulta_ia', {prompt: prompt_});
+    if(!res || !res.success || !res.texto) return fallback;
+    const dx = /DIAGNOSTICO:\s*(.*)/i.exec(res.texto);
+    const cl = /CLASIFICACION:\s*(.*)/i.exec(res.texto);
+    const te = /TERAPEUTICA:\s*(.*)/i.exec(res.texto);
+    return {
+      diagCorto: (dx&&dx[1].trim()) || fallback.diagCorto,
+      clasifCorto: (cl&&cl[1].trim()) || fallback.clasifCorto,
+      terapCorto: (te&&te[1].trim()) || fallback.terapCorto
+    };
+  }catch(e){ return fallback; }
+}
+
+async function guardarEnHistoriaClinica(){
+  const dni = document.getElementById('pac-dni').value.trim();
+  if(!dni){ toast('⚠️ Falta el DNI del paciente para guardar en la historia clínica','err'); return; }
+  await armarResumenCompleto();
+  if(!resumenGenerado){ toast('⚠️ No hay nada cargado todavía para guardar','err'); return; }
+  const resumenTexto = document.getElementById('resumen-completo').textContent;
+  const m = materialesCrudos_();
+  const observaciones = [
+    m.interr ? ('Interrogatorio:\n'+m.interr) : '',
+    m.examen ? ('Examen físico:\n'+m.examen) : '',
+    (m.clasificacion && !m.clasificacion.startsWith('Todavía')) ? ('Clasificación completa:\n'+m.clasificacion) : '',
+    m.terapeutica ? ('Terapéutica completa:\n'+m.terapeutica) : ''
+  ].filter(Boolean).join('\n\n');
+
+  const btn = document.getElementById('btn-guardar-hc');
+  await correrIAEnBoton(btn, async ()=>{
+    const etiquetas = await generarEtiquetasCortas_(m);
+    const res = await llamarBackend('addHistoria', {
+      DNI: dni,
+      Diagnostico: etiquetas.diagCorto || (m.diagnostico||m.motivo).slice(0,300),
+      Clasificacion: etiquetas.clasifCorto,
+      Terapeutica: etiquetas.terapCorto,
+      Observaciones: observaciones || resumenTexto,
+      Estudios_Pendientes: m.estudios,
+      Indicaciones: m.estudios,
+      Proximo_Control: m.proximoControl
+    });
+    if(res && res.success){ toast('✅ Guardado en la historia clínica (ID '+res.id+')'); }
+    else{ toast('❌ ' + ((res&&res.error)||'No se pudo guardar'), 'err'); }
+  });
+}
+
+// ══════════════════════════════════════════════════════════════
+// OTRAS ACCIONES — agendar el próximo control, o pasar el paciente a OCM
+// (OCM ya sabe recibir ?dni=... y auto-abrir a ese paciente — mismo
+// mecanismo que ya usa MiniRIMP/otras páginas para "mandarle el DNI").
+// ══════════════════════════════════════════════════════════════
+function irAAgendarControl(){
+  window.location.href = 'Agenda_Mensajes.html';
+}
+function irAOCM(){
+  const dni = document.getElementById('pac-dni').value.trim();
+  window.location.href = dni ? ('OCM_Muratori_v14_0_26.html?dni='+encodeURIComponent(dni)) : 'OCM_Muratori_v14_0_26.html';
+}
+
+// ══════════════════════════════════════════════════════════════
+inicializarSindromes();
+</script>
+</body>
+</html>
