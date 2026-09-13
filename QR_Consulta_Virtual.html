@@ -129,6 +129,15 @@
       <span class="cuando">entre semana · los fines de semana el valor es mayor</span>
     </div>
     <p class="sub" style="margin:0">Se confirma de lunes a viernes de 5 a 6 de la mañana, y sábados y domingos de 9 a 10 — previa carga de tus datos y el pago. Si de la entrevista surge que hace falta verte en persona, se te da un turno para eso en el consultorio que te quede más cerca.</p>
+    <div class="nota" style="margin-top:12px">
+      📲 <b style="display:block;margin-bottom:3px">Antes del horario acordado, instalá Google Meet</b>
+      La videollamada se hace por Google Meet. Si vas a conectarte desde el celular, te conviene tener la app instalada de antes para que a la hora de la entrevista no se te complique:
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+        <a href="https://play.google.com/store/apps/details?id=com.google.android.apps.tachyon" target="_blank" style="flex:1;min-width:140px;text-align:center;background:#0369a1;color:#fff;text-decoration:none;border-radius:8px;padding:9px 10px;font-size:12px;font-weight:800">🤖 Descargar (Android)</a>
+        <a href="https://apps.apple.com/us/app/google-meet/id1096918571" target="_blank" style="flex:1;min-width:140px;text-align:center;background:#0369a1;color:#fff;text-decoration:none;border-radius:8px;padding:9px 10px;font-size:12px;font-weight:800">🍎 Descargar (iPhone)</a>
+      </div>
+      <div style="margin-top:8px">Si te vas a conectar desde una computadora, no hace falta instalar nada — se abre directo en Google Chrome.</div>
+    </div>
   </div>
 
   <div class="card" id="card-form">
@@ -388,7 +397,17 @@ function mostrarExito_(data){
   const aviso = document.getElementById('exito-aviso');
   const mensaje = (data && data.mensaje_paciente) ||
     'Recibimos tu consulta. Nos vamos a comunicar a la brevedad para coordinar la entrevista express de asesoramiento médico.';
-  aviso.innerHTML = '<b>' + (esGuardia ? 'Te recomendamos no esperar' : 'Cómo sigue esto') + '</b>' + mensaje;
+  const recordatorioMeet = esGuardia ? '' : `
+    <div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(12,74,110,.15)">
+      <b style="display:block;margin-bottom:4px">📲 Instalá Google Meet antes del horario acordado</b>
+      La entrevista se hace por videollamada de Google Meet. Te va a llegar el link por mail o WhatsApp — para que no se te complique a último momento, instalá la app ahora si vas a usar el celular:
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+        <a href="https://play.google.com/store/apps/details?id=com.google.android.apps.tachyon" target="_blank" style="flex:1;min-width:130px;text-align:center;background:#0369a1;color:#fff;text-decoration:none;border-radius:8px;padding:8px 10px;font-size:11.5px;font-weight:800">🤖 Android</a>
+        <a href="https://apps.apple.com/us/app/google-meet/id1096918571" target="_blank" style="flex:1;min-width:130px;text-align:center;background:#0369a1;color:#fff;text-decoration:none;border-radius:8px;padding:8px 10px;font-size:11.5px;font-weight:800">🍎 iPhone</a>
+      </div>
+      Desde una computadora no hace falta instalar nada, se abre en Chrome.
+    </div>`;
+  aviso.innerHTML = '<b>' + (esGuardia ? 'Te recomendamos no esperar' : 'Cómo sigue esto') + '</b>' + mensaje + recordatorioMeet;
   card.style.display = 'block';
 }
 </script>
