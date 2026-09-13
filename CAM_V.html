@@ -168,9 +168,20 @@
   <div>
     <div class="col-titulo">🎙️ Dictado (activación manual)</div>
     <div class="card">
+      <div class="fg" style="margin-bottom:8px"><label>🎯 Vas a dictar para…</label>
+        <select id="destino-dictado" onchange="actualizarEtiquetaDestino()">
+          <option value="">Libre (decidís después con los botones de abajo)</option>
+          <option value="motivo">Motivo de consulta y antecedentes</option>
+          <option value="interr">Interrogatorio</option>
+          <option value="examen">Examen físico</option>
+          <option value="estudios">Estudios</option>
+          <option value="diagnostico">Diagnóstico</option>
+          <option value="terapeutica">Terapéutica</option>
+        </select>
+      </div>
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
         <button type="button" class="btn btn-mic" id="mic-btn" onclick="toggleMic()">🎤 Escuchar</button>
-        <span style="font-size:11px;color:var(--muted)">o escribí directo abajo</span>
+        <span style="font-size:11px;color:var(--muted)" id="destino-hint">o escribí directo abajo</span>
       </div>
       <div class="interim" id="interim-centro"></div>
       <textarea id="dictado-centro" rows="14" placeholder="Acá va apareciendo lo que dictás (o escribís)…"></textarea>
@@ -857,6 +868,15 @@ function toggleMic(){
     if(final.trim()){
       const ta = document.getElementById('dictado-centro');
       if(ta) ta.value = (ta.value.trim() ? ta.value.trim()+' ' : '') + final.trim();
+      // Si hay un destino elegido arriba, el dictado va cargando en vivo esa
+      // pantalla directamente (además de quedar en el centro) — así no hace
+      // falta tocar "Enviar a X" después de cada frase. Igual podés seguir
+      // escribiendo/corrigiendo a mano en cualquier recuadro en cualquier momento.
+      const destino = document.getElementById('destino-dictado').value;
+      if(destino && DESTINO_MAP_[destino]){
+        const destEl = document.getElementById(DESTINO_MAP_[destino]);
+        if(destEl) destEl.value = (destEl.value.trim() ? destEl.value.trim()+' ' : '') + final.trim();
+      }
       if(interimEl) interimEl.textContent = '';
     }
   };
@@ -896,12 +916,20 @@ async function pulirCentro(btnEl){
     else{ toast('❌ ' + ((res&&res.error)||'No se pudo procesar con IA'), 'err'); }
   });
 }
+const DESTINO_MAP_ = {motivo:'texto-motivo', interr:'texto-interr', examen:'texto-examen', diagnostico:'texto-diagnostico', terapeutica:'texto-terapeutica', estudios:'texto-estudios'};
+const DESTINO_NOMBRES_ = {motivo:'Motivo de consulta', interr:'Interrogatorio', examen:'Examen físico', estudios:'Estudios', diagnostico:'Diagnóstico', terapeutica:'Terapéutica'};
+function actualizarEtiquetaDestino(){
+  const destino = document.getElementById('destino-dictado').value;
+  const hint = document.getElementById('destino-hint');
+  hint.textContent = destino
+    ? `🎙️ Dictando directo a: ${DESTINO_NOMBRES_[destino]} — igual podés escribir/corregir a mano en cualquier recuadro`
+    : 'o escribí directo abajo';
+}
 function enviarCentroA(destino){
   const centro = document.getElementById('dictado-centro');
   const texto = centro.value.trim();
   if(!texto){ toast('⚠️ No hay texto en el centro para enviar','err'); return; }
-  const map = {motivo:'texto-motivo', interr:'texto-interr', examen:'texto-examen', diagnostico:'texto-diagnostico', terapeutica:'texto-terapeutica', estudios:'texto-estudios'};
-  const destinoEl = document.getElementById(map[destino]);
+  const destinoEl = document.getElementById(DESTINO_MAP_[destino]);
   if(!destinoEl) return;
   destinoEl.value = destinoEl.value.trim() ? destinoEl.value.trim()+' '+texto : texto;
   centro.value = '';
