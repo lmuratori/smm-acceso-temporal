@@ -162,6 +162,10 @@
       <div id="man-lista" style="margin-top:8px"></div>
       <button type="button" class="btn btn-primary" style="margin-top:8px;width:100%" onclick="enviarHerramientaAExamen('man')">⬇️ Enviar a Examen físico</button>
     </div>
+
+    <div style="margin:14px 0 6px;font-size:10.5px;color:var(--muted);font-weight:700">📷 MEDICIONES GONIO (FOTO) — se abren en otra pestaña</div>
+    <button type="button" class="btn-herr" onclick="abrirGonio('GONIO_Columna_v1.html')">🩻 Columna (Cobb, Pelvis, SVA, Edad ósea, predicción…) ↗</button>
+    <button type="button" class="btn-herr" onclick="abrirGonio('GONIO_MiembroInferior_v1.html')">🦵 Miembro Inferior (Hallux, Genu, Costa-Bártani, Retropié…) ↗</button>
   </div>
 
   <!-- ═══ COLUMNA CENTRAL: DICTADO ═══ -->
@@ -651,6 +655,19 @@ function toggleHerramienta(k){
       btn.classList.remove('abierta');
     }
   });
+}
+
+// Abre las herramientas GONIO completas (Columna / Miembro Inferior) en una
+// pestaña nueva, pasando el DNI ya cargado arriba (si hay) para que la
+// herramienta cargue directo el historial de ese paciente.
+function abrirGonio(archivo){
+  let dni = '';
+  try{
+    const campo = document.getElementById('pac-dni');
+    if(campo) dni = campo.value.trim();
+  }catch(e){}
+  const url = archivo + (dni ? ('?dni=' + encodeURIComponent(dni)) : '');
+  window.open(url, '_blank');
 }
 
 function enviarHerramientaAExamen(cual){

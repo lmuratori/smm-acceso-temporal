@@ -1103,6 +1103,23 @@ function dibujarGrafico(canvasEl, filasReales, filasPred){
 
 // ─────────────────────────── Init ───────────────────────────
 cambiarTipo();
+
+// Precarga de DNI si se llega desde otro módulo (ej. CAM V) con ?dni=...
+(function(){
+  try{
+    const params = new URLSearchParams(location.search);
+    const dniParam = params.get('dni');
+    if(dniParam){
+      const campoDni = document.getElementById('dni');
+      const campoDniHist = document.getElementById('dni-historial');
+      if(campoDni) campoDni.value = dniParam;
+      if(campoDniHist){
+        campoDniHist.value = dniParam;
+        cargarHistorial();
+      }
+    }
+  }catch(e){ /* si algo falla acá, no debe romper el resto de la página */ }
+})();
 </script>
 
 </body>
