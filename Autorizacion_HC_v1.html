@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Consentimiento Informado — Firma</title>
+<title>Autorización — Resumen de Historia Clínica</title>
 <style>
   :root{--azul:#0369a1;--azul-osc:#0c4a6e;--verde:#16a34a;--muted:#64748b;--border:#e2e8f0;--bg:#f4fbfd;--surface:#fff}
   *{box-sizing:border-box}
@@ -14,8 +14,7 @@
   main{max-width:480px;margin:0 auto}
   .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px}
   .card h2{font-size:13px;margin:0 0 10px;color:var(--azul-osc)}
-  #proc-texto{font-size:12.5px;color:var(--muted);margin-bottom:8px}
-  #consinf-texto{white-space:pre-wrap;font-size:12.5px;line-height:1.6;background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:12px;max-height:340px;overflow-y:auto}
+  #resumen-texto{white-space:pre-wrap;font-size:13px;line-height:1.6;background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:12px}
   .aviso{background:#fffbeb;border:1px solid #fde68a;color:#92400e;border-radius:10px;padding:12px 14px;font-size:12px;line-height:1.6}
   .ok{background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;border-radius:10px;padding:14px;font-size:13px;line-height:1.6;text-align:center}
   canvas{width:100%;height:180px;border:1.5px dashed var(--azul);border-radius:8px;background:#fff;touch-action:none;display:block}
@@ -32,7 +31,7 @@
 <body>
 
 <div class="topbar">
-  <h1>✍️ Consentimiento Informado</h1>
+  <h1>🩺 Autorización de Historia Clínica</h1>
   <p>Dr. Luis Alberto Muratori — M.N. 100.540 / M.P. 9943</p>
 </div>
 
@@ -40,17 +39,16 @@
   <div id="cargando" class="card"><p style="text-align:center;color:var(--muted);font-size:12.5px">Cargando…</p></div>
 
   <div id="no-encontrado" class="card oculto">
-    <div class="aviso">⚠️ No encontramos un consentimiento pendiente de firma para este link. Pedile al médico que te genere el link de nuevo.</div>
+    <div class="aviso">⚠️ No encontramos un resumen pendiente de firma para este link. Pedile al médico que te genere el link de nuevo.</div>
   </div>
 
   <div id="ya-firmado" class="card oculto">
-    <div class="ok">✅ Ya firmaste este consentimiento. No hace falta hacer nada más.</div>
+    <div class="ok">✅ Ya firmaste este resumen. No hace falta hacer nada más.</div>
   </div>
 
   <div id="contenido" class="card oculto">
-    <h2>Consentimiento a firmar</h2>
-    <div id="proc-texto"></div>
-    <div id="consinf-texto"></div>
+    <h2>Resumen a autorizar</h2>
+    <div id="resumen-texto"></div>
 
     <h2 style="margin-top:16px">Tu firma</h2>
     <canvas id="firma-canvas"></canvas>
@@ -61,7 +59,7 @@
 
     <label class="autoriza">
       <input type="checkbox" id="chk-autorizo">
-      He leído el consentimiento informado completo, entiendo el procedimiento, sus riesgos y las alternativas explicadas, y firmo dando mi conformidad para la intervención.
+      Autorizo la exposición de estos datos de mi historia clínica a quien los haya solicitado, bajo la autorización correspondiente.
     </label>
 
     <button class="btn" id="btn-confirmar" disabled>Firmar y confirmar</button>
@@ -78,8 +76,7 @@
   const elNoEnc      = document.getElementById('no-encontrado');
   const elYaFirmado  = document.getElementById('ya-firmado');
   const elContenido  = document.getElementById('contenido');
-  const elProcTxt    = document.getElementById('proc-texto');
-  const elConsinfTxt = document.getElementById('consinf-texto');
+  const elResumenTxt = document.getElementById('resumen-texto');
 
   function mostrarSolo(el){
     [elCargando, elNoEnc, elYaFirmado, elContenido].forEach(e => e.classList.toggle('oculto', e !== el));
@@ -88,12 +85,11 @@
   async function cargar(){
     if(!dni){ mostrarSolo(elNoEnc); return; }
     try{
-      const resp = await fetch(SHEETS_URL + '?action=get_consentimiento_para_firma&dni=' + encodeURIComponent(dni));
+      const resp = await fetch(SHEETS_URL + '?action=get_resumen_para_firma&dni=' + encodeURIComponent(dni));
       const data = await resp.json();
       if(!data.success || !data.encontrado){ mostrarSolo(elNoEnc); return; }
       if(data.firmado){ mostrarSolo(elYaFirmado); return; }
-      elProcTxt.textContent = data.procedimiento ? ('Procedimiento: ' + data.procedimiento) : '';
-      elConsinfTxt.textContent = data.texto || '(sin texto)';
+      elResumenTxt.textContent = data.resumen || '(sin texto)';
       mostrarSolo(elContenido);
       initFirma();
     }catch(e){
@@ -101,8 +97,8 @@
     }
   }
 
-  // ── Canvas de firma táctil — mismo mecanismo que el Resumen de Historia
-  // Clínica (eventos pointer, sin librerías externas). ──
+  // ── Canvas de firma táctil — lo más simple posible: eventos pointer
+  // (funcionan igual con dedo, lápiz o mouse), sin librerías externas. ──
   let dibujando = false, firmoAlgo = false;
   function initFirma(){
     const canvas = document.getElementById('firma-canvas');
@@ -158,7 +154,7 @@
     try{
       const firmaBase64 = window._firmaCanvas.toDataURL('image/png');
       const resp = await fetch(SHEETS_URL, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
-        body: JSON.stringify({action:'guardar_firma_consentimiento', dni, firma_base64: firmaBase64})});
+        body: JSON.stringify({action:'guardar_firma_paciente', dni, firma_base64: firmaBase64})});
       const data = await resp.json();
       if(!data.success) throw new Error(data.error || 'Error al guardar');
       mostrarSolo(elYaFirmado);

@@ -1,0 +1,45 @@
+CARPETA "CELULAR" — Sistema Médico Integral Muratori (S.I.M-M)
+════════════════════════════════════════════════════════════
+
+Estos son los archivos pensados para usarse desde el teléfono (tanto
+por los kinesiólogos como por los pacientes), aunque también funcionan
+perfectamente desde una computadora o tablet.
+
+CONTENIDO:
+
+1) KSM_Kinesiologia.html  ("la puerta de kinesiología")
+   → La usa el kinesiólogo. Ya tiene cargada la URL real del sistema,
+     no necesita configuración.
+   → Al abrirla por primera vez pide nombre/matrícula/mail del
+     profesional y la aceptación del peaje (5% por defecto) — sin
+     aceptar, no se habilita el uso.
+   → Desde ahí: busca pacientes, carga evoluciones, ve alertas,
+     responde preguntas de sus pacientes, genera videollamadas, arma
+     informes para el médico, cobra sus consultas (con el peaje ya
+     descontado automáticamente) y ve de solo lectura qué módulos
+     opcionales le habilitó el médico (podoscopía nunca puede
+     aparecer — eso lo decide el Panel de Especialistas de la carpeta
+     COMPU, ya no se auto-configura desde acá).
+
+2) KSM_Autoevaluacion_Paciente.html
+   → La recibe el paciente por mail (con un link que ya incluye su DNI
+     y nombre). Autoevaluación + canal de preguntas al kinesiólogo.
+     Ya tiene cargada la URL real del sistema.
+
+3) RMYT_Autoevaluacion_Semanal_v1.html
+   → Autoevaluación semanal de seguimiento (RMYT) que recibe el
+     paciente por mail. Ya tiene cargada la URL real, no se tocó
+     porque ya estaba correctamente conectada.
+
+4) COL_Colegas_SIMM.html  (NUEVO — tercera ronda)
+   → Versión genérica de KSM para especialistas que NO son
+     kinesiólogos (traumatólogos, nutricionistas, fonoaudiólogos,
+     etc.). Se registran, aceptan la condición del sistema, y vos les
+     autorizás módulo por módulo desde el Panel de Especialistas —
+     sin las partes específicas de kinesiología (evoluciones de
+     sesión, videollamada, facturación directa), que quedan
+     reservadas a KSM.
+
+IMPORTANTE: estos cuatro archivos dependen de que el Codigo.gs de la
+carpeta COMPU ya esté instalado y publicado (implementado) en el
+proyecto de Apps Script — si no, van a dar error de conexión.

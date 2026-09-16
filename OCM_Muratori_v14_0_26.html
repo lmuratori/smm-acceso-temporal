@@ -2840,9 +2840,24 @@ async function getConsultas(id){
 // nube despues) y lo deja seleccionado solo, listo para armar la receta.
 // No cambia nada del comportamiento normal si no viene el parametro.
 // ══════════════════════════════════════════════════════════════════
-async function autoAbrirPacientePorDNI(dni){
-  if(!dni) return;
-  try{
+// BUGFIX (sept 2026): OCM tiene DOS secciones que se auto-cargan por
+// separado al abrir la pagina con ?dni=... — la clinica/recetario
+// (autoAbrirPacientePorDNI, mas abajo) y la quirurgica (cargarPacientePorDNI,
+// mucho mas abajo en el archivo). Antes CADA UNA hacia su propia busqueda
+// local+nube en paralelo, sin coordinarse entre si: eran dos carreras
+// independientes por el mismo DNI, y segun cual terminara ultima, la otra
+// seccion podia quedar sin pintar el paciente (o pintarlo con datos algo
+// distintos). Esto se veia como "OCM no carga el paciente" al venir desde
+// CAM. Ahora hay UNA sola busqueda compartida y memoizada por DNI: la
+// primera seccion que la pide dispara la consulta real; la segunda reusa
+// el mismo resultado (sin duplicar la llamada a la nube), y cada una sigue
+// pintando su propia parte de la pantalla como antes.
+let _buscaPacOCMDniPromise = null, _buscaPacOCMDniValor = null;
+async function buscarPacienteCompartidoPorDNI_(dni){
+  if(!dni) return null;
+  if(_buscaPacOCMDniValor && String(_buscaPacOCMDniValor.dni)===String(dni)) return _buscaPacOCMDniValor;
+  if(_buscaPacOCMDniPromise) return _buscaPacOCMDniPromise;
+  _buscaPacOCMDniPromise = (async()=>{
     const local = await buscarPacientesDB(dni);
     let pac = local.find(p=>String(p.dni||'')===String(dni));
     if(!pac){
@@ -2858,9 +2873,17 @@ async function autoAbrirPacientePorDNI(dni){
         };
         const id = await dbAdd('pacientes',{...datos,created_at:new Date().toISOString()});
         pac = {...datos,id};
-        toast('☁ Paciente traido desde CAM','ok');
       }
     }
+    _buscaPacOCMDniValor = pac || null;
+    return _buscaPacOCMDniValor;
+  })();
+  return _buscaPacOCMDniPromise;
+}
+async function autoAbrirPacientePorDNI(dni){
+  if(!dni) return;
+  try{
+    const pac = await buscarPacienteCompartidoPorDNI_(dni);
     if(pac){
       seleccionarPaciente(pac);
       toast('Paciente cargado desde CAM: '+(pac.apellido||'')+', '+(pac.nombre||''),'ok');
@@ -12733,21 +12756,11 @@ async function enviarDocumentoQXPorMail(tituloRp, cuerpoTexto, destinatarioMail)
 async function cargarPacientePorDNI(dni){
   if(!dni) return;
   try{
-    const local = await buscarPacientesDB(dni);
-    let pac = local.find(p=>String(p.dni||'')===String(dni));
-    if(!pac){
-      const resp = await fetch(SHEETS_URL+'?action=search&query='+encodeURIComponent(dni)+tokenQS_(), {signal:AbortSignal.timeout(6000)});
-      const data = await resp.json();
-      const c = (data.data||[]).find(c=>String(c.DNI||'')===String(dni));
-      if(c){
-        pac = {
-          dni:c.DNI||'', apellido:c.Apellido||'', nombre:c.Nombre||'', fecha_nac:c.Fecha_Nac||'',
-          obra_social:c.Obra_Social||'', plan:c.Plan||'', nro_afiliado:c.N_Afiliado||'',
-          telefono:c.Telefono||'', mail:c.Email||'', direccion:c.Domicilio||'',
-          localidad:c.Localidad||'', lugar_atencion:c.Lugar_Atencion||'', centro_derivador:c.Centro_Derivador||''
-        };
-      }
-    }
+    // BUGFIX (sept 2026): antes esta función volvía a buscar el paciente
+    // desde cero (local+nube) en paralelo con autoAbrirPacientePorDNI() —
+    // ver el comentario grande junto a esa función, más arriba en este
+    // archivo. Ahora reusa la misma búsqueda compartida y memoizada.
+    const pac = await buscarPacienteCompartidoPorDNI_(dni);
     if(pac){ seleccionarPacienteQX(pac); }
     else{ toast('No se encontró un paciente con ese DNI','err'); renderPacBarSinPaciente(); }
   }catch(e){
@@ -14852,5 +14865,6 @@ function enviarChecklistPorMail(tipo){
   setInterval(chequearTrial_, 10*60*1000);
 })();
 </script>
+<script src="efecto-lupa.js" defer></script>
 </body>
 </html>
