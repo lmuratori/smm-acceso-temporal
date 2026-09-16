@@ -76,20 +76,6 @@
   .lc-meeting{grid-column:2;grid-row:1 / span 3}
 
   .caratula-leyenda{max-width:900px;margin:12px auto 0;font-size:11px;color:var(--muted);text-align:center}
-
-  /* ===================== Portada como libro (StPageFlip) =====================
-     Cada sección (antes eran bloques con scroll vertical) ahora es una página
-     del libro; se navega con los botones, el selector rápido, arrastrando la
-     esquina de la hoja, o deslizando el dedo en celular/tablet. */
-  .libro-controles{max-width:900px;margin:16px auto 0;padding:0 20px;display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}
-  .libro-controles button{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:9px 16px;font-weight:800;font-size:13px;color:var(--azul-osc);cursor:pointer}
-  .libro-controles button:hover{border-color:var(--azul);box-shadow:0 2px 8px rgba(3,105,161,.12)}
-  .libro-controles select{border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-size:12.5px;font-weight:700;color:var(--azul-osc);background:var(--surface);max-width:220px}
-  .libro-indicador{font-size:12px;color:var(--muted);font-weight:800;min-width:104px;text-align:center}
-  .book-wrap{max-width:900px;margin:20px auto 0;padding:0 20px 50px}
-  #book{margin:0 auto}
-  .page{background:var(--surface);overflow-y:auto;box-sizing:border-box;padding:20px 22px 34px}
-  .page.grupo{margin-top:0}
 </style>
 </head>
 <body>
@@ -99,26 +85,9 @@
   <p>Sistema Médico Integral Muratori — Dr. Luis Alberto Muratori (M.N. 100.540 / M.P. 9943)</p>
 </div>
 
-<div class="libro-controles">
-  <button type="button" id="libro-prev">◀ Anterior</button>
-  <select id="libro-selector">
-    <option value="0">Panel principal</option>
-    <option value="1">Consulta diaria</option>
-    <option value="2">Cobros y Kinesiología</option>
-    <option value="3">Documentación</option>
-    <option value="4">Mediciones GONIO</option>
-    <option value="5">Investigación y Análisis</option>
-    <option value="6">Contactos y Discapacidad</option>
-    <option value="7">Administración</option>
-  </select>
-  <span class="libro-indicador" id="libro-indicador">Página 1 de 8</span>
-  <button type="button" id="libro-next">Siguiente ▶</button>
-</div>
+<main>
 
-<div class="book-wrap">
-<div id="book">
-
-  <div class="grupo page" data-density="hard">
+  <div class="grupo">
     <div class="grupo-titulo">Panel principal</div>
     <div class="caratula-wrap" id="caratulaWrap">
 
@@ -187,7 +156,7 @@
     <div class="caratula-leyenda">🩵 Tocá cualquier casilla para abrirla. Las grises todavía no tienen página propia asignada — son las que hay que terminar de definir. Libro RMYT y Libro Discapacidad también siguen accesibles desde el menú "Documentos" dentro de OCM.</div>
   </div>
 
-  <div class="grupo page">
+  <div class="grupo">
     <div class="grupo-titulo">Consulta diaria (acceso clásico — se mantiene por ahora)</div>
     <div class="tarjetas">
       <a class="tarjeta" href="OCM_Muratori_v14_0_26.html">
@@ -214,7 +183,7 @@
     <div class="nota">📈 El <b>Dashboard RSG</b> (seguimiento de evaluaciones de pacientes) y el <b>Seguimiento de Plantillas</b> no son páginas aparte — son botones dentro de OCM, arriba de la pantalla de consulta.</div>
   </div>
 
-  <div class="grupo page">
+  <div class="grupo">
     <div class="grupo-titulo">Cobros y Kinesiología</div>
     <div class="tarjetas">
       <a class="tarjeta" href="KSM_Kinesiologia.html">
@@ -230,7 +199,7 @@
     </div>
   </div>
 
-  <div class="grupo page">
+  <div class="grupo">
     <div class="grupo-titulo">Documentación y recomendaciones del paciente</div>
     <div class="tarjetas">
       <div class="tarjeta pendiente">
@@ -246,7 +215,7 @@
     </div>
   </div>
 
-  <div class="grupo page">
+  <div class="grupo">
     <div class="grupo-titulo">Mediciones GONIO (foto, escáner o cámara)</div>
     <div class="tarjetas">
       <a class="tarjeta" href="GONIO_CostaBartani_v1.html">
@@ -283,7 +252,7 @@
     <div class="nota">📷 En los 6, el sistema no distingue el origen de la imagen: foto del celular, escáner (USB/Bluetooth) o cámara web conectada al consultorio — se marcan los puntos igual sobre la imagen final.</div>
   </div>
 
-  <div class="grupo page">
+  <div class="grupo">
     <div class="grupo-titulo">Investigación y Análisis</div>
     <div class="tarjetas">
       <a class="tarjeta" href="Estadisticas_SMM.html">
@@ -299,7 +268,7 @@
     </div>
   </div>
 
-  <div class="grupo page">
+  <div class="grupo">
     <div class="grupo-titulo">Contactos y Discapacidad</div>
     <div class="tarjetas">
       <a class="tarjeta" href="Lector_CUD.html">
@@ -326,7 +295,7 @@
     </div>
   </div>
 
-  <div class="grupo page" data-density="hard">
+  <div class="grupo">
     <div class="grupo-titulo">Administración</div>
     <div class="tarjetas">
       <a class="tarjeta" href="Agenda_Mensajes.html">
@@ -352,76 +321,13 @@
     </div>
   </div>
 
-</div>
-</div>
+</main>
 
 <div class="aviso" style="max-width:960px;margin-left:auto;margin-right:auto">
   ⚠️ Estos accesos son para uso interno del consultorio, los kinesiólogos y colegas autorizados. El formulario RIMP para pacientes (RIDM_Muratori_v1.html) y la página de Consulta Virtual por QR (QR_Consulta_Virtual.html) no están listados acá a propósito — a ambos se llega siempre por un link o QR personalizado, no se comparten sueltos desde este índice.
 </div>
 
 <footer>S.I.M-M — Sistema Médico Integral Muratori</footer>
-
-<script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.js"></script>
-<script>
-  // ══════════════════════════════════════════════════════════════
-  // Portada como libro (StPageFlip): cada sección de arriba es ahora
-  // una página que se "da vuelta" en vez de bajar con scroll. Se puede
-  // pasar de página con los botones, el selector, arrastrando la
-  // esquina de la hoja con el mouse, o deslizando el dedo en celular.
-  // disableFlipByClick queda en true para que un simple click sobre
-  // una tarjeta o una tapa NUNCA se confunda con "pasar la hoja" —
-  // solo se pasa página con los controles o arrastrando de verdad.
-  // ══════════════════════════════════════════════════════════════
-  (function(){
-    const paginas = document.querySelectorAll('#book .page');
-    const total = paginas.length;
-    const libroPrev = document.getElementById('libro-prev');
-    const libroNext = document.getElementById('libro-next');
-    const libroSelector = document.getElementById('libro-selector');
-    const libroIndicador = document.getElementById('libro-indicador');
-
-    let pageFlip;
-    try{
-      pageFlip = new St.PageFlip(document.getElementById('book'), {
-        width: 860,
-        height: 760,
-        size: 'stretch',
-        minWidth: 300,
-        maxWidth: 900,
-        minHeight: 420,
-        maxHeight: 900,
-        showCover: true,
-        mobileScrollSupport: true,
-        disableFlipByClick: true,
-        maxShadowOpacity: 0.5
-      });
-      pageFlip.loadFromHTML(paginas);
-    }catch(e){
-      // Si por lo que sea la librería no cargó (sin internet, CDN caído, etc.)
-      // no queremos que la portada quede inutilizable: mostramos todas las
-      // páginas apiladas como antes, en vez de romper la pantalla.
-      console.error('No se pudo inicializar el libro, se muestran las secciones apiladas:', e);
-      paginas.forEach(p=>{ p.style.display='block'; p.style.height='auto'; p.style.overflow='visible'; });
-      if(libroPrev) libroPrev.style.display='none';
-      if(libroNext) libroNext.style.display='none';
-      if(libroSelector) libroSelector.style.display='none';
-      if(libroIndicador) libroIndicador.style.display='none';
-      return;
-    }
-
-    function actualizarIndicador(idx){
-      if(libroIndicador) libroIndicador.textContent = 'Página ' + (idx+1) + ' de ' + total;
-      if(libroSelector) libroSelector.value = String(idx);
-    }
-    actualizarIndicador(0);
-
-    pageFlip.on('flip', function(e){ actualizarIndicador(e.data); });
-
-    if(libroPrev) libroPrev.addEventListener('click', function(){ pageFlip.flipPrev(); });
-    if(libroNext) libroNext.addEventListener('click', function(){ pageFlip.flipNext(); });
-    if(libroSelector) libroSelector.addEventListener('change', function(){ pageFlip.flip(parseInt(this.value,10)); });
-  })();
-</script>
 
 <script>
   // Efecto "tapa de libro": al tocar una casilla, la tapa gira del todo
