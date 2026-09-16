@@ -307,17 +307,17 @@ async function cvCambioConsultorio(){
   if(!consultorio){ contSlots.innerHTML = ''; contManual.style.display = 'none'; return; }
   if(consultorio === 'a-mano'){ contSlots.innerHTML = ''; contManual.style.display = 'block'; return; }
   contManual.style.display = 'none';
-  contSlots.innerHTML = '<div style="font-size:11px;color:var(--muted)">Buscando horarios disponibles…</div>';
+  contSlots.innerHTML = '<div style="font-size:15px;color:var(--muted)">Buscando horarios disponibles…</div>';
   try{
     const resp = await fetch(SHEETS_URL + '?action=get_turnos_disponibles&consultorio=' + encodeURIComponent(consultorio));
     const data = await resp.json();
     const dias = (data.success && data.consultorios && data.consultorios[consultorio]) || [];
-    if(!dias.length){ contSlots.innerHTML = '<div style="font-size:11px;color:var(--muted)">No hay horarios libres en las próximas semanas — probá con otro consultorio o anotalo a mano.</div>'; return; }
+    if(!dias.length){ contSlots.innerHTML = '<div style="font-size:15px;color:var(--muted)">No hay horarios libres en las próximas semanas — probá con otro consultorio o anotalo a mano.</div>'; return; }
     contSlots.innerHTML = dias.map(d => `
-      <div style="margin-bottom:6px">
-        <div style="font-size:11px;font-weight:700;color:#334155;margin-bottom:3px">${cvFormatFecha_(d.fecha)}</div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap">
-          ${d.horarios.map(h => `<button type="button" class="btn-mini cv-slot" data-fecha="${d.fecha}" data-hora="${h}" onclick="cvSeleccionarSlot('${consultorio}','${d.fecha}','${h}')" style="border:1.5px solid var(--border);background:#fff;border-radius:6px;padding:5px 9px;font-size:11.5px;cursor:pointer;font-family:inherit">${h}</button>`).join('')}
+      <div style="margin-bottom:12px">
+        <div style="font-size:22px;font-weight:700;color:#334155;margin-bottom:6px">${cvFormatFecha_(d.fecha)}</div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap">
+          ${d.horarios.map(h => `<button type="button" class="btn-mini cv-slot" data-fecha="${d.fecha}" data-hora="${h}" onclick="cvSeleccionarSlot('${consultorio}','${d.fecha}','${h}')" style="border:3px solid var(--border);background:#fff;border-radius:12px;padding:10px 18px;font-size:23px;cursor:pointer;font-family:inherit">${h}</button>`).join('')}
         </div>
       </div>`).join('');
   }catch(e){
@@ -677,19 +677,19 @@ setInterval(cargarMensajes, 60000); // se refresca sola cada 1 minuto
 
     <div class="cv-box" style="margin-top:14px">
       <h4>Próximo control / turno presencial</h4>
-      <label style="display:block;font-size:11.5px;font-weight:700;color:#334155;margin:0 0 5px">Consultorio</label>
-      <select id="cv-turno-consultorio" onchange="cvCambioConsultorio()" style="width:100%;border:1.5px solid var(--border);border-radius:6px;padding:8px 10px;font-size:12.5px;font-family:inherit">
+      <label style="display:block;font-size:16px;font-weight:700;color:#334155;margin:0 0 8px">Consultorio</label>
+      <select id="cv-turno-consultorio" onchange="cvCambioConsultorio()" style="width:100%;border:2px solid var(--border);border-radius:10px;padding:14px 16px;font-size:19px;font-family:inherit">
         <option value="">— No hace falta turno presencial —</option>
         <option value="Centro Médico Palmares">Centro Médico Palmares (martes 13:30–16:45 y jueves 13:30–20 hs)</option>
         <option value="Rehabilitarte Instituto Médico">Rehabilitarte Instituto Médico (viernes 16–18 hs)</option>
         <option value="Consultorios Privados del Norte">Consultorios Privados del Norte (viernes 18–20:30 hs)</option>
         <option value="a-mano">Otro / anotarlo a mano (no reserva nada, solo texto)</option>
       </select>
-      <div id="cv-turno-slots" style="margin-top:8px"></div>
-      <div id="cv-turno-manual" style="display:none;margin-top:8px">
-        <input type="text" id="cv-turno-texto-manual" placeholder="Ej: turno presencial en Rehabilitarte, viernes" style="width:100%;border:1.5px solid var(--border);border-radius:6px;padding:9px 11px;font-size:12.5px;font-family:inherit">
+      <div id="cv-turno-slots" style="margin-top:14px"></div>
+      <div id="cv-turno-manual" style="display:none;margin-top:14px">
+        <input type="text" id="cv-turno-texto-manual" placeholder="Ej: turno presencial en Rehabilitarte, viernes" style="width:100%;border:2px solid var(--border);border-radius:10px;padding:14px 16px;font-size:19px;font-family:inherit">
       </div>
-      <div id="cv-turno-seleccionado" style="margin-top:8px;font-size:12px"></div>
+      <div id="cv-turno-seleccionado" style="margin-top:14px;font-size:18px"></div>
     </div>
 
     <div class="row">
